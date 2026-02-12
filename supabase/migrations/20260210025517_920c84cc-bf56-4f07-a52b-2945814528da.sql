@@ -1,0 +1,27 @@
+
+-- Expand profiles table with full personal data fields
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS cpf text,
+  ADD COLUMN IF NOT EXISTS phone text,
+  ADD COLUMN IF NOT EXISTS whatsapp text,
+  ADD COLUMN IF NOT EXISTS photo_url text,
+  ADD COLUMN IF NOT EXISTS mini_bio text,
+  ADD COLUMN IF NOT EXISTS address_street text,
+  ADD COLUMN IF NOT EXISTS address_number text,
+  ADD COLUMN IF NOT EXISTS address_complement text,
+  ADD COLUMN IF NOT EXISTS address_neighborhood text,
+  ADD COLUMN IF NOT EXISTS address_city text,
+  ADD COLUMN IF NOT EXISTS address_state text,
+  ADD COLUMN IF NOT EXISTS address_country text DEFAULT 'Brasil',
+  ADD COLUMN IF NOT EXISTS address_zipcode text,
+  ADD COLUMN IF NOT EXISTS institution_affiliation text,
+  ADD COLUMN IF NOT EXISTS professional_position text,
+  ADD COLUMN IF NOT EXISTS lattes_url text,
+  ADD COLUMN IF NOT EXISTS instagram_url text,
+  ADD COLUMN IF NOT EXISTS linkedin_url text,
+  ADD COLUMN IF NOT EXISTS research_area_cnpq text,
+  ADD COLUMN IF NOT EXISTS keywords text[],
+  ADD COLUMN IF NOT EXISTS receive_news boolean DEFAULT true,
+  ADD COLUMN IF NOT EXISTS receive_editais_notifications boolean DEFAULT true,
+  ADD COLUMN IF NOT EXISTS profile_completed boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS profile_completed_at timestamptz;

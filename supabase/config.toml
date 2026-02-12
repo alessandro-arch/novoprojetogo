@@ -1,0 +1,13 @@
+project_id = "pqrfubegqqdfgvsngszk"
+
+[functions.send-submission-notification]
+verify_jwt = false
+
+[functions.seed-institutions]
+verify_jwt = false
+
+[functions.validate-reviewer-code]
+verify_jwt = false
+
+[functions.accept-reviewer-code]
+verify_jwt = false
