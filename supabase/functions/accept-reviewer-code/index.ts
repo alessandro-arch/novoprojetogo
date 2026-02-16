@@ -61,8 +61,8 @@ const handler = async (req: Request): Promise<Response> => {
       institution_custom_name: institution_custom_name || null,
       institution_type: institution_type || null,
       lattes_url: lattes_url || null,
-      cpf: cpf,
       cpf_hash: cpfHash,
+      cpf_last4: cpfLast4,
     }).eq("user_id", userId);
 
     // Add reviewer role in organization_members

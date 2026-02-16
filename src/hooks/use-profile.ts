@@ -7,7 +7,8 @@ export interface UserProfile {
   user_id: string;
   email: string | null;
   full_name: string | null;
-  cpf: string | null;
+  cpf_last4: string | null;
+  cpf_hash: string | null;
   phone: string | null;
   whatsapp: string | null;
   photo_url: string | null;

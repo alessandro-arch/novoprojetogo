@@ -67,7 +67,7 @@ const ReviewerDetail = ({ reviewerId, orgId, onBack }: Props) => {
           areas: Array.isArray(rp?.areas) ? rp.areas : [], keywords: rp?.keywords || null,
           lattes_url: profile.lattes_url, orcid: rp?.orcid || null, bio: rp?.bio || null,
           status: (om as any)?.status || "ativo", created_at: rp?.created_at || profile.created_at,
-          cpf_last4: profile.cpf?.slice(-4) || null,
+          cpf_last4: profile.cpf_last4 || null,
         };
       } else {
         const { data: inv } = await supabase.from("reviewer_invites").select("*").eq("id", id).single();
