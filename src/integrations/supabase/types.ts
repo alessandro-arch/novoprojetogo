@@ -911,8 +911,8 @@ export type Database = {
           address_state: string | null
           address_street: string | null
           address_zipcode: string | null
-          cpf: string | null
           cpf_hash: string | null
+          cpf_last4: string | null
           created_at: string
           email: string | null
           full_name: string | null
@@ -947,8 +947,8 @@ export type Database = {
           address_state?: string | null
           address_street?: string | null
           address_zipcode?: string | null
-          cpf?: string | null
           cpf_hash?: string | null
+          cpf_last4?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
@@ -983,8 +983,8 @@ export type Database = {
           address_state?: string | null
           address_street?: string | null
           address_zipcode?: string | null
-          cpf?: string | null
           cpf_hash?: string | null
+          cpf_last4?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null

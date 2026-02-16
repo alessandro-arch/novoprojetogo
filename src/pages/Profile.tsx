@@ -36,7 +36,7 @@ const Profile = () => {
 
   const handleSave = async () => {
     setSaving(true);
-    const { full_name, phone, whatsapp, cpf, mini_bio, photo_url,
+    const { full_name, phone, whatsapp, mini_bio, photo_url,
       address_street, address_number, address_complement, address_neighborhood,
       address_city, address_state, address_country, address_zipcode,
       institution_affiliation, institution_id, institution_custom_name, institution_type,
@@ -45,7 +45,7 @@ const Profile = () => {
       receive_news, receive_editais_notifications } = form;
 
     const { error } = await updateProfile({
-      full_name, phone, whatsapp, cpf, mini_bio, photo_url,
+      full_name, phone, whatsapp, mini_bio, photo_url,
       address_street, address_number, address_complement, address_neighborhood,
       address_city, address_state, address_country, address_zipcode,
       institution_affiliation, institution_id, institution_custom_name, institution_type,
@@ -138,7 +138,7 @@ const Profile = () => {
               </div>
               <div>
                 <Label htmlFor="cpf">CPF</Label>
-                <Input id="cpf" value={form.cpf || ""} onChange={(e) => set("cpf", e.target.value)} placeholder="000.000.000-00" className="mt-1" />
+                <Input id="cpf" value={form.cpf_last4 ? `***.***.***-${form.cpf_last4}` : ""} disabled placeholder="Somente leitura" className="mt-1 bg-muted" />
               </div>
             </div>
             <div>

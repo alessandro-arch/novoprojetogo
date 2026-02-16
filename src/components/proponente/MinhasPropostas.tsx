@@ -96,7 +96,7 @@ const MinhasPropostas = ({ orgId, userId }: Props) => {
     try {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("full_name, email, cpf, research_area_cnpq")
+        .select("full_name, email, cpf_last4, research_area_cnpq")
         .eq("user_id", userId)
         .single();
 
@@ -105,7 +105,7 @@ const MinhasPropostas = ({ orgId, userId }: Props) => {
         editalTitle: (proposal.editais as any)?.title ?? "Edital",
         proponenteName: profile?.full_name ?? "—",
         proponenteEmail: profile?.email ?? "—",
-        proponenteCpf: profile?.cpf ?? undefined,
+        proponenteCpf: profile?.cpf_last4 ? `***.***.***-${profile.cpf_last4}` : undefined,
         cnpqArea: profile?.research_area_cnpq ?? undefined,
         submittedAt: proposal.submitted_at
           ? new Date(proposal.submitted_at).toLocaleString("pt-BR")

@@ -137,7 +137,7 @@ const ReviewersList = ({ orgId, onViewReviewer }: Props) => {
             bio: rp?.bio || null,
             status: memberStatusMap.get(uid) || "ativo",
             created_at: rp?.created_at || profile.created_at || new Date().toISOString(),
-            cpf_last4: profile.cpf?.slice(-4) || null,
+            cpf_last4: profile.cpf_last4 || null,
           });
         }
       }
