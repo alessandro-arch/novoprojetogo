@@ -183,41 +183,39 @@ const InstitutionSelector = ({ value, onChange, disabled, required, label }: Pro
 
           {/* Dropdown */}
           {isOpen && !disabled && !hasSelection && (
-            <div className="relative z-50">
-              <div className="absolute w-full mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-64 overflow-y-auto">
-                {isLoading ? (
-                  <div className="flex items-center justify-center py-6">
-                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                  </div>
-                ) : debouncedSearch.length < 2 ? (
-                  <div className="py-4 text-center text-sm text-muted-foreground">
-                    Digite ao menos 2 caracteres para buscar
-                  </div>
-                ) : !results || results.length === 0 ? (
-                  <div className="py-4 text-center text-sm text-muted-foreground">
-                    Nenhuma instituição encontrada. Marque a opção abaixo para informar manualmente.
-                  </div>
-                ) : (
-                  results.map((inst) => (
-                    <div
-                      key={inst.id}
-                      onClick={() => handleSelect(inst)}
-                      className="flex items-center gap-2 px-3 py-2.5 hover:bg-muted/50 cursor-pointer transition-colors border-b border-border/50 last:border-0"
-                    >
-                      <Building2 className="w-4 h-4 text-muted-foreground shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {inst.name}
-                          {inst.sigla && <span className="text-muted-foreground font-normal"> ({inst.sigla})</span>}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {[inst.organization_type, inst.municipio, inst.uf].filter(Boolean).join(" · ")}
-                        </p>
-                      </div>
+            <div className="w-full mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-64 overflow-y-auto">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                </div>
+              ) : debouncedSearch.length < 2 ? (
+                <div className="py-4 text-center text-sm text-muted-foreground">
+                  Digite ao menos 2 caracteres para buscar
+                </div>
+              ) : !results || results.length === 0 ? (
+                <div className="py-4 text-center text-sm text-muted-foreground">
+                  Nenhuma instituição encontrada. Marque a opção abaixo para informar manualmente.
+                </div>
+              ) : (
+                results.map((inst) => (
+                  <div
+                    key={inst.id}
+                    onClick={() => handleSelect(inst)}
+                    className="flex items-center gap-2 px-3 py-2.5 hover:bg-muted/50 cursor-pointer transition-colors border-b border-border/50 last:border-0"
+                  >
+                    <Building2 className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {inst.name}
+                        {inst.sigla && <span className="text-muted-foreground font-normal"> ({inst.sigla})</span>}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {[inst.organization_type, inst.municipio, inst.uf].filter(Boolean).join(" · ")}
+                      </p>
                     </div>
-                  ))
-                )}
-              </div>
+                  </div>
+                ))
+              )}
             </div>
           )}
         </>
