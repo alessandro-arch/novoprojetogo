@@ -39,13 +39,13 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex gradient-hero">
+    <div className="min-h-screen flex bg-background">
       <div className="flex-1 flex items-center justify-center p-4 md:p-8">
         <div className="w-full max-w-md">
-          <div className="bg-card rounded-2xl shadow-card-hover p-6 md:p-8 border border-border/50">
+          <div className="bg-card rounded-2xl shadow-card-hover p-6 md:p-8 border border-border">
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 rounded-lg gradient-secondary flex items-center justify-center">
-                <FileText className="w-5 h-5 text-secondary-foreground" />
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+                <FileText className="w-5 h-5 text-primary-foreground" />
               </div>
               <h1 className="text-2xl font-bold font-heading text-foreground">ProjetoGO</h1>
             </div>
