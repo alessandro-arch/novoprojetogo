@@ -104,7 +104,7 @@ const handler = async (req: Request): Promise<Response> => {
     });
   } catch (error: any) {
     console.error("Error sending reviewer invite:", error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    return new Response(JSON.stringify({ error: "Erro ao enviar convite. Tente novamente." }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
   }
 };
 
