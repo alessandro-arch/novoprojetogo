@@ -125,6 +125,7 @@ const Register = () => {
               </div>
               <Button
                 type="submit"
+                variant="dark"
                 className="w-full min-h-[44px]"
                 size="lg"
                 disabled={loading || strength === "weak"}

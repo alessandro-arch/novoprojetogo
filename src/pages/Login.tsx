@@ -79,7 +79,7 @@ const Login = () => {
                   className="mt-1"
                 />
               </div>
-              <Button type="submit" className="w-full min-h-[44px]" size="lg" disabled={loading}>
+              <Button type="submit" variant="dark" className="w-full min-h-[44px]" size="lg" disabled={loading}>
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                 Entrar
               </Button>

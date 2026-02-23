@@ -35,30 +35,32 @@ const features = [
 
 const FeaturesSection = () => {
   return (
-    <section className="py-24 bg-background">
+    <section className="py-20 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
+        <div className="text-center mb-14">
+          <span className="text-sm font-semibold uppercase tracking-wider text-primary mb-3 block">
+            Funcionalidades
+          </span>
           <h2 className="text-3xl md:text-4xl font-bold font-heading text-foreground mb-4">
             Tudo que você precisa para gerenciar editais
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto">
             Uma plataforma completa para publicar editais, receber propostas e gerenciar avaliações.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map((feature) => (
             <div
               key={feature.title}
-              className="group p-6 rounded-xl bg-card shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 border border-border"
-              style={{ animationDelay: `${index * 100}ms` }}
+              className="p-6 rounded-xl bg-card border border-border/50 hover:shadow-sm transition-shadow"
             >
-              <div className="w-12 h-12 rounded-xl bg-info-light flex items-center justify-center mb-4 group-hover:shadow-glow transition-shadow duration-300">
-                <feature.icon className="w-6 h-6 text-primary" />
+              <div className="w-11 h-11 rounded-full bg-muted flex items-center justify-center mb-4">
+                <feature.icon className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold font-heading text-foreground mb-2">
+              <h3 className="text-base font-semibold font-heading text-foreground mb-2">
                 {feature.title}
               </h3>
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {feature.description}
               </p>
             </div>
