@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Search, Download, FileText, Shield, ChevronLeft, ChevronRight } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Loader2, Search, Download, FileText, Shield, ChevronLeft, ChevronRight, ChevronDown, Link2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface AuditLog {
@@ -17,6 +18,11 @@ interface AuditLog {
   action: string;
   metadata_json: any;
   user_role: string | null;
+  actor_role: string | null;
+  entity_type: string | null;
+  diff: any;
+  log_hash: string | null;
+  prev_log_hash: string | null;
   created_at: string;
 }
 
@@ -25,11 +31,21 @@ const ENTITY_LABELS: Record<string, string> = {
   proposal: "Proposta",
   review_assignment: "Designação de Avaliador",
   review: "Avaliação",
+  review_score: "Nota de Avaliação",
   proposal_decision: "Parecer Final",
   scoring_criteria: "Critério de Avaliação",
+  submission: "Submissão",
 };
 
 const ACTION_LABELS: Record<string, string> = {
+  CREATE: "Criação",
+  UPDATE: "Alteração",
+  DELETE: "Exclusão",
+  STATUS_CHANGE: "Mudança de Status",
+  SUBMIT: "Submissão",
+  EXPORT_PDF: "Exportação PDF",
+  INTEGRITY_VERIFIED: "Integridade OK",
+  INTEGRITY_MISMATCH: "Integridade Comprometida",
   insert: "Criação",
   update: "Alteração",
   delete: "Exclusão",
@@ -43,33 +59,60 @@ const ROLE_LABELS: Record<string, string> = {
   reviewer: "Avaliador",
 };
 
+const ACTION_FILTER_OPTIONS = [
+  { value: "all", label: "Todas as ações" },
+  { value: "CREATE", label: "Criação" },
+  { value: "UPDATE", label: "Alteração" },
+  { value: "DELETE", label: "Exclusão" },
+  { value: "STATUS_CHANGE", label: "Mudança de Status" },
+  { value: "SUBMIT", label: "Submissão" },
+  { value: "EXPORT_PDF", label: "Exportação PDF" },
+  { value: "INTEGRITY", label: "Verificação de Integridade" },
+];
+
 const PAGE_SIZE = 25;
 
 interface AuditLogViewerProps {
   orgId: string;
+  entityId?: string;
+  entityType?: string;
 }
 
-const AuditLogViewer = ({ orgId }: AuditLogViewerProps) => {
+const AuditLogViewer = ({ orgId, entityId, entityType }: AuditLogViewerProps) => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [entityFilter, setEntityFilter] = useState<string>("all");
+  const [actionFilter, setActionFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
   const [exporting, setExporting] = useState(false);
   const { toast } = useToast();
 
   const fetchLogs = async () => {
     setLoading(true);
-    let query = supabase
+    let query: any = supabase
       .from("audit_logs")
       .select("*")
       .eq("organization_id", orgId)
       .order("created_at", { ascending: false })
       .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
-    if (entityFilter !== "all") {
-      query = query.eq("entity", entityFilter);
+    if (entityId) {
+      query = query.eq("entity_id", entityId);
+    }
+
+    if (entityType) {
+      query = query.eq("entity_type", entityType);
+    } else if (entityFilter !== "all") {
+      query = query.or(`entity.eq.${entityFilter},entity_type.eq.${entityFilter}`);
+    }
+
+    if (actionFilter !== "all") {
+      if (actionFilter === "INTEGRITY") {
+        query = query.or("action.eq.INTEGRITY_VERIFIED,action.eq.INTEGRITY_MISMATCH");
+      } else {
+        query = query.eq("action", actionFilter);
+      }
     }
 
     if (search.trim()) {
@@ -82,25 +125,31 @@ const AuditLogViewer = ({ orgId }: AuditLogViewerProps) => {
     }
     if (data) {
       setLogs(data as AuditLog[]);
-      setHasMore(data.length > PAGE_SIZE);
     }
     setLoading(false);
   };
 
   useEffect(() => {
     fetchLogs();
-  }, [orgId, page, entityFilter]);
+  }, [orgId, page, entityFilter, actionFilter, entityId, entityType]);
 
   const handleSearch = () => {
     setPage(0);
     fetchLogs();
   };
 
-  const formatAction = (action: string) => {
+  const formatAction = (log: AuditLog) => {
+    const action = log.action || "";
+    // New-style actions (uppercase)
+    if (ACTION_LABELS[action]) return ACTION_LABELS[action];
+    // Legacy style: entity.operation
     const parts = action.split(".");
-    const entity = ENTITY_LABELS[parts[0]] || parts[0];
-    const op = ACTION_LABELS[parts[1]] || parts[1];
-    return `${entity} — ${op}`;
+    if (parts.length === 2) {
+      const entity = ENTITY_LABELS[parts[0]] || parts[0];
+      const op = ACTION_LABELS[parts[1]] || parts[1];
+      return `${entity} — ${op}`;
+    }
+    return action;
   };
 
   const formatDate = (date: string) => {
@@ -154,7 +203,7 @@ const AuditLogViewer = ({ orgId }: AuditLogViewerProps) => {
       const downloadUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = downloadUrl;
-      a.download = `audit-logs-${new Date().toISOString().slice(0, 10)}.${format}`;
+      a.download = `audit-logs-${new Date().toISOString().slice(0, 10)}.${format === "pdf" ? "html" : format}`;
       a.click();
       URL.revokeObjectURL(downloadUrl);
       toast({ title: `Exportação ${format.toUpperCase()} concluída!` });
@@ -166,26 +215,28 @@ const AuditLogViewer = ({ orgId }: AuditLogViewerProps) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold font-heading text-foreground flex items-center gap-2">
-            <Shield className="w-6 h-6" /> Trilha de Auditoria
-          </h2>
-          <p className="text-muted-foreground">Registro cronológico e imutável de todas as ações do sistema.</p>
+      {!entityId && (
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold font-heading text-foreground flex items-center gap-2">
+              <Shield className="w-6 h-6" /> Trilha de Auditoria
+            </h2>
+            <p className="text-muted-foreground">Registro cronológico e imutável de todas as ações do sistema.</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => handleExport("csv")} disabled={exporting}>
+              <Download className="w-4 h-4 mr-1" /> CSV
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => handleExport("pdf")} disabled={exporting}>
+              <FileText className="w-4 h-4 mr-1" /> PDF
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => handleExport("csv")} disabled={exporting}>
-            <Download className="w-4 h-4 mr-1" /> CSV
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => handleExport("pdf")} disabled={exporting}>
-            <FileText className="w-4 h-4 mr-1" /> PDF
-          </Button>
-        </div>
-      </div>
+      )}
 
       {/* Filters */}
-      <div className="flex gap-3 items-end">
-        <div className="flex-1">
+      <div className="flex gap-3 items-end flex-wrap">
+        <div className="flex-1 min-w-[200px]">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -197,18 +248,30 @@ const AuditLogViewer = ({ orgId }: AuditLogViewerProps) => {
             />
           </div>
         </div>
-        <Select value={entityFilter} onValueChange={(v) => { setEntityFilter(v); setPage(0); }}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Filtrar por entidade" />
+        {!entityType && (
+          <Select value={entityFilter} onValueChange={(v) => { setEntityFilter(v); setPage(0); }}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Entidade" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas entidades</SelectItem>
+              <SelectItem value="edital">Editais</SelectItem>
+              <SelectItem value="proposal">Propostas</SelectItem>
+              <SelectItem value="submission">Submissões</SelectItem>
+              <SelectItem value="review">Avaliações</SelectItem>
+              <SelectItem value="proposal_decision">Pareceres</SelectItem>
+              <SelectItem value="scoring_criteria">Critérios</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+        <Select value={actionFilter} onValueChange={(v) => { setActionFilter(v); setPage(0); }}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Ação" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas as entidades</SelectItem>
-            <SelectItem value="edital">Editais</SelectItem>
-            <SelectItem value="proposal">Propostas</SelectItem>
-            <SelectItem value="review_assignment">Designações</SelectItem>
-            <SelectItem value="review">Avaliações</SelectItem>
-            <SelectItem value="proposal_decision">Pareceres</SelectItem>
-            <SelectItem value="scoring_criteria">Critérios</SelectItem>
+            {ACTION_FILTER_OPTIONS.map(opt => (
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Button onClick={handleSearch} variant="secondary" size="sm">
@@ -232,11 +295,12 @@ const AuditLogViewer = ({ orgId }: AuditLogViewerProps) => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[180px]">Data/Hora</TableHead>
+                  <TableHead className="w-[160px]">Data/Hora</TableHead>
                   <TableHead>Ação</TableHead>
                   <TableHead>Papel</TableHead>
                   <TableHead>Detalhes</TableHead>
-                  <TableHead className="w-[100px]">ID Entidade</TableHead>
+                  <TableHead className="w-[80px]">Diff</TableHead>
+                  <TableHead className="w-[90px]">Hash</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -246,18 +310,51 @@ const AuditLogViewer = ({ orgId }: AuditLogViewerProps) => {
                       {formatDate(log.created_at)}
                     </TableCell>
                     <TableCell className="font-medium text-sm">
-                      {formatAction(log.action)}
+                      {formatAction(log)}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-xs">
-                        {log.user_role ? (ROLE_LABELS[log.user_role] || log.user_role) : "Sistema"}
+                        {log.actor_role
+                          ? (ROLE_LABELS[log.actor_role] || log.actor_role)
+                          : log.user_role
+                          ? (ROLE_LABELS[log.user_role] || log.user_role)
+                          : "Sistema"}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       {getStatusBadge(log.metadata_json)}
                     </TableCell>
-                    <TableCell className="text-xs font-mono text-muted-foreground">
-                      {log.entity_id?.slice(0, 8)}...
+                    <TableCell>
+                      {log.diff && Object.keys(log.diff).length > 0 ? (
+                        <Collapsible>
+                          <CollapsibleTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
+                              <ChevronDown className="w-3 h-3 mr-1" />
+                              {Object.keys(log.diff).length}
+                            </Button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="mt-1">
+                            <div className="text-xs font-mono bg-muted/50 rounded p-2 max-w-[300px] overflow-auto max-h-[200px]">
+                              {Object.entries(log.diff).map(([key, val]: [string, any]) => (
+                                <div key={key} className="mb-1">
+                                  <span className="font-semibold text-foreground">{key}:</span>{" "}
+                                  <span className="text-destructive">{JSON.stringify(val?.old)}</span>
+                                  {" → "}
+                                  <span className="text-primary">{JSON.stringify(val?.new)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      ) : null}
+                    </TableCell>
+                    <TableCell>
+                      {log.log_hash ? (
+                        <span className="text-xs font-mono text-muted-foreground flex items-center gap-1" title={log.log_hash}>
+                          <Link2 className="w-3 h-3" />
+                          {log.log_hash.slice(0, 8)}…
+                        </span>
+                      ) : null}
                     </TableCell>
                   </TableRow>
                 ))}
