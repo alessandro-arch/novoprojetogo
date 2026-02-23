@@ -49,11 +49,11 @@ const FeaturesSection = () => {
           {features.map((feature, index) => (
             <div
               key={feature.title}
-              className="group p-6 rounded-xl gradient-card shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 border border-border/50"
+              className="group p-6 rounded-xl bg-card shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 border border-border"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="w-12 h-12 rounded-lg gradient-primary flex items-center justify-center mb-4 group-hover:shadow-glow transition-shadow duration-300">
-                <feature.icon className="w-6 h-6 text-primary-foreground" />
+              <div className="w-12 h-12 rounded-xl bg-info-light flex items-center justify-center mb-4 group-hover:shadow-glow transition-shadow duration-300">
+                <feature.icon className="w-6 h-6 text-primary" />
               </div>
               <h3 className="text-xl font-semibold font-heading text-foreground mb-2">
                 {feature.title}

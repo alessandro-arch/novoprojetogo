@@ -65,45 +65,84 @@ const OrgDashboard = ({ orgId }: { orgId: string }) => {
   }
 
   const cards = [
-    { label: "Editais Publicados", value: stats.published, icon: ScrollText, color: "text-primary" },
-    { label: "Editais em Rascunho", value: stats.draft, icon: FileEdit, color: "text-accent-foreground" },
-    { label: "Propostas Recebidas", value: stats.proposals, icon: Inbox, color: "text-secondary-foreground" },
-    { label: "Propostas Hoje", value: stats.todayProposals, icon: CalendarCheck, color: "text-primary" },
+    {
+      label: "Editais Publicados",
+      value: stats.published,
+      icon: ScrollText,
+      borderColor: "border-l-primary",
+      iconBg: "bg-info-light",
+      iconColor: "text-primary",
+    },
+    {
+      label: "Editais em Rascunho",
+      value: stats.draft,
+      icon: FileEdit,
+      borderColor: "border-l-warning",
+      iconBg: "bg-warning-light",
+      iconColor: "text-warning",
+    },
+    {
+      label: "Propostas Recebidas",
+      value: stats.proposals,
+      icon: Inbox,
+      borderColor: "border-l-success",
+      iconBg: "bg-success-light",
+      iconColor: "text-success",
+    },
+    {
+      label: "Propostas Hoje",
+      value: stats.todayProposals,
+      icon: CalendarCheck,
+      borderColor: "border-l-secondary",
+      iconBg: "bg-warning-light",
+      iconColor: "text-secondary",
+    },
   ];
 
   return (
     <div>
-      <h2 className="text-xl md:text-2xl font-bold font-heading text-foreground mb-4 md:mb-6">Dashboard</h2>
+      <div className="mb-6">
+        <h2 className="text-xl md:text-2xl font-bold font-heading text-foreground">Dashboard</h2>
+        <p className="text-sm text-muted-foreground mt-1">Visão geral da organização</p>
+      </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
         {cards.map((c) => (
-          <Card key={c.label}>
-            <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row items-center gap-3 md:gap-4">
-              <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl bg-muted flex items-center justify-center shrink-0 ${c.color}`}>
-                <c.icon className="w-5 h-5 md:w-6 md:h-6" />
+          <Card key={c.label} className={`border-l-4 ${c.borderColor} shadow-card hover:shadow-card-hover transition-shadow duration-200`}>
+            <CardContent className="p-4 md:p-5 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-2xl md:text-3xl font-bold text-foreground">{c.value}</p>
+                <p className="text-[11px] md:text-xs text-muted-foreground mt-0.5">{c.label}</p>
               </div>
-              <div className="text-center sm:text-left">
-                <p className="text-xl md:text-2xl font-bold text-foreground">{c.value}</p>
-                <p className="text-[11px] md:text-xs text-muted-foreground">{c.label}</p>
+              <div className={`w-10 h-10 md:w-11 md:h-11 rounded-xl ${c.iconBg} flex items-center justify-center shrink-0`}>
+                <c.icon className={`w-5 h-5 ${c.iconColor}`} />
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Submissões — Últimos 14 dias</CardTitle>
+      <Card className="shadow-card">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base md:text-lg font-semibold">Submissões — Últimos 14 dias</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-48 md:h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="date" className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                <XAxis dataKey="date" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
                 <YAxis allowDecimals={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
-                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
-                <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Submissões" />
+                <Tooltip
+                  contentStyle={{
+                    background: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: 10,
+                    fontSize: 12,
+                    boxShadow: "var(--shadow-md)",
+                  }}
+                />
+                <Bar dataKey="count" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} name="Submissões" />
               </BarChart>
             </ResponsiveContainer>
           </div>
