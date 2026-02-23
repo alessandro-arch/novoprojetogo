@@ -8,17 +8,29 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) => {
-  const { user, loading, globalRole, membership } = useAuth();
+  const { user, session, loading, globalRole, membership } = useAuth();
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground animate-pulse">Carregando...</p>
+        </div>
       </div>
     );
   }
 
-  if (!user) return <Navigate to="/login" replace />;
+  // Check both user existence AND valid session with non-expired token
+  if (!user || !session) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Verify token is not expired
+  const expiresAt = session.expires_at;
+  if (expiresAt && expiresAt * 1000 < Date.now()) {
+    return <Navigate to="/login" replace />;
+  }
 
   if (allowedRoles && allowedRoles.length > 0) {
     const userRole = globalRole || membership?.role;
