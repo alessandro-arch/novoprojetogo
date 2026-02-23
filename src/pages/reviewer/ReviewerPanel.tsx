@@ -410,8 +410,8 @@ const ReviewerPanel = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-md">
+        <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg gradient-primary flex items-center justify-center">
               <FileText className="w-5 h-5 text-primary-foreground" />
@@ -449,12 +449,12 @@ const ReviewerPanel = () => {
         </div>
       )}
 
-      <main className="container mx-auto px-4 py-6">
-        <div className="flex flex-col lg:flex-row gap-6">
+      <main className="container mx-auto px-4 md:px-8 lg:px-12 py-4 md:py-6">
+        <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
           {/* Main content */}
           <div className="flex-1 min-w-0">
             {/* ─── 1. Metric Cards ─── */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-3 mb-4 md:mb-6">
               {metricCards.map((m, i) => (
                 <Card
                   key={i}
@@ -471,8 +471,8 @@ const ReviewerPanel = () => {
             </div>
 
             {/* ─── Filters ─── */}
-            <div className="flex flex-wrap items-center gap-3 mb-4">
-              <div className="relative flex-1 min-w-[200px] max-w-xs">
+            <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-4">
+              <div className="relative flex-1 min-w-0 sm:min-w-[200px] sm:max-w-xs">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar por código..."
@@ -482,7 +482,7 @@ const ReviewerPanel = () => {
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="w-full sm:w-[160px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -495,7 +495,7 @@ const ReviewerPanel = () => {
               </Select>
               {uniqueAreas.length > 0 && (
                 <Select value={areaFilter} onValueChange={setAreaFilter}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder="Área" />
                   </SelectTrigger>
                   <SelectContent>
@@ -537,15 +537,16 @@ const ReviewerPanel = () => {
               </Card>
             ) : (
               <Card className="shadow-sm">
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto relative">
+                  <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent z-10 md:hidden" />
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/30">
                         <TableHead className="font-semibold">Código Cego</TableHead>
-                        <TableHead className="font-semibold">Área</TableHead>
-                        <TableHead className="font-semibold">Progresso</TableHead>
+                        <TableHead className="font-semibold hidden md:table-cell">Área</TableHead>
+                        <TableHead className="font-semibold hidden sm:table-cell">Progresso</TableHead>
                         <TableHead className="font-semibold">Status</TableHead>
-                        <TableHead className="font-semibold">Prazo</TableHead>
+                        <TableHead className="font-semibold hidden sm:table-cell">Prazo</TableHead>
                         <TableHead className="font-semibold text-right">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -572,14 +573,14 @@ const ReviewerPanel = () => {
                             </TableCell>
 
                             {/* Area */}
-                            <TableCell>
+                            <TableCell className="hidden md:table-cell">
                               <span className="text-sm text-foreground">
                                 {a.knowledge_area || "—"}
                               </span>
                             </TableCell>
 
                             {/* Progress */}
-                            <TableCell>
+                            <TableCell className="hidden sm:table-cell">
                               <div className="flex items-center gap-2 min-w-[120px]">
                                 <Progress value={progress} className="h-2 flex-1" />
                                 <span className="text-xs font-medium text-muted-foreground w-8 text-right">
@@ -592,7 +593,7 @@ const ReviewerPanel = () => {
                             <TableCell>{statusBadge(a)}</TableCell>
 
                             {/* Deadline */}
-                            <TableCell>
+                            <TableCell className="hidden sm:table-cell">
                               {a.review_deadline ? (
                                 <div>
                                   <p className={`text-sm font-medium ${isOverdue ? "text-destructive" : isCritical ? "text-destructive" : "text-foreground"}`}>
@@ -650,7 +651,7 @@ const ReviewerPanel = () => {
           </div>
 
           {/* ─── 6. Compliance Sidebar ─── */}
-          <aside className="w-full lg:w-72 flex-shrink-0">
+          <aside className="w-full lg:w-72 flex-shrink-0 order-first lg:order-last">
             <Card className="shadow-sm sticky top-6">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">

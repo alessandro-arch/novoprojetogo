@@ -358,8 +358,8 @@ const EditaisList = ({ orgId }: { orgId: string }) => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold font-heading text-foreground">Editais</h2>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 md:mb-6 gap-3">
+        <h2 className="text-xl md:text-2xl font-bold font-heading text-foreground">Editais</h2>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button><Plus className="w-4 h-4 mr-2" /> Novo Edital</Button>
@@ -375,7 +375,7 @@ const EditaisList = ({ orgId }: { orgId: string }) => {
                 <Label>Descrição da Chamada <span className="text-destructive">*</span></Label>
                 <Textarea value={newDesc} onChange={(e) => setNewDesc(e.target.value)} placeholder="Descreva brevemente o edital..." className="mt-1" rows={3} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>Data de Abertura <span className="text-destructive">*</span></Label>
                   <Input type="datetime-local" value={newStartDate} onChange={(e) => setNewStartDate(e.target.value)} className="mt-1" />
@@ -448,13 +448,13 @@ const EditaisList = ({ orgId }: { orgId: string }) => {
         </DialogContent>
       </Dialog>
 
-      <div className="flex items-center gap-3 mb-4 flex-wrap">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4 flex-wrap">
+        <div className="relative flex-1 w-full sm:max-w-sm">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar edital..." className="pl-9" />
         </div>
         <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-48"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="draft">Rascunho</SelectItem>
@@ -469,7 +469,7 @@ const EditaisList = ({ orgId }: { orgId: string }) => {
           </SelectContent>
         </Select>
         <Select value={visibilityFilter} onValueChange={setVisibilityFilter}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-40"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas visibilidades</SelectItem>
             <SelectItem value="public">Público</SelectItem>
@@ -491,7 +491,7 @@ const EditaisList = ({ orgId }: { orgId: string }) => {
         <div className="grid gap-3">
           {editais.map((e) => (
             <Card key={e.id} className="cursor-pointer hover:shadow-card transition-shadow" onClick={() => setSelectedEdital(e)}>
-              <CardContent className="p-5 flex items-center justify-between">
+              <CardContent className="p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <p className="font-semibold text-foreground">{e.title}</p>

@@ -367,14 +367,14 @@ const ReviewForm = ({ assignment, onBack }: { assignment: Assignment; onBack: ()
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-md">
+        <div className="container mx-auto px-4 md:px-8 py-3 md:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0">
             <Button variant="ghost" size="sm" onClick={onBack}>
               <ArrowLeft className="w-4 h-4 mr-1" /> Voltar
             </Button>
-            <div>
-              <h1 className="text-lg font-bold font-heading text-foreground">
+            <div className="min-w-0">
+              <h1 className="text-base md:text-lg font-bold font-heading text-foreground truncate">
                 Avaliação: {anonymizedData?.anonymous_id || assignment.proposal_masked_id}
               </h1>
               <p className="text-xs text-muted-foreground">{assignment.edital_title}</p>
@@ -398,7 +398,7 @@ const ReviewForm = ({ assignment, onBack }: { assignment: Assignment; onBack: ()
         </div>
       )}
 
-      <main className="container mx-auto px-4 py-8 max-w-3xl">
+      <main className="container mx-auto px-4 md:px-8 lg:px-12 py-4 md:py-8 max-w-3xl">
         {/* Proposal content (anonymized) */}
         <ProposalContentCard
           anonymizedData={anonymizedData}
@@ -495,7 +495,7 @@ const ReviewForm = ({ assignment, onBack }: { assignment: Assignment; onBack: ()
 
         {/* Submit */}
         {!isReadOnly && (
-          <div className="flex items-center justify-between pb-8">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-8">
             <AiReviewAssistant
               scores={scores.map((s) => {
                 const c = criteria.find((cr) => cr.id === s.criteria_id);
@@ -515,7 +515,7 @@ const ReviewForm = ({ assignment, onBack }: { assignment: Assignment; onBack: ()
               proposalContent={proposalContent}
               onInsert={(text) => setComments((prev) => (prev ? prev + "\n\n" + text : text))}
             />
-            <Button onClick={handleSubmit} size="lg" disabled={submitting}>
+            <Button onClick={handleSubmit} size="lg" disabled={submitting} className="min-h-[44px]">
               {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
               Enviar Avaliação
             </Button>
