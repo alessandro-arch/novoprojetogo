@@ -4,8 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { FileText, ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { translateAuthError } from "@/lib/auth-errors";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -19,21 +21,28 @@ const Login = () => {
     if (!email.trim() || !password.trim()) return;
 
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
     setLoading(false);
 
     if (error) {
-      toast({ title: "Erro ao entrar", description: error.message, variant: "destructive" });
+      toast({
+        title: "Erro ao entrar",
+        description: translateAuthError(error.message),
+        variant: "destructive",
+      });
     } else {
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     }
   };
 
   return (
     <div className="min-h-screen flex gradient-hero">
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-4 md:p-8">
         <div className="w-full max-w-md">
-          <div className="bg-card rounded-2xl shadow-card-hover p-8 border border-border/50">
+          <div className="bg-card rounded-2xl shadow-card-hover p-6 md:p-8 border border-border/50">
             <div className="flex items-center gap-3 mb-8">
               <div className="w-10 h-10 rounded-lg gradient-secondary flex items-center justify-center">
                 <FileText className="w-5 h-5 text-secondary-foreground" />
@@ -54,22 +63,23 @@ const Login = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seu@email.com"
                   required
+                  autoComplete="email"
                   className="mt-1"
                 />
               </div>
               <div>
                 <Label htmlFor="password">Senha</Label>
-                <Input
+                <PasswordInput
                   id="password"
-                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
+                  autoComplete="current-password"
                   className="mt-1"
                 />
               </div>
-              <Button type="submit" className="w-full" size="lg" disabled={loading}>
+              <Button type="submit" className="w-full min-h-[44px]" size="lg" disabled={loading}>
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                 Entrar
               </Button>
