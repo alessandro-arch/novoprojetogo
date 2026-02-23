@@ -37,8 +37,38 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { csvText } = await req.json();
-    if (!csvText) throw new Error("csvText is required");
+    // Try to get csvText from body, or fetch from public URL
+    let csvText = "";
+    let csvUrl = "";
+    try {
+      const body = await req.json();
+      csvText = body.csvText || "";
+      csvUrl = body.csvUrl || "";
+    } catch { /* no body */ }
+
+    if (!csvText) {
+      // Fetch from the deployed app's public data
+      const urls = [
+        csvUrl,
+        "https://projetogo.lovable.app/data/institutions-emec.csv",
+        "https://id-preview--1a559eba-0539-4eb6-b753-ea572e9cc56a.lovable.app/data/institutions-emec.csv",
+      ].filter(Boolean);
+
+      for (const url of urls) {
+        try {
+          const resp = await fetch(url);
+          if (resp.ok) {
+            const text = await resp.text();
+            if (text.includes("NOME_DA_IES")) {
+              csvText = text;
+              break;
+            }
+          }
+        } catch { /* try next */ }
+      }
+    }
+
+    if (!csvText) throw new Error("Could not obtain CSV data");
 
     const lines = csvText.split("\n");
     const rows: any[] = [];
