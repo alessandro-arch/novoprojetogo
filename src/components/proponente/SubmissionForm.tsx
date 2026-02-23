@@ -297,6 +297,22 @@ const SubmissionForm = ({ editalId, editalTitle, editalStartDate, editalEndDate,
       },
     }).catch(err => console.warn("Email notification failed:", err));
 
+    // Finalize submission (calculate hashes and archive PDF)
+    supabase.functions.invoke("finalize-proposal-submission", {
+      body: { submission_id: sub.id },
+    }).then(({ data: finalizeData, error: finalizeError }) => {
+      if (finalizeError) {
+        console.warn("Finalization failed:", finalizeError);
+      } else if (finalizeData) {
+        setSubmission((prev: any) => ({
+          ...prev,
+          integrity_hash: finalizeData.integrity_hash,
+          pdf_integrity_hash: finalizeData.pdf_integrity_hash,
+          integrity_status: finalizeData.integrity_status,
+        }));
+      }
+    }).catch(err => console.warn("Finalization error:", err));
+
     setSubmission(sub);
     setIsSubmitted(true);
     setConfirmOpen(false);

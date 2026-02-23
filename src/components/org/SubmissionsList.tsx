@@ -7,9 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Loader2, Search, Eye, Download, FileText, ArrowLeft, Users } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Search, Eye, Download, FileText, ArrowLeft, Users, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ReviewerAssignment from "@/components/org/ReviewerAssignment";
+import IntegrityBadge from "@/components/org/IntegrityBadge";
+import AuditLogViewer from "@/components/org/AuditLogViewer";
 import { generateProposalPdf } from "@/lib/generate-proposal-pdf";
 import { generateSubmissionReceipt } from "@/lib/generate-submission-receipt";
 
@@ -34,6 +37,8 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [assignDialog, setAssignDialog] = useState<{ proposalId: string; blindCode: string; cnpqArea?: string | null } | null>(null);
+  const [verifying, setVerifying] = useState(false);
+  const [exportingReport, setExportingReport] = useState(false);
 
   const { data: submissions, isLoading, refetch } = useQuery({
     queryKey: ["admin-submissions", editalId],
@@ -49,7 +54,6 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
     },
   });
 
-  // Fetch proposals linked to submissions for reviewer assignment
   const { data: proposals } = useQuery({
     queryKey: ["proposals-for-submissions", editalId],
     queryFn: async () => {
@@ -62,7 +66,6 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
     },
   });
 
-  // Load profiles for proponent names
   const userIds = submissions?.map((s: any) => s.user_id) || [];
   const { data: profiles } = useQuery({
     queryKey: ["submission-profiles", userIds],
@@ -80,7 +83,6 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
 
   const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
 
-  // Load form version snapshot for viewer
   const { data: formVersion } = useQuery({
     queryKey: ["form-version-for-edital", editalId],
     queryFn: async () => {
@@ -108,7 +110,71 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
     return matchSearch && matchStatus;
   });
 
-  // Submission viewer
+  const handleVerifyIntegrity = async (submissionId: string) => {
+    setVerifying(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Não autenticado");
+
+      const { data, error } = await supabase.functions.invoke("verify-proposal-integrity", {
+        body: { submission_id: submissionId },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: data.match ? "✅ Integridade verificada" : "⚠️ Integridade comprometida",
+        description: data.match
+          ? "Os hashes conferem. Nenhuma alteração detectada."
+          : `Mismatch detectado. Hash armazenado: ${data.stored_hash?.slice(0, 16)}…`,
+        variant: data.match ? "default" : "destructive",
+      });
+
+      // Refresh submission data
+      refetch();
+    } catch (err: any) {
+      toast({ title: "Erro na verificação", description: err.message, variant: "destructive" });
+    }
+    setVerifying(false);
+  };
+
+  const handleExportAuditReport = async (submissionId: string) => {
+    setExportingReport(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Não autenticado");
+
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/export-audit-report`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ submission_id: submissionId }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Erro na exportação");
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = `audit-report-${submissionId.slice(0, 8)}.html`;
+      a.click();
+      URL.revokeObjectURL(downloadUrl);
+      toast({ title: "Relatório de auditoria exportado!" });
+    } catch (err: any) {
+      toast({ title: "Erro na exportação", description: err.message, variant: "destructive" });
+    }
+    setExportingReport(false);
+  };
+
+  // Submission detail viewer
   if (selectedSubmission) {
     const profile = profileMap.get(selectedSubmission.user_id);
     const snapshot = (formVersion as any)?.snapshot;
@@ -122,49 +188,162 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
 
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <CardTitle className="text-lg">Proposta — {selectedSubmission.protocol}</CardTitle>
-              <Badge variant={(STATUS_LABELS[selectedSubmission.status] || STATUS_LABELS.draft).variant}>
-                {(STATUS_LABELS[selectedSubmission.status] || STATUS_LABELS.draft).label}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <IntegrityBadge status={selectedSubmission.integrity_status} />
+                <Badge variant={(STATUS_LABELS[selectedSubmission.status] || STATUS_LABELS.draft).variant}>
+                  {(STATUS_LABELS[selectedSubmission.status] || STATUS_LABELS.draft).label}
+                </Badge>
+              </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-xs text-muted-foreground">Proponente</Label>
-                <p className="text-foreground font-medium">{(profile as any)?.full_name || "—"}</p>
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Email</Label>
-                <p className="text-foreground">{(profile as any)?.email || "—"}</p>
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Protocolo</Label>
-                <p className="text-foreground font-mono">{selectedSubmission.protocol}</p>
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Data de submissão</Label>
-                <p className="text-foreground">{selectedSubmission.submitted_at ? new Date(selectedSubmission.submitted_at).toLocaleString("pt-BR") : "—"}</p>
-              </div>
-              {selectedSubmission.cnpq_area_code && (
-                <div className="col-span-2">
-                  <Label className="text-xs text-muted-foreground">Área do Conhecimento (CNPq)</Label>
-                  <p className="text-foreground text-sm">{selectedSubmission.cnpq_area_code}</p>
+          <CardContent>
+            <Tabs defaultValue="dados">
+              <TabsList>
+                <TabsTrigger value="dados">Dados</TabsTrigger>
+                <TabsTrigger value="auditoria">Auditoria</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="dados" className="space-y-4 mt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Proponente</Label>
+                    <p className="text-foreground font-medium">{(profile as any)?.full_name || "—"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Email</Label>
+                    <p className="text-foreground">{(profile as any)?.email || "—"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Protocolo</Label>
+                    <p className="text-foreground font-mono">{selectedSubmission.protocol}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Data de submissão</Label>
+                    <p className="text-foreground">{selectedSubmission.submitted_at ? new Date(selectedSubmission.submitted_at).toLocaleString("pt-BR") : "—"}</p>
+                  </div>
+                  {selectedSubmission.cnpq_area_code && (
+                    <div className="col-span-2">
+                      <Label className="text-xs text-muted-foreground">Área do Conhecimento (CNPq)</Label>
+                      <p className="text-foreground text-sm">{selectedSubmission.cnpq_area_code}</p>
+                    </div>
+                  )}
+                  {selectedSubmission.integrity_hash && (
+                    <div className="col-span-2">
+                      <Label className="text-xs text-muted-foreground">Hash de Integridade (SHA-256)</Label>
+                      <p className="text-foreground text-xs font-mono break-all">{selectedSubmission.integrity_hash}</p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button size="sm" variant="outline" onClick={() => {
-                if (!snapshot) return;
-                const sections = (snapshot.sections || [])
-                  .sort((a: any, b: any) => a.sort_order - b.sort_order)
-                  .map((s: any) => ({
-                    title: s.title,
-                    description: s.description,
-                    questions: (s.questions || [])
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={() => {
+                    if (!snapshot) return;
+                    const sections = (snapshot.sections || [])
                       .sort((a: any, b: any) => a.sort_order - b.sort_order)
-                      .map((q: any) => {
+                      .map((s: any) => ({
+                        title: s.title,
+                        description: s.description,
+                        questions: (s.questions || [])
+                          .sort((a: any, b: any) => a.sort_order - b.sort_order)
+                          .map((q: any) => {
+                            let answerDisplay = answers[q.id] || "—";
+                            if (Array.isArray(answerDisplay)) answerDisplay = answerDisplay.join(", ");
+                            if (q.options_source === "knowledge_areas" && snapshot.knowledge_areas) {
+                              const ka = snapshot.knowledge_areas.find((k: any) => k.id === answerDisplay);
+                              if (ka) answerDisplay = ka.name;
+                            }
+                            if (q.options_source === "manual" && q.manual_options) {
+                              const opt = q.manual_options.find((o: any) => o.value === answerDisplay);
+                              if (opt) answerDisplay = opt.label;
+                            }
+                            return { label: q.label, isRequired: q.is_required, answer: answerDisplay };
+                          }),
+                      }));
+                    generateProposalPdf({
+                      editalTitle,
+                      proponenteName: (profile as any)?.full_name || "—",
+                      proponenteEmail: (profile as any)?.email || "—",
+                      protocol: selectedSubmission.protocol || "—",
+                      submittedAt: selectedSubmission.submitted_at ? new Date(selectedSubmission.submitted_at).toLocaleString("pt-BR") : "—",
+                      cnpqArea: selectedSubmission.cnpq_area_code,
+                      submissionId: selectedSubmission.id,
+                      sections,
+                    });
+                  }}>
+                    <Download className="w-4 h-4 mr-1" /> Baixar PDF
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => {
+                    generateSubmissionReceipt({
+                      protocol: selectedSubmission.protocol || "—",
+                      editalTitle,
+                      proponenteName: (profile as any)?.full_name || "—",
+                      proponenteEmail: (profile as any)?.email || "—",
+                      cnpqArea: selectedSubmission.cnpq_area_code || undefined,
+                      submittedAt: selectedSubmission.submitted_at ? new Date(selectedSubmission.submitted_at).toLocaleString("pt-BR") : "—",
+                      submissionId: selectedSubmission.id,
+                    });
+                  }}>
+                    <FileText className="w-4 h-4 mr-1" /> Baixar Recibo
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleVerifyIntegrity(selectedSubmission.id)} disabled={verifying}>
+                    {verifying ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <ShieldCheck className="w-4 h-4 mr-1" />}
+                    Verificar Integridade
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleExportAuditReport(selectedSubmission.id)} disabled={exportingReport}>
+                    {exportingReport ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <FileText className="w-4 h-4 mr-1" />}
+                    Relatório de Auditoria
+                  </Button>
+                  <Button size="sm" variant="secondary" onClick={async () => {
+                    if (!orgId) return;
+                    try {
+                      let proposal: any = (proposals || []).find((p: any) => p.proponente_user_id === selectedSubmission.user_id);
+                      if (!proposal) {
+                        const { data: newProposal, error: createError } = await supabase
+                          .from("proposals")
+                          .insert({
+                            edital_id: editalId,
+                            organization_id: orgId,
+                            proponente_user_id: selectedSubmission.user_id,
+                            status: "submitted",
+                            submitted_at: selectedSubmission.submitted_at || new Date().toISOString(),
+                          })
+                          .select("id, blind_code")
+                          .single();
+                        if (createError) {
+                          toast({ title: "Erro ao preparar proposta para avaliação", description: createError.message, variant: "destructive" });
+                          return;
+                        }
+                        proposal = newProposal;
+                        if (selectedSubmission.answers && Object.keys(selectedSubmission.answers).length > 0) {
+                          await supabase.from("proposal_answers").upsert({
+                            proposal_id: newProposal.id,
+                            answers_json: selectedSubmission.answers,
+                          }, { onConflict: "proposal_id" });
+                        }
+                      }
+                      setAssignDialog({
+                        proposalId: proposal.id,
+                        blindCode: proposal.blind_code || selectedSubmission.protocol,
+                        cnpqArea: selectedSubmission.cnpq_area_code,
+                      });
+                    } catch (err: any) {
+                      toast({ title: "Erro inesperado", description: err.message || "Tente novamente.", variant: "destructive" });
+                    }
+                  }} disabled={!orgId}>
+                    <Users className="w-4 h-4 mr-1" /> Enviar para avaliação
+                  </Button>
+                </div>
+
+                {/* Render answers by section */}
+                {snapshot && (snapshot.sections || []).sort((a: any, b: any) => a.sort_order - b.sort_order).map((section: any) => (
+                  <Card key={section.id}>
+                    <CardHeader>
+                      <CardTitle className="text-base">{section.title}</CardTitle>
+                      {section.description && <p className="text-sm text-muted-foreground">{section.description}</p>}
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {(section.questions || []).sort((a: any, b: any) => a.sort_order - b.sort_order).map((q: any) => {
                         let answerDisplay = answers[q.id] || "—";
                         if (Array.isArray(answerDisplay)) answerDisplay = answerDisplay.join(", ");
                         if (q.options_source === "knowledge_areas" && snapshot.knowledge_areas) {
@@ -175,115 +354,30 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
                           const opt = q.manual_options.find((o: any) => o.value === answerDisplay);
                           if (opt) answerDisplay = opt.label;
                         }
-                        return { label: q.label, isRequired: q.is_required, answer: answerDisplay };
-                      }),
-                  }));
-                generateProposalPdf({
-                  editalTitle: editalTitle,
-                  proponenteName: (profile as any)?.full_name || "—",
-                  proponenteEmail: (profile as any)?.email || "—",
-                  protocol: selectedSubmission.protocol || "—",
-                  submittedAt: selectedSubmission.submitted_at ? new Date(selectedSubmission.submitted_at).toLocaleString("pt-BR") : "—",
-                  cnpqArea: selectedSubmission.cnpq_area_code,
-                  submissionId: selectedSubmission.id,
-                  sections,
-                });
-              }}>
-                <Download className="w-4 h-4 mr-1" /> Baixar PDF
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => {
-                generateSubmissionReceipt({
-                  protocol: selectedSubmission.protocol || "—",
-                  editalTitle: editalTitle,
-                  proponenteName: (profile as any)?.full_name || "—",
-                  proponenteEmail: (profile as any)?.email || "—",
-                  cnpqArea: selectedSubmission.cnpq_area_code || undefined,
-                  submittedAt: selectedSubmission.submitted_at ? new Date(selectedSubmission.submitted_at).toLocaleString("pt-BR") : "—",
-                  submissionId: selectedSubmission.id,
-                });
-              }}>
-                <FileText className="w-4 h-4 mr-1" /> Baixar Recibo
-              </Button>
-              <Button size="sm" variant="secondary" onClick={async () => {
-                if (!orgId) return;
-                try {
-                  // Find existing proposal for this submission's user + edital
-                  let proposal: any = (proposals || []).find((p: any) => p.proponente_user_id === selectedSubmission.user_id);
+                        return (
+                          <div key={q.id}>
+                            <Label className="text-xs text-muted-foreground">{q.label}{q.is_required ? " *" : ""}</Label>
+                            <p className="text-foreground">{answerDisplay}</p>
+                          </div>
+                        );
+                      })}
+                    </CardContent>
+                  </Card>
+                ))}
+              </TabsContent>
 
-                  if (!proposal) {
-                    // Auto-create proposal from submission so reviewers can be assigned
-                    const { data: newProposal, error: createError } = await supabase
-                      .from("proposals")
-                      .insert({
-                        edital_id: editalId,
-                        organization_id: orgId,
-                        proponente_user_id: selectedSubmission.user_id,
-                        status: "submitted",
-                        submitted_at: selectedSubmission.submitted_at || new Date().toISOString(),
-                      })
-                      .select("id, blind_code")
-                      .single();
-
-                    if (createError) {
-                      toast({ title: "Erro ao preparar proposta para avaliação", description: createError.message, variant: "destructive" });
-                      return;
-                    }
-                    proposal = newProposal;
-
-                    // Also copy answers to proposal_answers for reviewer access
-                    if (selectedSubmission.answers && Object.keys(selectedSubmission.answers).length > 0) {
-                      await supabase.from("proposal_answers").upsert({
-                        proposal_id: newProposal.id,
-                        answers_json: selectedSubmission.answers,
-                      }, { onConflict: "proposal_id" });
-                    }
-                  }
-
-                  setAssignDialog({
-                    proposalId: proposal.id,
-                    blindCode: proposal.blind_code || selectedSubmission.protocol,
-                    cnpqArea: selectedSubmission.cnpq_area_code,
-                  });
-                } catch (err: any) {
-                  console.error("Error preparing proposal for review:", err);
-                  toast({ title: "Erro inesperado", description: err.message || "Tente novamente.", variant: "destructive" });
-                }
-              }} disabled={!orgId}>
-                <Users className="w-4 h-4 mr-1" /> Enviar para avaliação
-              </Button>
-            </div>
+              <TabsContent value="auditoria" className="mt-4">
+                {orgId && (
+                  <AuditLogViewer
+                    orgId={orgId}
+                    entityId={selectedSubmission.id}
+                    entityType="submission"
+                  />
+                )}
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
-
-        {/* Render answers by section */}
-        {snapshot && (snapshot.sections || []).sort((a: any, b: any) => a.sort_order - b.sort_order).map((section: any) => (
-          <Card key={section.id}>
-            <CardHeader>
-              <CardTitle className="text-base">{section.title}</CardTitle>
-              {section.description && <p className="text-sm text-muted-foreground">{section.description}</p>}
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {(section.questions || []).sort((a: any, b: any) => a.sort_order - b.sort_order).map((q: any) => {
-                let answerDisplay = answers[q.id] || "—";
-                if (Array.isArray(answerDisplay)) answerDisplay = answerDisplay.join(", ");
-                if (q.options_source === "knowledge_areas" && snapshot.knowledge_areas) {
-                  const ka = snapshot.knowledge_areas.find((k: any) => k.id === answerDisplay);
-                  if (ka) answerDisplay = ka.name;
-                }
-                if (q.options_source === "manual" && q.manual_options) {
-                  const opt = q.manual_options.find((o: any) => o.value === answerDisplay);
-                  if (opt) answerDisplay = opt.label;
-                }
-                return (
-                  <div key={q.id}>
-                    <Label className="text-xs text-muted-foreground">{q.label}{q.is_required ? " *" : ""}</Label>
-                    <p className="text-foreground">{answerDisplay}</p>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        ))}
       </div>
     );
   }
@@ -318,10 +412,8 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
         </Select>
       </div>
 
-      {/* Summary */}
       <p className="text-sm text-muted-foreground">{filtered.length} submissão(ões) encontrada(s)</p>
 
-      {/* List */}
       {filtered.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
@@ -345,6 +437,7 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
+                      <IntegrityBadge status={sub.integrity_status} />
                       <span className="text-xs text-muted-foreground">
                         {sub.submitted_at ? new Date(sub.submitted_at).toLocaleDateString("pt-BR") : "—"}
                       </span>

@@ -1,1 +1,10 @@
 project_id = "vxvnrocwixzwbjamfiqr"
+
+[functions.finalize-proposal-submission]
+verify_jwt = false
+
+[functions.verify-proposal-integrity]
+verify_jwt = false
+
+[functions.export-audit-report]
+verify_jwt = false
