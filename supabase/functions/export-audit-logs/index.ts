@@ -179,7 +179,8 @@ ${tableRows}
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    console.error("Error exporting audit logs:", err);
+    return new Response(JSON.stringify({ error: "Erro ao exportar logs de auditoria." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

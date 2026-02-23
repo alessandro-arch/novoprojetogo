@@ -12,10 +12,14 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { invite_code, password, cpf, full_name, institution, institution_id, institution_custom_name, institution_type, areas, keywords, lattes_url } = await req.json();
-    if (!invite_code || !password) throw new Error("Missing invite_code or password");
-    if (password.length < 6) throw new Error("Password must be at least 6 characters");
-    if (!cpf || cpf.length !== 11) throw new Error("CPF is required (11 digits)");
-    if (!full_name?.trim()) throw new Error("Full name is required");
+    if (!invite_code || !password) throw new Error("Código e senha são obrigatórios");
+    if (password.length < 6) throw new Error("A senha deve ter pelo menos 6 caracteres");
+    if (!cpf || typeof cpf !== "string" || !/^\d{11}$/.test(cpf)) throw new Error("CPF inválido (11 dígitos numéricos)");
+    if (!full_name?.trim() || full_name.trim().length < 3 || full_name.trim().length > 200) throw new Error("Nome completo é obrigatório (3-200 caracteres)");
+    if (lattes_url && lattes_url.length > 500) throw new Error("URL Lattes muito longa");
+    if (institution_custom_name && institution_custom_name.length > 300) throw new Error("Nome da instituição muito longo");
+    if (areas && (!Array.isArray(areas) || areas.length > 20)) throw new Error("Áreas inválidas");
+    if (keywords && (!Array.isArray(keywords) || keywords.length > 30)) throw new Error("Palavras-chave inválidas");
 
     const code = invite_code.toUpperCase().trim();
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -102,7 +106,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(JSON.stringify({ success: true }), { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } });
   } catch (error: any) {
     console.error("Error accepting invite by code:", error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    return new Response(JSON.stringify({ error: "Ocorreu um erro ao processar o convite. Tente novamente." }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
   }
 };
 

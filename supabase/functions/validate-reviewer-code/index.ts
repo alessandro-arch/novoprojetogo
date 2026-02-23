@@ -21,7 +21,9 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { invite_code } = await req.json();
-    if (!invite_code) throw new Error("Missing invite_code");
+    if (!invite_code || typeof invite_code !== "string" || invite_code.trim().length === 0 || invite_code.trim().length > 20) {
+      return new Response(JSON.stringify({ error: "Código inválido." }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    }
 
     const clientIp = req.headers.get("x-forwarded-for") || "unknown";
     if (!checkRateLimit(clientIp)) {
@@ -58,7 +60,7 @@ const handler = async (req: Request): Promise<Response> => {
     }), { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } });
   } catch (error: any) {
     console.error("Error validating code:", error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    return new Response(JSON.stringify({ error: "Erro ao validar código. Tente novamente." }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
   }
 };
 

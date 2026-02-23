@@ -12,9 +12,9 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { token, password, cpf } = await req.json();
-    if (!token || !password) throw new Error("Missing token or password");
-    if (password.length < 6) throw new Error("Password must be at least 6 characters");
-    if (!cpf || cpf.length !== 11) throw new Error("CPF is required (11 digits)");
+    if (!token || !password) throw new Error("Token e senha são obrigatórios");
+    if (password.length < 6) throw new Error("A senha deve ter pelo menos 6 caracteres");
+    if (!cpf || typeof cpf !== "string" || !/^\d{11}$/.test(cpf)) throw new Error("CPF inválido (11 dígitos numéricos)");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -103,7 +103,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(JSON.stringify({ success: true }), { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } });
   } catch (error: any) {
     console.error("Error accepting invite:", error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    return new Response(JSON.stringify({ error: "Ocorreu um erro ao processar o convite. Tente novamente." }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
   }
 };
 

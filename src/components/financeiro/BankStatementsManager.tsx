@@ -62,14 +62,12 @@ const BankStatementsManager = ({ executionId, userId }: Props) => {
         .upload(filePath, file);
       if (uploadErr) throw uploadErr;
 
-      const { data: urlData } = supabase.storage.from("bank-statements").getPublicUrl(filePath);
-
       const { error } = await supabase
         .from("bank_statements" as any)
         .insert({
           project_execution_id: executionId,
           bank_account_id: selectedAccountId,
-          file_url: urlData.publicUrl,
+          file_url: filePath,
           statement_period_start: periodStart || null,
           statement_period_end: periodEnd || null,
           uploaded_by: userId,
