@@ -91,8 +91,8 @@ const EditaisAbertos = ({ orgId, userId, onStartProposal }: Props) => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold font-heading text-foreground">Editais Abertos</h1>
-        <p className="text-muted-foreground mt-1">Veja os editais publicados e inicie sua submissão.</p>
+        <h1 className="text-xl md:text-2xl font-bold font-heading text-foreground">Editais Abertos</h1>
+        <p className="text-sm text-muted-foreground mt-1">Veja os editais publicados e inicie sua submissão.</p>
       </div>
 
       <div className="relative max-w-md">
@@ -132,18 +132,18 @@ const EditaisAbertos = ({ orgId, userId, onStartProposal }: Props) => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
                       {edital.start_date && (
                         <span className="flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5" />
-                          Abertura: {format(new Date(edital.start_date), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                          <Calendar className="w-3.5 h-3.5 shrink-0" />
+                          <span className="text-xs sm:text-sm">Abertura: {format(new Date(edital.start_date), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
                         </span>
                       )}
                       {edital.end_date && (
                         <span className="flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5" />
-                          Encerramento: {format(new Date(edital.end_date), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                          <Calendar className="w-3.5 h-3.5 shrink-0" />
+                          <span className="text-xs sm:text-sm">Encerramento: {format(new Date(edital.end_date), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
                         </span>
                       )}
                     </div>

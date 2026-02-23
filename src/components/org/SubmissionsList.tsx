@@ -130,7 +130,7 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label className="text-xs text-muted-foreground">Proponente</Label>
                 <p className="text-foreground font-medium">{(profile as any)?.full_name || "—"}</p>
@@ -154,7 +154,7 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
                 </div>
               )}
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="outline" onClick={() => {
                 if (!snapshot) return;
                 const sections = (snapshot.sections || [])
@@ -295,8 +295,8 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+        <div className="relative flex-1 w-full sm:max-w-sm">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
@@ -306,7 +306,7 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -337,7 +337,7 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
             return (
               <Card key={sub.id} className="hover:shadow-card-hover transition-shadow cursor-pointer" onClick={() => setSelectedSubmission(sub)}>
                 <CardContent className="py-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="flex items-center gap-4">
                       <div>
                         <p className="font-mono text-sm font-medium text-foreground">{sub.protocol || "—"}</p>
@@ -349,7 +349,7 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
                         {sub.submitted_at ? new Date(sub.submitted_at).toLocaleDateString("pt-BR") : "—"}
                       </span>
                       <Badge variant={st.variant}>{st.label}</Badge>
-                      <Button size="icon" variant="ghost">
+                      <Button size="icon" variant="ghost" className="min-h-[44px] min-w-[44px]">
                         <Eye className="w-4 h-4" />
                       </Button>
                     </div>

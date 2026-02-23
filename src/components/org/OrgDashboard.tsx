@@ -73,18 +73,18 @@ const OrgDashboard = ({ orgId }: { orgId: string }) => {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold font-heading text-foreground mb-6">Dashboard</h2>
+      <h2 className="text-xl md:text-2xl font-bold font-heading text-foreground mb-4 md:mb-6">Dashboard</h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
         {cards.map((c) => (
           <Card key={c.label}>
-            <CardContent className="p-6 flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-xl bg-muted flex items-center justify-center ${c.color}`}>
-                <c.icon className="w-6 h-6" />
+            <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row items-center gap-3 md:gap-4">
+              <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl bg-muted flex items-center justify-center shrink-0 ${c.color}`}>
+                <c.icon className="w-5 h-5 md:w-6 md:h-6" />
               </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{c.value}</p>
-                <p className="text-xs text-muted-foreground">{c.label}</p>
+              <div className="text-center sm:text-left">
+                <p className="text-xl md:text-2xl font-bold text-foreground">{c.value}</p>
+                <p className="text-[11px] md:text-xs text-muted-foreground">{c.label}</p>
               </div>
             </CardContent>
           </Card>
@@ -96,7 +96,7 @@ const OrgDashboard = ({ orgId }: { orgId: string }) => {
           <CardTitle className="text-lg">Submissões — Últimos 14 dias</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-64">
+          <div className="h-48 md:h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
