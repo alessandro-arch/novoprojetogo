@@ -362,7 +362,7 @@ const EditaisList = ({ orgId }: { orgId: string }) => {
         <h2 className="text-xl md:text-2xl font-bold font-heading text-foreground">Editais</h2>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" /> Novo Edital</Button>
+            <Button className="w-full sm:w-auto min-h-[44px]"><Plus className="w-4 h-4 mr-2" /> Novo Edital</Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader><DialogTitle>Criar Edital</DialogTitle></DialogHeader>
@@ -493,7 +493,7 @@ const EditaisList = ({ orgId }: { orgId: string }) => {
             <Card key={e.id} className="cursor-pointer hover:shadow-card transition-shadow" onClick={() => setSelectedEdital(e)}>
               <CardContent className="p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-semibold text-foreground">{e.title}</p>
                     {statusBadge(e)}
                     {(e as any).is_public && <Badge variant="outline" className="text-xs">Público</Badge>}

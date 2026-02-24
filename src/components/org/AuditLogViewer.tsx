@@ -216,18 +216,18 @@ const AuditLogViewer = ({ orgId, entityId, entityType }: AuditLogViewerProps) =>
   return (
     <div className="space-y-6">
       {!entityId && (
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-bold font-heading text-foreground flex items-center gap-2">
-              <Shield className="w-6 h-6" /> Trilha de Auditoria
+            <h2 className="text-xl md:text-2xl font-bold font-heading text-foreground flex items-center gap-2">
+              <Shield className="w-5 h-5 md:w-6 md:h-6" /> Trilha de Auditoria
             </h2>
-            <p className="text-muted-foreground">Registro cronológico e imutável de todas as ações do sistema.</p>
+            <p className="text-sm text-muted-foreground">Registro cronológico e imutável de todas as ações do sistema.</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => handleExport("csv")} disabled={exporting}>
+            <Button variant="outline" size="sm" onClick={() => handleExport("csv")} disabled={exporting} className="min-h-[44px]">
               <Download className="w-4 h-4 mr-1" /> CSV
             </Button>
-            <Button variant="outline" size="sm" onClick={() => handleExport("pdf")} disabled={exporting}>
+            <Button variant="outline" size="sm" onClick={() => handleExport("pdf")} disabled={exporting} className="min-h-[44px]">
               <FileText className="w-4 h-4 mr-1" /> PDF
             </Button>
           </div>
@@ -235,8 +235,8 @@ const AuditLogViewer = ({ orgId, entityId, entityType }: AuditLogViewerProps) =>
       )}
 
       {/* Filters */}
-      <div className="flex gap-3 items-end flex-wrap">
-        <div className="flex-1 min-w-[200px]">
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end flex-wrap">
+        <div className="flex-1 min-w-0">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -250,7 +250,7 @@ const AuditLogViewer = ({ orgId, entityId, entityType }: AuditLogViewerProps) =>
         </div>
         {!entityType && (
           <Select value={entityFilter} onValueChange={(v) => { setEntityFilter(v); setPage(0); }}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Entidade" />
             </SelectTrigger>
             <SelectContent>
@@ -265,7 +265,7 @@ const AuditLogViewer = ({ orgId, entityId, entityType }: AuditLogViewerProps) =>
           </Select>
         )}
         <Select value={actionFilter} onValueChange={(v) => { setActionFilter(v); setPage(0); }}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Ação" />
           </SelectTrigger>
           <SelectContent>
@@ -274,7 +274,7 @@ const AuditLogViewer = ({ orgId, entityId, entityType }: AuditLogViewerProps) =>
             ))}
           </SelectContent>
         </Select>
-        <Button onClick={handleSearch} variant="secondary" size="sm">
+        <Button onClick={handleSearch} variant="secondary" size="sm" className="min-h-[44px]">
           <Search className="w-4 h-4" />
         </Button>
       </div>
@@ -291,7 +291,7 @@ const AuditLogViewer = ({ orgId, entityId, entityType }: AuditLogViewerProps) =>
         </div>
       ) : (
         <>
-          <div className="border border-border rounded-xl overflow-hidden">
+          <div className="border border-border rounded-xl overflow-hidden mobile-scroll">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -363,15 +363,15 @@ const AuditLogViewer = ({ orgId, entityId, entityType }: AuditLogViewerProps) =>
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">
               Página {page + 1} · {logs.length} registros
             </p>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="flex-1 sm:flex-initial min-h-[44px]">
                 <ChevronLeft className="w-4 h-4" /> Anterior
               </Button>
-              <Button variant="outline" size="sm" disabled={logs.length < PAGE_SIZE} onClick={() => setPage(p => p + 1)}>
+              <Button variant="outline" size="sm" disabled={logs.length < PAGE_SIZE} onClick={() => setPage(p => p + 1)} className="flex-1 sm:flex-initial min-h-[44px]">
                 Próxima <ChevronRight className="w-4 h-4" />
               </Button>
             </div>

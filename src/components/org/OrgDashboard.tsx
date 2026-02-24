@@ -106,7 +106,7 @@ const OrgDashboard = ({ orgId }: { orgId: string }) => {
         <p className="text-sm text-muted-foreground mt-1">Visão geral da organização</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
         {cards.map((c) => (
           <Card key={c.label} className={`border-l-4 ${c.borderColor} shadow-card hover:shadow-card-hover transition-shadow duration-200`}>
             <CardContent className="p-4 md:p-5 flex items-center justify-between gap-3">

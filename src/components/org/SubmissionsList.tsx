@@ -200,9 +200,9 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="dados">
-              <TabsList>
-                <TabsTrigger value="dados">Dados</TabsTrigger>
-                <TabsTrigger value="auditoria">Auditoria</TabsTrigger>
+              <TabsList className="w-full sm:w-auto">
+                <TabsTrigger value="dados" className="flex-1 sm:flex-initial">Dados</TabsTrigger>
+                <TabsTrigger value="auditoria" className="flex-1 sm:flex-initial">Auditoria</TabsTrigger>
               </TabsList>
 
               <TabsContent value="dados" className="space-y-4 mt-4">
@@ -236,8 +236,8 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
                     </div>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" onClick={() => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-2">
+                  <Button size="sm" variant="outline" className="min-h-[44px]" onClick={() => {
                     if (!snapshot) return;
                     const sections = (snapshot.sections || [])
                       .sort((a: any, b: any) => a.sort_order - b.sort_order)
@@ -273,7 +273,7 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
                   }}>
                     <Download className="w-4 h-4 mr-1" /> Baixar PDF
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => {
+                  <Button size="sm" variant="outline" className="min-h-[44px]" onClick={() => {
                     generateSubmissionReceipt({
                       protocol: selectedSubmission.protocol || "—",
                       editalTitle,
@@ -286,15 +286,15 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
                   }}>
                     <FileText className="w-4 h-4 mr-1" /> Baixar Recibo
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleVerifyIntegrity(selectedSubmission.id)} disabled={verifying}>
+                  <Button size="sm" variant="outline" className="min-h-[44px]" onClick={() => handleVerifyIntegrity(selectedSubmission.id)} disabled={verifying}>
                     {verifying ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <ShieldCheck className="w-4 h-4 mr-1" />}
                     Verificar Integridade
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleExportAuditReport(selectedSubmission.id)} disabled={exportingReport}>
+                  <Button size="sm" variant="outline" className="min-h-[44px]" onClick={() => handleExportAuditReport(selectedSubmission.id)} disabled={exportingReport}>
                     {exportingReport ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <FileText className="w-4 h-4 mr-1" />}
                     Relatório de Auditoria
                   </Button>
-                  <Button size="sm" variant="secondary" onClick={async () => {
+                  <Button size="sm" variant="secondary" className="min-h-[44px]" onClick={async () => {
                     if (!orgId) return;
                     try {
                       let proposal: any = (proposals || []).find((p: any) => p.proponente_user_id === selectedSubmission.user_id);
