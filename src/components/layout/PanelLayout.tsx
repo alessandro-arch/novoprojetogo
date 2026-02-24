@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -109,6 +110,14 @@ const PanelLayout = (props: PanelLayoutProps) => {
   const isMobile = useIsMobile();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  const prefersReducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const contentVariants = prefersReducedMotion
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
+    : { initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -10 } };
+
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Mobile Header */}
@@ -154,11 +163,22 @@ const PanelLayout = (props: PanelLayoutProps) => {
             </Button>
             <UserAvatar />
           </header>
-          <main className="flex-1 overflow-x-hidden">
-            <div className="px-6 py-6 md:px-8 lg:px-10">
-              {props.children}
-            </div>
-          </main>
+           <main className="flex-1 overflow-x-hidden">
+              <div className="px-6 py-6 md:px-8 lg:px-10">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={props.activeNav}
+                    variants={contentVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                  >
+                    {props.children}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </main>
         </div>
       )}
 
@@ -166,7 +186,18 @@ const PanelLayout = (props: PanelLayoutProps) => {
       {isMobile && (
         <main className="flex-1 min-w-0 overflow-x-hidden">
           <div className="px-4 py-5">
-            {props.children}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={props.activeNav}
+                variants={contentVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              >
+                {props.children}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </main>
       )}
