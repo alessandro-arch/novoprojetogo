@@ -381,6 +381,9 @@ export type Database = {
           edital_id: string
           form_version_id: string | null
           id: string
+          integrity_hash: string | null
+          integrity_status: string | null
+          pdf_integrity_hash: string | null
           protocol: string | null
           status: string
           submitted_at: string | null
@@ -394,6 +397,9 @@ export type Database = {
           edital_id: string
           form_version_id?: string | null
           id?: string
+          integrity_hash?: string | null
+          integrity_status?: string | null
+          pdf_integrity_hash?: string | null
           protocol?: string | null
           status?: string
           submitted_at?: string | null
@@ -407,6 +413,9 @@ export type Database = {
           edital_id?: string
           form_version_id?: string | null
           id?: string
+          integrity_hash?: string | null
+          integrity_status?: string | null
+          pdf_integrity_hash?: string | null
           protocol?: string | null
           status?: string
           submitted_at?: string | null
