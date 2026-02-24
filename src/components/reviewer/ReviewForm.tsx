@@ -420,12 +420,12 @@ const ReviewForm = ({ assignment, onBack }: { assignment: Assignment; onBack: ()
                 const entry = scores.find((s) => s.criteria_id === c.id);
                 return (
                   <div key={c.id} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                      <div className="min-w-0">
                         <Label className="font-medium">{c.name}</Label>
                         {c.description && <p className="text-xs text-muted-foreground">{c.description}</p>}
                       </div>
-                      <div className="text-right">
+                      <div className="text-left sm:text-right shrink-0">
                         <span className="text-lg font-bold text-primary">{entry?.score || 0}</span>
                         <span className="text-xs text-muted-foreground">/{c.max_score}</span>
                         <span className="text-xs text-muted-foreground ml-2">(peso {c.weight})</span>
@@ -515,7 +515,7 @@ const ReviewForm = ({ assignment, onBack }: { assignment: Assignment; onBack: ()
               proposalContent={proposalContent}
               onInsert={(text) => setComments((prev) => (prev ? prev + "\n\n" + text : text))}
             />
-            <Button onClick={handleSubmit} size="lg" disabled={submitting} className="min-h-[44px]">
+            <Button onClick={handleSubmit} size="lg" disabled={submitting} className="w-full sm:w-auto min-h-[48px]">
               {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
               Enviar Avaliação
             </Button>

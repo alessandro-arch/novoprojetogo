@@ -147,6 +147,15 @@
 }
 
 @layer utilities {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .mobile-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
   .gradient-primary {
     background: var(--gradient-primary);
   }
@@ -207,6 +216,18 @@
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Touch devices: replace hover with active feedback */
+@media (hover: none) {
+  .card-interactive:hover {
+    transform: none;
+    box-shadow: var(--shadow-md);
+  }
+  .card-interactive:active {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+  }
 }
 
 /* Reduced motion */
