@@ -106,6 +106,14 @@ const FomentoLogin = () => {
                   className="mt-1"
                 />
               </div>
+              <div className="flex justify-end">
+                <Link
+                  to="/forgot-password?back=/fomento/login"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Esqueci minha senha
+                </Link>
+              </div>
               <Button
                 type="submit"
                 className="w-full min-h-[44px] bg-[hsl(213,52%,24%)] text-white hover:bg-[hsl(213,52%,30%)] transition-colors"
