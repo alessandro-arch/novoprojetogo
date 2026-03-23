@@ -434,7 +434,7 @@ Campos não encontrados retornar null.`,
                 <div className="flex flex-col items-center gap-2">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
                   {retryMessage ? (
-                    <p className="text-sm text-amber-600 font-medium">{retryMessage}</p>
+                    <p className="text-sm text-destructive font-medium">{retryMessage}</p>
                   ) : (
                     <p className="text-sm text-muted-foreground">Extraindo dados do PDF…</p>
                   )}
