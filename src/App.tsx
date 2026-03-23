@@ -47,6 +47,7 @@ const App = () => (
             <Route path="/avaliador" element={<ReviewerLoginPage />} />
             <Route path="/invite/reviewer" element={<ReviewerInvitePage />} />
             <Route path="/reviewer/activate" element={<ReviewerActivatePage />} />
+            <Route path="/fomento/login" element={<FomentoLogin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
