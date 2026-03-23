@@ -8,8 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, ArrowRight, Building2, Edit, Loader2, Plus, Power, UserCog } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building2, Edit, Loader2, Mail, Plus, Power, UserCog } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface FomentoOrg {
   id: string;
@@ -20,8 +22,16 @@ interface FomentoOrg {
   admin_user_id: string | null;
   admin_name: string | null;
   admin_email: string | null;
+  admin_status: string;
   status: string;
   created_at: string;
+}
+
+interface InviteLog {
+  id: string;
+  email: string;
+  enviado_em: string;
+  enviado_por: string;
 }
 
 interface Props {
@@ -42,6 +52,16 @@ const PLAN_COLORS: Record<string, string> = {
   enterprise: "bg-accent text-accent-foreground",
 };
 
+const AdminStatusBadge = ({ status }: { status: string }) => {
+  if (status === "ativo") {
+    return <Badge className="bg-green-600 text-white hover:bg-green-600">🟢 Ativo</Badge>;
+  }
+  if (status === "inativo") {
+    return <Badge variant="destructive">🔴 Inativo</Badge>;
+  }
+  return <Badge className="bg-yellow-500 text-white hover:bg-yellow-500">🟡 Convite pendente</Badge>;
+};
+
 // ─── Listing ───────────────────────────────────────────────
 const OrgListing = ({ onNavigate }: { onNavigate: (p: string) => void }) => {
   const { data: orgs, isLoading } = useQuery({
@@ -58,6 +78,7 @@ const OrgListing = ({ onNavigate }: { onNavigate: (p: string) => void }) => {
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [resendingId, setResendingId] = useState<string | null>(null);
 
   const toggleStatus = useMutation({
     mutationFn: async ({ id, newStatus }: { id: string; newStatus: string }) => {
@@ -72,6 +93,27 @@ const OrgListing = ({ onNavigate }: { onNavigate: (p: string) => void }) => {
       toast({ title: "Status atualizado" });
     },
   });
+
+  const handleResendInvite = async (org: FomentoOrg) => {
+    if (!org.admin_email || !org.admin_name) return;
+    setResendingId(org.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("invite-fomento-admin", {
+        body: { email: org.admin_email, full_name: org.admin_name, org_id: org.id, resend: true },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({
+        title: "Convite reenviado",
+        description: `Convite reenviado para ${org.admin_email}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["fomento-organizations"] });
+    } catch (err: any) {
+      toast({ title: "Erro ao reenviar convite", description: err.message, variant: "destructive" });
+    } finally {
+      setResendingId(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -126,6 +168,9 @@ const OrgListing = ({ onNavigate }: { onNavigate: (p: string) => void }) => {
                         <div>
                           <div className="text-sm font-medium">{org.admin_name}</div>
                           <div className="text-xs text-muted-foreground">{org.admin_email}</div>
+                          {org.admin_status === "pendente" && (
+                            <AdminStatusBadge status="pendente" />
+                          )}
                         </div>
                       ) : (
                         <span className="text-muted-foreground text-sm">Sem admin</span>
@@ -143,6 +188,21 @@ const OrgListing = ({ onNavigate }: { onNavigate: (p: string) => void }) => {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
+                        {org.admin_email && org.admin_status === "pendente" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleResendInvite(org)}
+                            disabled={resendingId === org.id}
+                            title="Reenviar Convite"
+                          >
+                            {resendingId === org.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Mail className="w-4 h-4" />
+                            )}
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -188,6 +248,7 @@ const OrgForm = ({
   const isEditing = !!orgId;
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
+  const [resending, setResending] = useState(false);
 
   // Step 1 fields
   const [name, setName] = useState("");
@@ -203,7 +264,7 @@ const OrgForm = ({
   const queryClient = useQueryClient();
 
   // Load existing org for edit
-  const { isLoading: loadingOrg } = useQuery({
+  const { isLoading: loadingOrg, data: orgData } = useQuery({
     queryKey: ["fomento-org", orgId],
     enabled: isEditing,
     queryFn: async () => {
@@ -221,6 +282,35 @@ const OrgForm = ({
       setAdminName(org.admin_name || "");
       setAdminEmail(org.admin_email || "");
       return org;
+    },
+  });
+
+  // Check admin status via edge function
+  const { data: adminStatusData } = useQuery({
+    queryKey: ["fomento-admin-status", orgId],
+    enabled: isEditing && !!orgData?.admin_user_id,
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("invite-fomento-admin", {
+        body: { check_status: true, org_id: orgId },
+      });
+      if (error) throw error;
+      return data as { admin_status: string; last_sign_in_at: string | null };
+    },
+  });
+
+  // Invite log
+  const { data: inviteLogs } = useQuery({
+    queryKey: ["fomento-invite-log", orgId],
+    enabled: isEditing,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("fomento_invite_log")
+        .select("*")
+        .eq("organization_id", orgId!)
+        .order("enviado_em", { ascending: false })
+        .limit(3);
+      if (error) throw error;
+      return data as InviteLog[];
     },
   });
 
@@ -251,6 +341,28 @@ const OrgForm = ({
     setEmecCode(inst.id);
     setEmecResults([]);
     setEmecSearch("");
+  };
+
+  const handleResendInvite = async () => {
+    if (!adminEmail.trim() || !adminName.trim()) return;
+    setResending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("invite-fomento-admin", {
+        body: { email: adminEmail, full_name: adminName, org_id: orgId, resend: true },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({
+        title: "Convite reenviado",
+        description: `Convite reenviado para ${adminEmail}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["fomento-invite-log", orgId] });
+      queryClient.invalidateQueries({ queryKey: ["fomento-admin-status", orgId] });
+    } catch (err: any) {
+      toast({ title: "Erro ao reenviar", description: err.message, variant: "destructive" });
+    } finally {
+      setResending(false);
+    }
   };
 
   const handleSave = async () => {
@@ -320,6 +432,8 @@ const OrgForm = ({
       </div>
     );
   }
+
+  const currentAdminStatus = adminStatusData?.admin_status || orgData?.admin_status || "pendente";
 
   return (
     <div className="space-y-4 max-w-2xl">
@@ -441,6 +555,48 @@ const OrgForm = ({
                 O admin receberá um e-mail com link de acesso e instrução para definir senha.
               </p>
             </div>
+
+            {/* Admin status + resend section (editing only) */}
+            {isEditing && orgData?.admin_email && (
+              <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label className="text-sm font-medium">Status do convite</Label>
+                    <div>
+                      <AdminStatusBadge status={currentAdminStatus} />
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResendInvite}
+                    disabled={resending}
+                    className="gap-2"
+                  >
+                    {resending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Mail className="w-4 h-4" />
+                    )}
+                    Reenviar Convite
+                  </Button>
+                </div>
+
+                {/* Invite log */}
+                {inviteLogs && inviteLogs.length > 0 && (
+                  <div className="space-y-1 pt-2 border-t">
+                    <Label className="text-xs text-muted-foreground">Histórico de envios</Label>
+                    {inviteLogs.map((log) => (
+                      <div key={log.id} className="text-xs text-muted-foreground">
+                        📧 Enviado em{" "}
+                        {format(new Date(log.enviado_em), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                        {" — "}{log.email}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="flex justify-between pt-2">
               <Button variant="outline" onClick={() => setStep(1)}>
