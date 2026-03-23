@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { useFomentoAuth } from "@/contexts/FomentoAuthContext";
+import { useLocation, useNavigate, Navigate } from "react-router-dom";
 import { Loader2, LayoutDashboard, FolderKanban, AlertTriangle, ShieldCheck } from "lucide-react";
 import PanelLayout, { NavItem } from "@/components/layout/PanelLayout";
 import FomentoDashboardView from "@/components/fomento/FomentoDashboardView";
@@ -8,13 +8,10 @@ import FomentoProjectForm from "@/components/fomento/FomentoProjectForm";
 import FomentoAlerts from "@/components/fomento/FomentoAlerts";
 import FomentoAdmin from "@/components/fomento/FomentoAdmin";
 
-type NavKey = "dashboard" | "projetos" | "alertas" | "admin";
-
 const FomentoPanel = () => {
   const { loading, fomentoRole, signOut } = useFomentoAuth();
-  const [activeNav, setActiveNav] = useState<NavKey>("dashboard");
-  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
-  const [creatingProject, setCreatingProject] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   if (loading) {
     return (
@@ -23,6 +20,17 @@ const FomentoPanel = () => {
       </div>
     );
   }
+
+  // Parse path: /fomento/projetos/abc/editar → ["projetos","abc","editar"]
+  const segments = location.pathname.replace(/^\/fomento\/?/, "").split("/").filter(Boolean);
+  const section = segments[0] || "dashboard";
+
+  // Redirect bare /fomento to /fomento/dashboard
+  if (!segments.length) {
+    return <Navigate to="/fomento/dashboard" replace />;
+  }
+
+  const activeNav = section === "projetos" ? "projetos" : section;
 
   const navItems: NavItem[] = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -35,25 +43,49 @@ const FomentoPanel = () => {
   }
 
   const handleNavChange = (key: string) => {
-    setActiveNav(key as NavKey);
-    setEditingProjectId(null);
-    setCreatingProject(false);
+    navigate(`/fomento/${key}`);
   };
 
   const handleEditProject = (id: string) => {
-    setEditingProjectId(id);
-    setCreatingProject(false);
-    setActiveNav("projetos");
+    navigate(`/fomento/projetos/${id}/editar`);
   };
 
   const handleNewProject = () => {
-    setCreatingProject(true);
-    setEditingProjectId(null);
+    navigate("/fomento/projetos/novo");
   };
 
   const handleBackToList = () => {
-    setEditingProjectId(null);
-    setCreatingProject(false);
+    navigate("/fomento/projetos");
+  };
+
+  // Determine which view to render
+  const renderContent = () => {
+    if (section === "dashboard") {
+      return <FomentoDashboardView onEditProject={handleEditProject} />;
+    }
+
+    if (section === "projetos") {
+      // /fomento/projetos/novo
+      if (segments[1] === "novo") {
+        return <FomentoProjectForm onBack={handleBackToList} />;
+      }
+      // /fomento/projetos/:id/editar
+      if (segments[1] && segments[2] === "editar") {
+        return <FomentoProjectForm projectId={segments[1]} onBack={handleBackToList} />;
+      }
+      // /fomento/projetos
+      return <FomentoProjectsList onNewProject={handleNewProject} onEditProject={handleEditProject} />;
+    }
+
+    if (section === "alertas") {
+      return <FomentoAlerts onEditProject={handleEditProject} />;
+    }
+
+    if (section === "admin" && fomentoRole === "admin") {
+      return <FomentoAdmin />;
+    }
+
+    return <Navigate to="/fomento/dashboard" replace />;
   };
 
   return (
@@ -65,30 +97,7 @@ const FomentoPanel = () => {
       onNavChange={handleNavChange}
       onSignOut={signOut}
     >
-      {activeNav === "dashboard" && (
-        <FomentoDashboardView onEditProject={handleEditProject} />
-      )}
-
-      {activeNav === "projetos" && (
-        editingProjectId ? (
-          <FomentoProjectForm projectId={editingProjectId} onBack={handleBackToList} />
-        ) : creatingProject ? (
-          <FomentoProjectForm onBack={handleBackToList} />
-        ) : (
-          <FomentoProjectsList
-            onNewProject={handleNewProject}
-            onEditProject={handleEditProject}
-          />
-        )
-      )}
-
-      {activeNav === "alertas" && (
-        <FomentoAlerts onEditProject={handleEditProject} />
-      )}
-
-      {activeNav === "admin" && fomentoRole === "admin" && (
-        <FomentoAdmin />
-      )}
+      {renderContent()}
     </PanelLayout>
   );
 };
