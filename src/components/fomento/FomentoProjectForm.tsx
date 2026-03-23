@@ -489,7 +489,7 @@ Campos não encontrados retornar null.`,
       <SectionCard {...sectionProps} id="class" title="[C] Classificação">
         <div className="space-y-4">
           <div>
-            <Label className="mb-2 block">Fonte</Label>
+            <Label className="mb-2 block">Origem do Recurso</Label>
             <RadioGroup value={fonte} onValueChange={setFonte} className="flex gap-4">
               <div className="flex items-center gap-2"><RadioGroupItem value="publica" id="fonte-pub" /><Label htmlFor="fonte-pub">Pública</Label></div>
               <div className="flex items-center gap-2"><RadioGroupItem value="privada" id="fonte-priv" /><Label htmlFor="fonte-priv">Privada</Label></div>
@@ -498,16 +498,17 @@ Campos não encontrados retornar null.`,
           <div>
             <Label className="mb-2 block">Natureza</Label>
             <RadioGroup value={natureza} onValueChange={setNatureza} className="flex gap-4">
-              <div className="flex items-center gap-2"><RadioGroupItem value="outorga" id="nat-out" /><Label htmlFor="nat-out">Outorga</Label></div>
-              <div className="flex items-center gap-2"><RadioGroupItem value="parceria" id="nat-par" /><Label htmlFor="nat-par">Parceria</Label></div>
+              <div className="flex items-center gap-2"><RadioGroupItem value="auxilio_financeiro" id="nat-aux" /><Label htmlFor="nat-aux">Auxílio Financeiro</Label></div>
+              <div className="flex items-center gap-2"><RadioGroupItem value="bolsa" id="nat-bol" /><Label htmlFor="nat-bol">Bolsa</Label></div>
             </RadioGroup>
           </div>
           <div>
-            <Label className="mb-2 block">Área</Label>
+            <Label className="mb-2 block">Área / Atividade</Label>
             <RadioGroup value={area} onValueChange={setArea} className="flex flex-wrap gap-4">
               <div className="flex items-center gap-2"><RadioGroupItem value="pesquisa" id="area-pesq" /><Label htmlFor="area-pesq">Pesquisa</Label></div>
               <div className="flex items-center gap-2"><RadioGroupItem value="inovacao" id="area-inov" /><Label htmlFor="area-inov">Inovação</Label></div>
               <div className="flex items-center gap-2"><RadioGroupItem value="extensao" id="area-ext" /><Label htmlFor="area-ext">Extensão</Label></div>
+              <div className="flex items-center gap-2"><RadioGroupItem value="ensino" id="area-ens" /><Label htmlFor="area-ens">Ensino</Label></div>
               <div className="flex items-center gap-2"><RadioGroupItem value="servicos" id="area-serv" /><Label htmlFor="area-serv">Serviços</Label></div>
             </RadioGroup>
             {area === "servicos" && (
