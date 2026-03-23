@@ -37,6 +37,17 @@ const FomentoProjectsList = ({ onNewProject, onEditProject }: Props) => {
     },
   });
 
+  const { data: docCounts } = useQuery({
+    queryKey: ["fomento-doc-counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("fomento_documents").select("project_id");
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      data.forEach((d) => { counts[d.project_id] = (counts[d.project_id] || 0) + 1; });
+      return counts;
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("fomento_projects").delete().eq("id", id);
