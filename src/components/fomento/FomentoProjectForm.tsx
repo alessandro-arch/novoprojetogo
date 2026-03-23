@@ -26,10 +26,15 @@ interface TeamMember { nome: string; funcao: string; email: string; }
 
 const RUBRICA_SUGGESTIONS = ["Bolsas", "Custeio", "Capital", "Diárias", "Passagens"];
 
-const SectionCard = ({ id, title, children, openSections, toggleSection }: {
-  id: string; title: string; children: React.ReactNode;
-  openSections: Record<string, boolean>; toggleSection: (id: string) => void;
-}) => (
+interface SectionCardProps {
+  id: string;
+  title: string;
+  children: React.ReactNode;
+  openSections: Record<string, boolean>;
+  toggleSection: (id: string) => void;
+}
+
+const SectionCard = ({ id, title, children, openSections, toggleSection }: SectionCardProps) => (
   <Collapsible open={openSections[id]} onOpenChange={() => toggleSection(id)}>
     <Card className="shadow-sm">
       <CollapsibleTrigger asChild>
