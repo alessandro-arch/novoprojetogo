@@ -15,6 +15,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ArrowLeft, ChevronDown, Plus, Trash2, Upload, Bot, Loader2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatBRL } from "@/lib/fomento-utils";
+import FomentoDocumentsSection from "./FomentoDocumentsSection";
 
 interface Props {
   projectId?: string;
