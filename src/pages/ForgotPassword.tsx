@@ -12,7 +12,10 @@ interface Props {
   backLabel?: string;
 }
 
-const ForgotPassword = ({ backTo = "/login", backLabel = "Voltar ao login" }: Props) => {
+const ForgotPassword = () => {
+  const [searchParams] = useSearchParams();
+  const backTo = searchParams.get("back") || "/login";
+  const backLabel = backTo.includes("fomento") ? "Voltar ao login Fomento" : "Voltar ao login";
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
