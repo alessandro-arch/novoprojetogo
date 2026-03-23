@@ -22,6 +22,8 @@ import ReviewerTermsPage from "./pages/reviewer/ReviewerTermsPage";
 import ReviewerTermsGate from "./components/ReviewerTermsGate";
 import NotFound from "./pages/NotFound";
 import FomentoLogin from "./pages/fomento/FomentoLogin";
+import FomentoDashboard from "./pages/fomento/FomentoDashboard";
+import FomentoProtectedRoute from "./components/FomentoProtectedRoute";
 
 const queryClient = new QueryClient();
 

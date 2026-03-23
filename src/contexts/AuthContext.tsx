@@ -149,6 +149,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setSession(null);
     setGlobalRole(null);
     setMembership(null);
+    setFomentoRole(null);
 
     // 3. Clear React Query cache
     if (queryClient) {
@@ -160,7 +161,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [queryClient]);
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, globalRole, membership, signOut, refreshRoles }}>
+    <AuthContext.Provider value={{ user, session, loading, globalRole, membership, fomentoRole, signOut, refreshRoles }}>
       {children}
     </AuthContext.Provider>
   );
