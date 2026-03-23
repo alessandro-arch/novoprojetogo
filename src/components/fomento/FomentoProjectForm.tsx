@@ -616,6 +616,13 @@ Campos não encontrados retornar null.`,
         </div>
       </SectionCard>
 
+      {/* [G] Documents */}
+      {isEditing && projectId && (
+        <SectionCard {...sectionProps} id="docs" title="[G] Documentos do Projeto">
+          <FomentoDocumentsSection projectId={projectId} />
+        </SectionCard>
+      )}
+
       {/* Bottom save button */}
       <div className="flex justify-end pt-2">
         <Button onClick={handleSave} disabled={saving} size="lg" className="gap-2">

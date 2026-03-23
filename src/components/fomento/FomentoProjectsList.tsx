@@ -189,6 +189,11 @@ const FomentoProjectsList = ({ onNewProject, onEditProject }: Props) => {
                       </TableCell>
                       <TableCell className="text-right font-mono">{formatBRL(Number(p.valor_total))}</TableCell>
                       <TableCell>
+                        {(docCounts?.[p.id] || 0) > 0 ? (
+                          <span className="inline-flex items-center gap-1 text-sm"><Paperclip className="w-3.5 h-3.5" />{docCounts[p.id]}</span>
+                        ) : "—"}
+                      </TableCell>
+                      <TableCell>
                         <div className="flex gap-1">
                           <Button variant="ghost" size="icon" onClick={() => onEditProject(p.id)}>
                             <Pencil className="w-4 h-4" />
