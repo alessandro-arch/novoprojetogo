@@ -75,15 +75,9 @@ const FomentoLogin = () => {
               </h1>
             </div>
 
-            <div className="mb-8">
-              <Badge variant="secondary" className="text-xs">
-                PRPPGE · UVV
-              </Badge>
-            </div>
-
-            <h2 className="text-xl font-semibold text-foreground mb-2">Entrar</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-2 mt-6">Entrar</h2>
             <p className="text-muted-foreground mb-6">
-              Acesse o módulo de monitoramento de captação de recursos
+              Monitore e gerencie a captação de recursos da sua instituição
             </p>
 
             <form onSubmit={handleLogin} className="space-y-4">

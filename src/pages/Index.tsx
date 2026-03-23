@@ -15,7 +15,7 @@ const modules = [
     icon: TrendingUp,
     title: "ProjetoGO Fomento",
     description: "Monitoramento de captação de recursos e termos de outorga",
-    badge: "PRPPGE · UVV",
+    
     to: "/fomento/login",
   },
 ];

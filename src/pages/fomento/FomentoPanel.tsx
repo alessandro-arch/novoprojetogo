@@ -91,7 +91,7 @@ const FomentoPanel = () => {
   return (
     <PanelLayout
       title="ProjetoGO Fomento"
-      subtitle="PRPPGE · UVV"
+      subtitle="Gestão de Captação de Recursos"
       navItems={navItems}
       activeNav={activeNav}
       onNavChange={handleNavChange}

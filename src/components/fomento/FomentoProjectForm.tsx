@@ -461,7 +461,7 @@ Campos não encontrados retornar null.`,
             {(vinculo_academico === "ppg" || vinculo_academico === "ambos") && (
               <div className="mt-3">
                 <Label>Nome do PPG</Label>
-                <Input value={ppg_nome} onChange={(e) => setPpgNome(e.target.value)} placeholder="PPG em Biotecnologia Vegetal (UENF-UVV)" />
+                <Input value={ppg_nome} onChange={(e) => setPpgNome(e.target.value)} placeholder="Ex: PPG em Ciências Ambientais" />
               </div>
             )}
           </div>

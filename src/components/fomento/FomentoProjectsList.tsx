@@ -143,7 +143,7 @@ const FomentoProjectsList = ({ onNewProject, onEditProject }: Props) => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Processo UVV</TableHead>
+                  <TableHead>Processo Interno</TableHead>
                   <TableHead>Pesquisador</TableHead>
                   <TableHead>Título</TableHead>
                   <TableHead>Área</TableHead>
