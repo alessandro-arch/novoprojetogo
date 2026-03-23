@@ -16,6 +16,7 @@ interface AuthContextType {
   loading: boolean;
   globalRole: AppRole | null;
   membership: UserMembership | null;
+  fomentoRole: string | null;
   signOut: () => Promise<void>;
   refreshRoles: () => Promise<void>;
 }
