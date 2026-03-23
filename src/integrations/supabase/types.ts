@@ -924,6 +924,7 @@ export type Database = {
           cpf_last4: string | null
           created_at: string
           email: string | null
+          fomento_role: string | null
           full_name: string | null
           id: string
           instagram_url: string | null
@@ -960,6 +961,7 @@ export type Database = {
           cpf_last4?: string | null
           created_at?: string
           email?: string | null
+          fomento_role?: string | null
           full_name?: string | null
           id?: string
           instagram_url?: string | null
@@ -996,6 +998,7 @@ export type Database = {
           cpf_last4?: string | null
           created_at?: string
           email?: string | null
+          fomento_role?: string | null
           full_name?: string | null
           id?: string
           instagram_url?: string | null
