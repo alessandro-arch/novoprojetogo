@@ -52,7 +52,7 @@ const Index = () => {
               <p className="text-sm text-muted-foreground leading-relaxed">
                 {m.description}
               </p>
-              {m.badge && <Badge variant="secondary">{m.badge}</Badge>}
+              
               <Button variant="dark" className="mt-2 gap-2">
                 Acessar <ArrowRight className="w-4 h-4" />
               </Button>
