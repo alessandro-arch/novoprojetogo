@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
       const { data: inviteData, error: inviteError } =
         await adminClient.auth.admin.inviteUserByEmail(email, {
           data: { full_name },
-          redirectTo: "https://projetogo.lovable.app/fomento/login",
+          redirectTo: "https://projetogo.innovago.app/fomento/login",
         });
 
       if (inviteError) {

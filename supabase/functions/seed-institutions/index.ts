@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
       // Fetch from the deployed app's public data
       const urls = [
         csvUrl,
-        "https://projetogo.lovable.app/data/institutions-emec.csv",
+        "https://projetogo.innovago.app/data/institutions-emec.csv",
         "https://id-preview--1a559eba-0539-4eb6-b753-ea572e9cc56a.lovable.app/data/institutions-emec.csv",
       ].filter(Boolean);
 
