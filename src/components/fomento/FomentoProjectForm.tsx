@@ -433,7 +433,11 @@ Campos não encontrados retornar null.`,
               {extracting ? (
                 <div className="flex flex-col items-center gap-2">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  <p className="text-sm text-muted-foreground">Extraindo dados do PDF…</p>
+                  {retryMessage ? (
+                    <p className="text-sm text-amber-600 font-medium">{retryMessage}</p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Extraindo dados do PDF…</p>
+                  )}
                 </div>
               ) : (
                 <>
