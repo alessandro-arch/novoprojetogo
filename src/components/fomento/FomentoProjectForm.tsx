@@ -26,6 +26,27 @@ interface TeamMember { nome: string; funcao: string; email: string; }
 
 const RUBRICA_SUGGESTIONS = ["Bolsas", "Custeio", "Capital", "Diárias", "Passagens"];
 
+const SectionCard = ({ id, title, children, openSections, toggleSection }: {
+  id: string; title: string; children: React.ReactNode;
+  openSections: Record<string, boolean>; toggleSection: (id: string) => void;
+}) => (
+  <Collapsible open={openSections[id]} onOpenChange={() => toggleSection(id)}>
+    <Card className="shadow-sm">
+      <CollapsibleTrigger asChild>
+        <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
+          <CardTitle className="text-sm flex items-center justify-between">
+            {title}
+            <ChevronDown className={`w-4 h-4 transition-transform ${openSections[id] ? "rotate-180" : ""}`} />
+          </CardTitle>
+        </CardHeader>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <CardContent className="pt-0 space-y-4">{children}</CardContent>
+      </CollapsibleContent>
+    </Card>
+  </Collapsible>
+);
+
 const FomentoProjectForm = ({ projectId, onBack }: Props) => {
   const { user } = useFomentoAuth();
   const { toast } = useToast();
