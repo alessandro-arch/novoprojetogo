@@ -432,7 +432,7 @@ Campos não encontrados retornar null.`,
 
       {/* [A] AI Extraction */}
       {!isEditing && (
-        <SectionCard id="ai" title="[A] Extração via IA">
+        <SectionCard {...sectionProps} id="ai" title="[A] Extração via IA">
           <div className="space-y-3">
             <div>
               <Label>Anthropic API Key</Label>
@@ -468,7 +468,7 @@ Campos não encontrados retornar null.`,
       )}
 
       {/* [B] Identification */}
-      <SectionCard id="ident" title="[B] Identificação">
+      <SectionCard {...sectionProps} id="ident" title="[B] Identificação">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div><Label>Processo Interno</Label><Input value={processo_uvv} onChange={(e) => setProcessoUvv(e.target.value)} /></div>
           <div><Label>Pesquisador Principal *</Label><Input value={pesquisador_principal} onChange={(e) => setPesquisador(e.target.value)} required /></div>
@@ -480,7 +480,7 @@ Campos não encontrados retornar null.`,
       </SectionCard>
 
       {/* [C] Classification */}
-      <SectionCard id="class" title="[C] Classificação">
+      <SectionCard {...sectionProps} id="class" title="[C] Classificação">
         <div className="space-y-4">
           <div>
             <Label className="mb-2 block">Fonte</Label>
@@ -527,7 +527,7 @@ Campos não encontrados retornar null.`,
       </SectionCard>
 
       {/* [D] Financial */}
-      <SectionCard id="fin" title="[D] Financeiro">
+      <SectionCard {...sectionProps} id="fin" title="[D] Financeiro">
         <div>
           <Label>Valor Total (R$)</Label>
           <Input type="number" step="0.01" value={valor_total} onChange={(e) => setValorTotal(e.target.value)} placeholder="0.00" />
@@ -557,7 +557,7 @@ Campos não encontrados retornar null.`,
       </SectionCard>
 
       {/* [E] Team */}
-      <SectionCard id="equipe" title="[E] Equipe">
+      <SectionCard {...sectionProps} id="equipe" title="[E] Equipe">
         <div>
           <div className="flex items-center justify-between mb-2">
             <Label>Membros da Equipe</Label>
@@ -590,7 +590,7 @@ Campos não encontrados retornar null.`,
       </SectionCard>
 
       {/* [F] Status & Dates */}
-      <SectionCard id="vigencia" title="[F] Vigência & Status">
+      <SectionCard {...sectionProps} id="vigencia" title="[F] Vigência & Status">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div><Label>Data Assinatura</Label><Input type="date" value={data_assinatura} onChange={(e) => setDataAssinatura(e.target.value)} /></div>
           <div><Label>Início Vigência</Label><Input type="date" value={vigencia_inicio} onChange={(e) => setVigenciaInicio(e.target.value)} /></div>
