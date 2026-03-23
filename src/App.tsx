@@ -50,6 +50,8 @@ const App = () => (
             <Route path="/invite/reviewer" element={<ReviewerInvitePage />} />
             <Route path="/reviewer/activate" element={<ReviewerActivatePage />} />
             <Route path="/fomento/login" element={<FomentoLogin />} />
+            <Route path="/fomento/dashboard" element={<FomentoProtectedRoute><FomentoDashboard /></FomentoProtectedRoute>} />
+            <Route path="/fomento/*" element={<FomentoProtectedRoute><FomentoDashboard /></FomentoProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
