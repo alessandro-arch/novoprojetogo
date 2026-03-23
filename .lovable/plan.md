@@ -1,101 +1,42 @@
 
 
-## Plan: Add Document Management to Fomento Projects
+## Plan: Redesign Landing Page (/) with Full Marketing Layout
 
 ### Summary
-Add a [G] Documents section to the project form with file upload, a new `fomento_documents` table, a private storage bucket, document counter in the project list, and a KPI on the dashboard.
+Replace the current minimal module-selector page with a full landing page featuring a Hero section, Modules section with feature lists, Differentials section, and a proper footer. All within the existing design system (navy dark variant, Plus Jakarta Sans, rounded-xl cards).
 
-### Step 1: Database Migration
+### Changes
 
-Create `fomento_documents` table and `fomento-docs` storage bucket:
+**Single file modified: `src/pages/Index.tsx`**
 
-```sql
--- Table
-CREATE TABLE public.fomento_documents (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  project_id uuid NOT NULL REFERENCES fomento_projects(id) ON DELETE CASCADE,
-  organization_id uuid REFERENCES organizations(id),
-  nome text NOT NULL,
-  descricao text,
-  tipo text NOT NULL DEFAULT 'outro',
-  storage_path text NOT NULL,
-  tamanho_bytes integer,
-  uploaded_by uuid,
-  created_at timestamptz DEFAULT now()
-);
+Rewrite the page with four sections, all inline (no new component files needed since the existing landing components like HeroSection/Footer are used elsewhere and we want this page self-contained):
 
--- Validation trigger (instead of CHECK constraint)
-CREATE OR REPLACE FUNCTION public.validate_fomento_document_tipo()
-RETURNS trigger LANGUAGE plpgsql SET search_path TO 'public' AS $$
-BEGIN
-  IF NEW.tipo NOT IN ('termo_outorga','termo_parceria','aditivo','relatorio_parcial',
-    'relatorio_final','prestacao_contas','publicacao','outro') THEN
-    RAISE EXCEPTION 'tipo inválido';
-  END IF;
-  RETURN NEW;
-END;$$;
+**1. Hero Section**
+- Navy background (`bg-[hsl(220,25%,12%)]`) with white text
+- FileText icon + "ProjetoGO" brand
+- Subtitle about the platform
+- Two CTA buttons side by side: "Acessar ProjetoGO" → `/login`, "Acessar Fomento" → `/fomento/login`
+- "Powered by InnovaGO" tag
 
-CREATE TRIGGER trg_validate_fomento_document_tipo
-  BEFORE INSERT OR UPDATE ON public.fomento_documents
-  FOR EACH ROW EXECUTE FUNCTION validate_fomento_document_tipo();
+**2. Modules Section**
+- Light background, section title "Escolha o módulo"
+- Two cards (md:grid-cols-2) with hover shadow elevation
+- Left card: ProjetoGO — FileText icon, description, 5 check items, "Acessar" button → `/login`
+- Right card: ProjetoGO Fomento — TrendingUp icon, "Novo módulo" badge, description, 6 check items, "Acessar" button → `/fomento/login`
+- Each feature item uses CheckCircle2 icon
 
-ALTER TABLE public.fomento_documents ENABLE ROW LEVEL SECURITY;
+**3. Differentials Section**
+- Muted background, title "Por que usar o ProjetoGO?"
+- Three columns (lg:grid-cols-3): AI (Bot icon), Strategic Vision (BarChart3 icon), Proactive Alerts (Bell icon)
+- Each with icon in circle, title, and description text
 
-CREATE POLICY "fomento_docs_select" ON public.fomento_documents
-  FOR SELECT TO authenticated USING (has_fomento_access(auth.uid()));
-
-CREATE POLICY "fomento_docs_insert" ON public.fomento_documents
-  FOR INSERT TO authenticated WITH CHECK (has_fomento_access(auth.uid()));
-
-CREATE POLICY "fomento_docs_delete" ON public.fomento_documents
-  FOR DELETE TO authenticated USING (has_fomento_admin(auth.uid()));
-
--- Storage bucket
-INSERT INTO storage.buckets (id, name, public) VALUES ('fomento-docs', 'fomento-docs', false);
-
-CREATE POLICY "fomento_docs_storage_select" ON storage.objects
-  FOR SELECT TO authenticated USING (bucket_id = 'fomento-docs' AND has_fomento_access(auth.uid()));
-
-CREATE POLICY "fomento_docs_storage_insert" ON storage.objects
-  FOR INSERT TO authenticated WITH CHECK (bucket_id = 'fomento-docs' AND has_fomento_access(auth.uid()));
-
-CREATE POLICY "fomento_docs_storage_delete" ON storage.objects
-  FOR DELETE TO authenticated USING (bucket_id = 'fomento-docs' AND has_fomento_admin(auth.uid()));
-```
-
-### Step 2: Add [G] Documents Section to `FomentoProjectForm.tsx`
-
-After the `[F] Vigência & Status` section (line 616), add a new `SectionCard` with id `"docs"`:
-
-- Add `docs: true` to `openSections` initial state
-- Query `fomento_documents` for the current `projectId`
-- **Upload zone**: Dropzone accepting PDFs (drag & drop + click), multiple files
-- **Per-file form**: Name (pre-filled from filename), Type select (8 options), Description (optional)
-- **Progress bar** using the `Progress` component during upload
-- Upload flow: `supabase.storage.from('fomento-docs').upload(path, file)` where path = `{org_id}/{project_id}/{filename}`
-- After upload, insert row into `fomento_documents`
-- **Existing documents list**: Icon + name + type badge + size + date + uploader
-- Action buttons: View (signed URL, new tab), Download (signed URL with download disposition), Delete (AlertDialog confirmation)
-- Note: Documents section only shows when editing (needs `projectId`)
-
-### Step 3: Add "Docs" Column to `FomentoProjectsList.tsx`
-
-- Add a query for document counts: `SELECT project_id, count(*) FROM fomento_documents GROUP BY project_id`
-- Add column "Docs" after "Valor Total" showing `📎 N` badge
-- Zero docs shows `—`
-
-### Step 4: Add "Total de Documentos" KPI to `FomentoDashboardView.tsx`
-
-- Query `fomento_documents` count
-- Add 5th KPI card: icon `FileText`, label "Total de Documentos", value = count
-- Adjust grid from `lg:grid-cols-4` to `lg:grid-cols-5`
+**4. Footer**
+- Navy background, single line: "ProjetoGO · Plataforma de gestão de projetos e captação de recursos"
+- "Powered by InnovaGO" and copyright
 
 ### Technical Details
-
-- **Files modified**: `FomentoProjectForm.tsx`, `FomentoProjectsList.tsx`, `FomentoDashboardView.tsx`
-- **New migration**: Creates table, trigger, RLS policies, storage bucket + policies
-- **Storage path convention**: `fomento-docs/{organization_id}/{project_id}/{filename}`
-- **Signed URLs**: Used for view/download since bucket is private; generated via `supabase.storage.from('fomento-docs').createSignedUrl(path, 3600)`
-- **Type labels map**: `{ termo_outorga: "Termo de Outorga", ... }` added to `fomento-utils.ts`
-- **File size formatting**: Helper to show KB/MB
+- Uses existing design tokens: `variant="dark"` buttons, `variant="hero-outline"`, navy hsl color, Badge component
+- Icons from lucide-react: FileText, TrendingUp, ArrowRight, CheckCircle2, Bot, BarChart3, Bell
+- No route changes, no new files needed — everything in Index.tsx
+- Responsive: single column on mobile, two columns on md+
 
