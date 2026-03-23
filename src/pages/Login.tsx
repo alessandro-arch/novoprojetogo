@@ -79,6 +79,14 @@ const Login = () => {
                   className="mt-1"
                 />
               </div>
+              <div className="flex justify-end">
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Esqueci minha senha
+                </Link>
+              </div>
               <Button type="submit" variant="dark" className="w-full min-h-[44px]" size="lg" disabled={loading}>
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                 Entrar
