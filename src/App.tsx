@@ -21,6 +21,7 @@ import ReviewerLoginPage from "./pages/reviewer/ReviewerLoginPage";
 import ReviewerTermsPage from "./pages/reviewer/ReviewerTermsPage";
 import ReviewerTermsGate from "./components/ReviewerTermsGate";
 import NotFound from "./pages/NotFound";
+import FomentoLogin from "./pages/fomento/FomentoLogin";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/avaliador" element={<ReviewerLoginPage />} />
             <Route path="/invite/reviewer" element={<ReviewerInvitePage />} />
             <Route path="/reviewer/activate" element={<ReviewerActivatePage />} />
+            <Route path="/fomento/login" element={<FomentoLogin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
