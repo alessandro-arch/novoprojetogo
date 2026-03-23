@@ -1,78 +1,63 @@
 
 
-## Plan: Fomento Authentication Flow
+## Plan: Create Fomento Database Tables
 
-### 1. Database Migration
-Add `fomento_role` column to existing `profiles` table using a validation trigger (not CHECK constraint, per Supabase guidelines):
+### 1. Security Definer Function
+Create a `has_fomento_role` function (SECURITY DEFINER) to check if a user has any fomento_role, and a `has_fomento_admin` variant for admin-only checks. This avoids recursive RLS on the profiles table.
 
 ```sql
-ALTER TABLE public.profiles ADD COLUMN fomento_role text DEFAULT NULL;
-
--- Validation trigger instead of CHECK
-CREATE OR REPLACE FUNCTION public.validate_fomento_role()
-RETURNS trigger LANGUAGE plpgsql AS $$
-BEGIN
-  IF NEW.fomento_role IS NOT NULL AND NEW.fomento_role NOT IN ('admin', 'gestor') THEN
-    RAISE EXCEPTION 'fomento_role must be admin, gestor, or NULL';
-  END IF;
-  RETURN NEW;
-END;
+CREATE OR REPLACE FUNCTION public.has_fomento_access(_user_id uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE user_id = _user_id AND fomento_role IS NOT NULL
+  )
 $$;
 
-CREATE TRIGGER trg_validate_fomento_role
-BEFORE INSERT OR UPDATE ON public.profiles
-FOR EACH ROW EXECUTE FUNCTION public.validate_fomento_role();
+CREATE OR REPLACE FUNCTION public.has_fomento_admin(_user_id uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE user_id = _user_id AND fomento_role = 'admin'
+  )
+$$;
 ```
 
-### 2. New: `src/contexts/FomentoContext.tsx`
-A lightweight context that tracks the active module (`'projetogo' | 'fomento'`) and the user's `fomento_role`. Provides:
-- `activeModule` state
-- `fomentoRole` (fetched from profiles after login)
-- `setActiveModule()` to switch context
+### 2. Create Tables
+Three tables using validation triggers (not CHECK constraints) per Supabase guidelines:
 
-### 3. Rewrite: `src/pages/fomento/FomentoLogin.tsx`
-Full login form matching `/login` visual style but with:
-- `TrendingUp` icon + "ProjetoGO Fomento" title
-- `Badge` "PRPPGE · UVV" below logo
-- Dark blue button (`bg-[#1e3a5f]`) instead of default `variant="dark"`
-- "Voltar ao inicio" link → `/`
-- On successful login: query `profiles.fomento_role` for the user
-  - If role exists → set `activeModule='fomento'`, navigate to `/fomento/dashboard`
-  - If null → show error toast, sign out, stay on page
+- **fomento_projects** — main project table with all specified columns. Uses `created_by uuid` (no FK to auth.users per project conventions).
+- **fomento_rubricas** — budget line items, FK to fomento_projects with CASCADE delete.
+- **fomento_team** — team members, FK to fomento_projects with CASCADE delete.
 
-### 4. New: `src/components/FomentoProtectedRoute.tsx`
-Similar to `ProtectedRoute` but:
-- Redirects unauthenticated users to `/fomento/login` (not `/login`)
-- Checks `fomento_role` from profiles query; if null → redirect to `/fomento/login`
-- Uses the shared `useAuth` for session/user state
+Validation triggers for `fonte`, `natureza`, `area`, `vinculo_academico`, and `status` columns instead of CHECK constraints.
 
-### 5. New: `src/pages/fomento/FomentoDashboard.tsx`
-Minimal placeholder page showing "Fomento Dashboard" with the user's role badge and a sign-out button.
+### 3. RLS Policies
 
-### 6. Update: `src/App.tsx`
-- Wrap all routes with `FomentoProvider`
-- Add fomento routes:
-  - `/fomento/login` → `<FomentoLogin />` (public)
-  - `/fomento/dashboard` → `<FomentoProtectedRoute><FomentoDashboard /></FomentoProtectedRoute>`
-  - `/fomento/*` → `<FomentoProtectedRoute>...</FomentoProtectedRoute>` (catch-all for future)
+**fomento_projects:**
+- SELECT/INSERT/UPDATE: `has_fomento_access(auth.uid())`
+- DELETE: `has_fomento_admin(auth.uid())`
 
-### 7. Update: `src/contexts/AuthContext.tsx`
-- Add `fomentoRole: string | null` to context
-- Fetch `fomento_role` from profiles alongside existing role fetching in `fetchRoles`
-- Expose in provider value
+**fomento_rubricas & fomento_team:**
+- ALL: `has_fomento_access(auth.uid())`
 
-### Files changed/created
+### 4. Updated_at Trigger
+Reuse existing `update_updated_at_column()` function for fomento_projects.
+
+### Files changed
 | File | Action |
 |------|--------|
-| Migration SQL | Add `fomento_role` + validation trigger |
-| `src/contexts/AuthContext.tsx` | Add `fomentoRole` field |
-| `src/pages/fomento/FomentoLogin.tsx` | Rewrite with full login form |
-| `src/components/FomentoProtectedRoute.tsx` | Create |
-| `src/pages/fomento/FomentoDashboard.tsx` | Create placeholder |
-| `src/App.tsx` | Add fomento protected routes |
+| Migration SQL | Create functions, tables, triggers, RLS policies |
 
 ### What stays untouched
-- `/login`, `/register`, `/dashboard` and all existing ProjetoGO routes
-- Existing `ProtectedRoute` component
-- All other tables and RLS policies
+- All existing tables including profiles
+- All existing RLS policies
+- All frontend code (no changes needed for this migration)
+
+### Technical details
+- Security definer functions prevent recursive RLS when querying profiles
+- Validation triggers used instead of CHECK constraints (Supabase guideline)
+- `created_by` stored as plain uuid without FK to auth.users (project convention)
 
