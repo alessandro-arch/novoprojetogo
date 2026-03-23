@@ -63,6 +63,7 @@ const FomentoProjectForm = ({ projectId, onBack }: Props) => {
   const [apiKey, setApiKey] = useState(() => localStorage.getItem("fomento_anthropic_key") || "");
   const [extracting, setExtracting] = useState(false);
   const [extractionStatus, setExtractionStatus] = useState<"idle" | "success" | "error">("idle");
+  const [retryMessage, setRetryMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Sections open state
