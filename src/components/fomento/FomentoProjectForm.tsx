@@ -247,9 +247,17 @@ Campos não encontrados retornar null.`,
         throw new Error(lastError || "Falha na extração");
       }
 
-      const result = await response.json();
-      const text = result.content?.[0]?.text || "";
-      const parsed = JSON.parse(text);
+      const data = await response.json();
+      const rawText = data.content
+        .map((block: any) => block.text || '')
+        .join('');
+      const cleaned = rawText
+        .replace(/```json\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .trim();
+      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('Nenhum JSON válido encontrado na resposta');
+      const parsed = JSON.parse(jsonMatch[0]);
 
       if (parsed.pesquisador_principal) setPesquisador(parsed.pesquisador_principal);
       if (parsed.titulo) setTitulo(parsed.titulo);
