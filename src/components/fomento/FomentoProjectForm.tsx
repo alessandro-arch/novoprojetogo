@@ -95,7 +95,7 @@ const FomentoProjectForm = ({ projectId, onBack }: Props) => {
 
   // Sections open state
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    ai: true, ident: true, class: true, fin: true, equipe: true, vigencia: true,
+    ai: true, ident: true, class: true, fin: true, equipe: true, vigencia: true, docs: true,
   });
 
   const toggleSection = (key: string) => setOpenSections((s) => ({ ...s, [key]: !s[key] }));
