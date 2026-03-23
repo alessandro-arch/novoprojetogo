@@ -451,6 +451,157 @@ export type Database = {
         }
         Relationships: []
       }
+      fomento_projects: {
+        Row: {
+          ano: number | null
+          area: string | null
+          bolsistas_doutorado: number | null
+          bolsistas_extensao: number | null
+          bolsistas_ic: number | null
+          bolsistas_mestrado: number | null
+          bolsistas_pos_doc: number | null
+          created_at: string | null
+          created_by: string | null
+          data_assinatura: string | null
+          edital: string | null
+          extracted_by_ai: boolean | null
+          fonte: string | null
+          id: string
+          natureza: string | null
+          orgao_financiador: string | null
+          pesquisador_principal: string
+          ppg_nome: string | null
+          processo_uvv: string | null
+          status: string | null
+          tipo_servico: string | null
+          titulo: string
+          updated_at: string | null
+          valor_total: number | null
+          vigencia_fim: string | null
+          vigencia_inicio: string | null
+          vinculo_academico: string | null
+        }
+        Insert: {
+          ano?: number | null
+          area?: string | null
+          bolsistas_doutorado?: number | null
+          bolsistas_extensao?: number | null
+          bolsistas_ic?: number | null
+          bolsistas_mestrado?: number | null
+          bolsistas_pos_doc?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          data_assinatura?: string | null
+          edital?: string | null
+          extracted_by_ai?: boolean | null
+          fonte?: string | null
+          id?: string
+          natureza?: string | null
+          orgao_financiador?: string | null
+          pesquisador_principal: string
+          ppg_nome?: string | null
+          processo_uvv?: string | null
+          status?: string | null
+          tipo_servico?: string | null
+          titulo: string
+          updated_at?: string | null
+          valor_total?: number | null
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
+          vinculo_academico?: string | null
+        }
+        Update: {
+          ano?: number | null
+          area?: string | null
+          bolsistas_doutorado?: number | null
+          bolsistas_extensao?: number | null
+          bolsistas_ic?: number | null
+          bolsistas_mestrado?: number | null
+          bolsistas_pos_doc?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          data_assinatura?: string | null
+          edital?: string | null
+          extracted_by_ai?: boolean | null
+          fonte?: string | null
+          id?: string
+          natureza?: string | null
+          orgao_financiador?: string | null
+          pesquisador_principal?: string
+          ppg_nome?: string | null
+          processo_uvv?: string | null
+          status?: string | null
+          tipo_servico?: string | null
+          titulo?: string
+          updated_at?: string | null
+          valor_total?: number | null
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
+          vinculo_academico?: string | null
+        }
+        Relationships: []
+      }
+      fomento_rubricas: {
+        Row: {
+          id: string
+          project_id: string
+          tipo: string
+          valor: number
+        }
+        Insert: {
+          id?: string
+          project_id: string
+          tipo: string
+          valor?: number
+        }
+        Update: {
+          id?: string
+          project_id?: string
+          tipo?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fomento_rubricas_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "fomento_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fomento_team: {
+        Row: {
+          email: string | null
+          funcao: string | null
+          id: string
+          nome: string
+          project_id: string
+        }
+        Insert: {
+          email?: string | null
+          funcao?: string | null
+          id?: string
+          nome: string
+          project_id: string
+        }
+        Update: {
+          email?: string | null
+          funcao?: string | null
+          id?: string
+          nome?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fomento_team_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "fomento_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       form_fields: {
         Row: {
           created_at: string
@@ -1790,6 +1941,8 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      has_fomento_access: { Args: { _user_id: string }; Returns: boolean }
+      has_fomento_admin: { Args: { _user_id: string }; Returns: boolean }
       has_org_role: {
         Args: {
           _org_id: string
