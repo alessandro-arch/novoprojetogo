@@ -1,0 +1,93 @@
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
+import { User, Session } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+
+interface FomentoAuthContextType {
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  fomentoRole: string | null;
+  profileName: string | null;
+  signOut: () => Promise<void>;
+  refreshRole: () => Promise<void>;
+}
+
+const FomentoAuthContext = createContext<FomentoAuthContextType>({
+  user: null,
+  session: null,
+  loading: true,
+  fomentoRole: null,
+  profileName: null,
+  signOut: async () => {},
+  refreshRole: async () => {},
+});
+
+export const useFomentoAuth = () => useContext(FomentoAuthContext);
+
+export const FomentoAuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [fomentoRole, setFomentoRole] = useState<string | null>(null);
+  const [profileName, setProfileName] = useState<string | null>(null);
+
+  const fetchFomentoRole = useCallback(async (userId: string) => {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("fomento_role, full_name")
+      .eq("user_id", userId)
+      .single();
+
+    setFomentoRole((profile as any)?.fomento_role ?? null);
+    setProfileName((profile as any)?.full_name ?? null);
+  }, []);
+
+  const refreshRole = useCallback(async () => {
+    if (user) await fetchFomentoRole(user.id);
+  }, [user, fetchFomentoRole]);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, newSession) => {
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+
+        if (newSession?.user) {
+          setTimeout(() => fetchFomentoRole(newSession.user.id), 0);
+        } else {
+          setFomentoRole(null);
+          setProfileName(null);
+        }
+
+        if (_event === "SIGNED_OUT") setLoading(false);
+      }
+    );
+
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      setSession(s);
+      setUser(s?.user ?? null);
+      if (s?.user) {
+        fetchFomentoRole(s.user.id).finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [fetchFomentoRole]);
+
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
+    setFomentoRole(null);
+    setProfileName(null);
+    window.location.replace("/");
+  }, []);
+
+  return (
+    <FomentoAuthContext.Provider value={{ user, session, loading, fomentoRole, profileName, signOut, refreshRole }}>
+      {children}
+    </FomentoAuthContext.Provider>
+  );
+};

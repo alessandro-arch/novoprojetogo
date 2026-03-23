@@ -1923,6 +1923,15 @@ export type Database = {
     }
     Functions: {
       ensure_default_membership: { Args: never; Returns: undefined }
+      find_profile_by_email: {
+        Args: { _email: string }
+        Returns: {
+          email: string
+          fomento_role: string
+          full_name: string
+          user_id: string
+        }[]
+      }
       generate_form_code: { Args: { p_org_id: string }; Returns: string }
       generate_submission_protocol: {
         Args: { p_edital_id: string }
@@ -1966,9 +1975,22 @@ export type Database = {
         Args: { _proposal_id: string; _user_id: string }
         Returns: boolean
       }
+      list_fomento_users: {
+        Args: never
+        Returns: {
+          email: string
+          fomento_role: string
+          full_name: string
+          user_id: string
+        }[]
+      }
       lookup_email_by_cpf_hash: {
         Args: { p_cpf_hash: string }
         Returns: string
+      }
+      set_fomento_role: {
+        Args: { _role: string; _target_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {
