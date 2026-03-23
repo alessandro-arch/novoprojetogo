@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { FomentoAuthProvider } from "@/contexts/FomentoAuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -22,7 +23,7 @@ import ReviewerTermsPage from "./pages/reviewer/ReviewerTermsPage";
 import ReviewerTermsGate from "./components/ReviewerTermsGate";
 import NotFound from "./pages/NotFound";
 import FomentoLogin from "./pages/fomento/FomentoLogin";
-import FomentoDashboard from "./pages/fomento/FomentoDashboard";
+import FomentoPanel from "./pages/fomento/FomentoPanel";
 import FomentoProtectedRoute from "./components/FomentoProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -34,26 +35,27 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/admin/*" element={<ProtectedRoute allowedRoles={["icca_admin"]}><AdminPanel /></ProtectedRoute>} />
-            <Route path="/org/*" element={<ProtectedRoute allowedRoles={["org_admin", "edital_manager"]}><OrgPanel /></ProtectedRoute>} />
-            <Route path="/proponente/*" element={<ProtectedRoute allowedRoles={["proponente"]}><ProponentePanel /></ProtectedRoute>} />
-            <Route path="/reviewer/terms" element={<ProtectedRoute allowedRoles={["reviewer"]}><ReviewerTermsPage /></ProtectedRoute>} />
-            <Route path="/reviewer/*" element={<ProtectedRoute allowedRoles={["reviewer"]}><ReviewerTermsGate><ReviewerPanel /></ReviewerTermsGate></ProtectedRoute>} />
-            <Route path="/financeiro/*" element={<ProtectedRoute allowedRoles={["proponente"]}><FinanceiroPanel /></ProtectedRoute>} />
-            <Route path="/avaliador" element={<ReviewerLoginPage />} />
-            <Route path="/invite/reviewer" element={<ReviewerInvitePage />} />
-            <Route path="/reviewer/activate" element={<ReviewerActivatePage />} />
-            <Route path="/fomento/login" element={<FomentoLogin />} />
-            <Route path="/fomento/dashboard" element={<FomentoProtectedRoute><FomentoDashboard /></FomentoProtectedRoute>} />
-            <Route path="/fomento/*" element={<FomentoProtectedRoute><FomentoDashboard /></FomentoProtectedRoute>} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <FomentoAuthProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/admin/*" element={<ProtectedRoute allowedRoles={["icca_admin"]}><AdminPanel /></ProtectedRoute>} />
+              <Route path="/org/*" element={<ProtectedRoute allowedRoles={["org_admin", "edital_manager"]}><OrgPanel /></ProtectedRoute>} />
+              <Route path="/proponente/*" element={<ProtectedRoute allowedRoles={["proponente"]}><ProponentePanel /></ProtectedRoute>} />
+              <Route path="/reviewer/terms" element={<ProtectedRoute allowedRoles={["reviewer"]}><ReviewerTermsPage /></ProtectedRoute>} />
+              <Route path="/reviewer/*" element={<ProtectedRoute allowedRoles={["reviewer"]}><ReviewerTermsGate><ReviewerPanel /></ReviewerTermsGate></ProtectedRoute>} />
+              <Route path="/financeiro/*" element={<ProtectedRoute allowedRoles={["proponente"]}><FinanceiroPanel /></ProtectedRoute>} />
+              <Route path="/avaliador" element={<ReviewerLoginPage />} />
+              <Route path="/invite/reviewer" element={<ReviewerInvitePage />} />
+              <Route path="/reviewer/activate" element={<ReviewerActivatePage />} />
+              <Route path="/fomento/login" element={<FomentoLogin />} />
+              <Route path="/fomento/*" element={<FomentoProtectedRoute><FomentoPanel /></FomentoProtectedRoute>} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </FomentoAuthProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
