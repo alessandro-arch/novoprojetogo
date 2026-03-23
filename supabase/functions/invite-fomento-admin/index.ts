@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
       const { data: inviteData, error: inviteError } =
         await adminClient.auth.admin.inviteUserByEmail(email, {
           data: { full_name },
-          redirectTo: `${supabaseUrl.replace('.supabase.co', '.supabase.co')}/auth/v1/callback`,
+          redirectTo: "https://projetogo.lovable.app/fomento/login",
         });
 
       if (inviteError) {
