@@ -1,85 +1,73 @@
 
 
-## Painel Master do Fomento — Gestão de Organizações
+## Plan: Add "Resend Invite" Feature to Fomento Master Panel
 
-### Contexto
-Atualmente o módulo Fomento tem apenas `admin` (administração de usuários). Não existe um conceito de "organizações" dentro do Fomento, nem um painel "master". Precisamos criar toda a infraestrutura.
+### Summary
+Add invite resend functionality with status tracking across the organization listing and edit screens, plus a new invite log table.
 
-### Arquitetura
+### Step 1: Create `fomento_invite_log` table (Migration)
 
-```text
-/fomento/master
-  ├── Listagem de organizações (cards/tabela)
-  └── /fomento/master/nova → Formulário 2 passos
-      └── /fomento/master/:id/editar → Edição
+```sql
+CREATE TABLE public.fomento_invite_log (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL REFERENCES fomento_organizations(id) ON DELETE CASCADE,
+  email text NOT NULL,
+  enviado_em timestamptz NOT NULL DEFAULT now(),
+  enviado_por uuid NOT NULL
+);
+
+ALTER TABLE public.fomento_invite_log ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "fomento_invite_log_select" ON public.fomento_invite_log
+  FOR SELECT TO authenticated USING (has_fomento_admin(auth.uid()));
+
+CREATE POLICY "fomento_invite_log_insert" ON public.fomento_invite_log
+  FOR INSERT TO authenticated WITH CHECK (has_fomento_admin(auth.uid()));
 ```
 
-### 1. Migração de Banco de Dados
+### Step 2: Update Edge Function `invite-fomento-admin`
 
-**Nova tabela `fomento_organizations`:**
-- `id` UUID PK
-- `name` TEXT NOT NULL (nome completo)
-- `sigla` TEXT
-- `emec_code` TEXT (código eMEC)
-- `plan` TEXT NOT NULL DEFAULT 'basic' CHECK (basic/pro/enterprise)
-- `admin_user_id` UUID REFERENCES auth.users(id) — admin vinculado
-- `admin_name` TEXT
-- `admin_email` TEXT
-- `status` TEXT NOT NULL DEFAULT 'ativo' CHECK (ativo/inativo)
-- `created_at`, `updated_at` TIMESTAMPTZ
+- Add support for `resend: true` flag in the request body
+- When `resend` is true and user already exists, call `adminClient.auth.admin.inviteUserByEmail` again (Supabase allows re-inviting existing users)
+- Log the invite to `fomento_invite_log` table on every successful invite (both new and resend)
+- Return `{ success: true, resent: true }` for resend operations
 
-**RLS Policies:**
-- SELECT/INSERT/UPDATE/DELETE restritos a usuários com `fomento_role = 'admin'` (via `has_fomento_admin`)
+### Step 3: Update `FomentoMasterPanel.tsx` - OrgListing
 
-**Nova função SQL `count_fomento_org_stats`:**
-- Retorna contagem de usuários ativos e projetos por organização (para a listagem)
+- Add `admin_user_id` check: if org has `admin_email` but admin has never logged in (we can check `last_sign_in_at` via the edge function response or a new field), show "Convite pendente" badge
+- Add a "Reenviar Convite" button (Mail icon) next to Edit/Power buttons, visible when admin_email exists
+- Button calls the `invite-fomento-admin` edge function with `resend: true`
+- Shows toast on success
 
-### 2. Edge Function: `invite-fomento-admin`
+### Step 4: Update `FomentoMasterPanel.tsx` - OrgForm (Step 2)
 
-- Recebe: `email`, `full_name`, `org_id`
-- Cria usuário via `supabase.auth.admin.inviteUserByEmail()` (envia magic link automático)
-- Se usuário já existe, apenas vincula
-- Atualiza `profiles.fomento_role = 'admin'`
-- Atualiza `fomento_organizations.admin_user_id`
+- Add invite status indicator below the email field:
+  - Query admin's `last_sign_in_at` via a new edge function endpoint or add `admin_status` field to `fomento_organizations`
+  - Display colored badge: Convite pendente / Ativo / Inativo
+- Add "Reenviar Convite" button
+- Query `fomento_invite_log` for the org, display last 3 entries with formatted timestamps
+- Show "Ultimo envio: DD/MM/YYYY as HH:MM" below the resend button
 
-### 3. Novo Componente: `FomentoMasterPanel.tsx`
+### Step 5: Add `admin_status` column to `fomento_organizations`
 
-**Listagem:**
-- Tabela com colunas: Nome/Sigla, Admin (nome + email), Plano, Usuários ativos, Projetos, Status
-- Botões: Editar, Desativar/Ativar, Acessar como admin
-- Botão "Nova Organização"
+To track admin status without querying auth.users (which is not accessible client-side):
 
-**Formulário (2 passos):**
+```sql
+ALTER TABLE public.fomento_organizations 
+  ADD COLUMN admin_status text NOT NULL DEFAULT 'pendente';
+```
 
-*Passo 1 — Dados da Organização:*
-- Busca eMEC (reutilizando lógica existente do `InstitutionSelector`)
-- Nome completo, Sigla
-- Plano: Select com Basic/Pro/Enterprise
+The edge function will:
+- Set `admin_status = 'pendente'` on initial invite
+- A trigger or the login flow will update to `'ativo'` on first access
 
-*Passo 2 — Administrador:*
-- Nome completo do admin
-- E-mail institucional
-- Ao salvar: chama edge function `invite-fomento-admin`
+Alternatively, the edge function can check `last_sign_in_at` from `auth.admin.getUserById()` and return the status in real-time.
 
-### 4. Roteamento
+### Technical Details
 
-**Arquivo `FomentoPanel.tsx`:**
-- Adicionar nav item "Master" (ícone Building2) visível apenas para `fomentoRole === 'admin'`
-- Rota `section === "master"` renderiza `FomentoMasterPanel`
-- Sub-rotas: `/fomento/master/nova`, `/fomento/master/:id/editar`
-
-### 5. Contexto de Segurança
-
-- Apenas usuários com `fomento_role = 'admin'` veem e acessam o painel master
-- A edge function usa `SUPABASE_SERVICE_ROLE_KEY` para criar usuários via Auth Admin API
-- RLS na tabela `fomento_organizations` restringe acesso a admins do Fomento
-
-### Resumo de Arquivos
-
-| Ação | Arquivo |
-|------|---------|
-| Criar | `supabase/migrations/xxx_fomento_organizations.sql` |
-| Criar | `supabase/functions/invite-fomento-admin/index.ts` |
-| Criar | `src/components/fomento/FomentoMasterPanel.tsx` |
-| Editar | `src/pages/fomento/FomentoPanel.tsx` (adicionar rota master) |
+- **Edge function approach for status**: Since `auth.users.last_sign_in_at` is only accessible server-side, the edge function will check this when called and also return the admin's current auth status
+- **Resend mechanism**: Supabase's `inviteUserByEmail` can be called again for existing users to resend the invitation email
+- **Invite log**: Read via standard Supabase client query with RLS (fomento admin only)
+- **Files modified**: `FomentoMasterPanel.tsx`, `invite-fomento-admin/index.ts`
+- **New table**: `fomento_invite_log`
 
