@@ -40,6 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [globalRole, setGlobalRole] = useState<AppRole | null>(null);
   const [membership, setMembership] = useState<UserMembership | null>(null);
+  const [fomentoRole, setFomentoRole] = useState<string | null>(null);
 
   let queryClient: ReturnType<typeof useQueryClient> | null = null;
   try {
