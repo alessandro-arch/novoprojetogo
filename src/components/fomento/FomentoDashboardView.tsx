@@ -38,6 +38,15 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     },
   });
 
+  const { data: totalDocs } = useQuery({
+    queryKey: ["fomento-docs-total"],
+    queryFn: async () => {
+      const { count, error } = await supabase.from("fomento_documents").select("id", { count: "exact", head: true });
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   const isLoading = loadingProjects || loadingRubricas;
 
   if (isLoading) {
