@@ -81,7 +81,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
   }).length;
 
   // Area breakdown
-  const areaData = ["pesquisa", "inovacao", "extensao", "servicos"].map((a) => {
+  const areaData = ["pesquisa", "inovacao", "extensao", "ensino", "servicos"].map((a) => {
     const filtered = p.filter((x) => x.area === a);
     return {
       area: AREA_LABELS[a] || a,
@@ -159,7 +159,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
       </div>
 
       {/* Area breakdown */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {areaData.map((a) => (
           <Card key={a.area} className="shadow-sm">
             <CardContent className="p-4 text-center">
