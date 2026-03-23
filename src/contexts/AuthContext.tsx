@@ -86,6 +86,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } else {
       setMembership(null);
     }
+
+    // Fetch fomento_role from profiles
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("fomento_role")
+      .eq("user_id", userId)
+      .single();
+
+    setFomentoRole((profile as any)?.fomento_role ?? null);
   }, []);
 
   const refreshRoles = useCallback(async () => {
