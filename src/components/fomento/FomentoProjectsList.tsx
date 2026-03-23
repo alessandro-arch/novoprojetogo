@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Search, Download, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Download, Pencil, Trash2, Paperclip } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatBRL, formatDateBR, STATUS_LABELS, AREA_LABELS, FONTE_LABELS } from "@/lib/fomento-utils";
 
@@ -34,6 +34,17 @@ const FomentoProjectsList = ({ onNewProject, onEditProject }: Props) => {
       const { data, error } = await supabase.from("fomento_projects").select("*").order("created_at", { ascending: false });
       if (error) throw error;
       return data;
+    },
+  });
+
+  const { data: docCounts } = useQuery({
+    queryKey: ["fomento-doc-counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("fomento_documents").select("project_id");
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      data.forEach((d) => { counts[d.project_id] = (counts[d.project_id] || 0) + 1; });
+      return counts;
     },
   });
 
@@ -152,13 +163,14 @@ const FomentoProjectsList = ({ onNewProject, onEditProject }: Props) => {
                   <TableHead>Status</TableHead>
                   <TableHead>Vigência</TableHead>
                   <TableHead className="text-right">Valor Total</TableHead>
+                  <TableHead>Docs</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                       Nenhum projeto encontrado.
                     </TableCell>
                   </TableRow>
@@ -176,6 +188,11 @@ const FomentoProjectsList = ({ onNewProject, onEditProject }: Props) => {
                         {formatDateBR(p.vigencia_inicio)} — {formatDateBR(p.vigencia_fim)}
                       </TableCell>
                       <TableCell className="text-right font-mono">{formatBRL(Number(p.valor_total))}</TableCell>
+                      <TableCell>
+                        {(docCounts?.[p.id] || 0) > 0 ? (
+                          <span className="inline-flex items-center gap-1 text-sm"><Paperclip className="w-3.5 h-3.5" />{docCounts[p.id]}</span>
+                        ) : "—"}
+                      </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
                           <Button variant="ghost" size="icon" onClick={() => onEditProject(p.id)}>

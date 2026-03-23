@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DollarSign, Briefcase, Users, AlertTriangle, Pencil } from "lucide-react";
+import { DollarSign, Briefcase, Users, AlertTriangle, Pencil, FileText } from "lucide-react";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { formatBRL, formatDateBR, daysRemaining, STATUS_LABELS, AREA_LABELS } from "@/lib/fomento-utils";
 
@@ -35,6 +35,15 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
       const { data, error } = await supabase.from("fomento_rubricas").select("*");
       if (error) throw error;
       return data;
+    },
+  });
+
+  const { data: totalDocs } = useQuery({
+    queryKey: ["fomento-docs-total"],
+    queryFn: async () => {
+      const { count, error } = await supabase.from("fomento_documents").select("id", { count: "exact", head: true });
+      if (error) throw error;
+      return count ?? 0;
     },
   });
 
@@ -125,6 +134,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     { label: "Projetos Ativos", value: String(ativos), icon: Briefcase, color: "text-primary", bg: "bg-[hsl(var(--info-light))]" },
     { label: "Pesquisadores", value: String(pesquisadores), icon: Users, color: "text-[hsl(var(--warning))]", bg: "bg-[hsl(var(--warning-light))]" },
     { label: "Vencendo em 60d", value: String(vencendo60), icon: AlertTriangle, color: vencendo60 > 0 ? "text-destructive" : "text-muted-foreground", bg: vencendo60 > 0 ? "bg-[hsl(var(--danger-light))]" : "bg-muted" },
+    { label: "Total de Documentos", value: String(totalDocs ?? 0), icon: FileText, color: "text-primary", bg: "bg-[hsl(var(--info-light))]" },
   ];
 
   return (
@@ -132,7 +142,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
       <h1 className="text-2xl font-bold font-heading text-foreground">Dashboard</h1>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {kpis.map((k) => (
           <Card key={k.label} className="shadow-sm">
             <CardContent className="p-5 flex items-center gap-4">

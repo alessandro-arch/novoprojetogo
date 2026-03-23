@@ -39,3 +39,21 @@ export const FONTE_LABELS: Record<string, string> = {
   publica: "Pública",
   privada: "Privada",
 };
+
+export const TIPO_DOC_LABELS: Record<string, string> = {
+  termo_outorga: "Termo de Outorga",
+  termo_parceria: "Termo de Parceria",
+  aditivo: "Aditivo",
+  relatorio_parcial: "Relatório Parcial",
+  relatorio_final: "Relatório Final",
+  prestacao_contas: "Prestação de Contas",
+  publicacao: "Publicação",
+  outro: "Outro",
+};
+
+/** Format file size in KB or MB */
+export const formatFileSize = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};

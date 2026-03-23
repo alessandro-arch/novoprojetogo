@@ -15,6 +15,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ArrowLeft, ChevronDown, Plus, Trash2, Upload, Bot, Loader2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatBRL } from "@/lib/fomento-utils";
+import FomentoDocumentsSection from "./FomentoDocumentsSection";
 
 interface Props {
   projectId?: string;
@@ -94,7 +95,7 @@ const FomentoProjectForm = ({ projectId, onBack }: Props) => {
 
   // Sections open state
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    ai: true, ident: true, class: true, fin: true, equipe: true, vigencia: true,
+    ai: true, ident: true, class: true, fin: true, equipe: true, vigencia: true, docs: true,
   });
 
   const toggleSection = (key: string) => setOpenSections((s) => ({ ...s, [key]: !s[key] }));
@@ -614,6 +615,13 @@ Campos não encontrados retornar null.`,
           </div>
         </div>
       </SectionCard>
+
+      {/* [G] Documents */}
+      {isEditing && projectId && (
+        <SectionCard {...sectionProps} id="docs" title="[G] Documentos do Projeto">
+          <FomentoDocumentsSection projectId={projectId} />
+        </SectionCard>
+      )}
 
       {/* Bottom save button */}
       <div className="flex justify-end pt-2">

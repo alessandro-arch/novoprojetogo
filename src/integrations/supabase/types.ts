@@ -451,6 +451,60 @@ export type Database = {
         }
         Relationships: []
       }
+      fomento_documents: {
+        Row: {
+          created_at: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          organization_id: string | null
+          project_id: string
+          storage_path: string
+          tamanho_bytes: number | null
+          tipo: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          organization_id?: string | null
+          project_id: string
+          storage_path: string
+          tamanho_bytes?: number | null
+          tipo?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          organization_id?: string | null
+          project_id?: string
+          storage_path?: string
+          tamanho_bytes?: number | null
+          tipo?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fomento_documents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fomento_documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "fomento_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fomento_invite_log: {
         Row: {
           email: string
