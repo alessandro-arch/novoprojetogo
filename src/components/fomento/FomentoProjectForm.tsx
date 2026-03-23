@@ -214,7 +214,7 @@ const FomentoProjectForm = ({ projectId, onBack }: Props) => {
 { "pesquisador_principal":"", "titulo":"", "edital":"", "orgao_financiador":"",
   "ano":null, "data_assinatura":"YYYY-MM-DD", "vigencia_inicio":"YYYY-MM-DD",
   "vigencia_fim":"YYYY-MM-DD", "valor_total":null,
-  "fonte":"publica ou privada", "natureza":"outorga ou parceria",
+  "fonte":"publica ou privada", "natureza":"auxilio_financeiro ou bolsa",
   "rubricas":[{"tipo":"","valor":null}] }
 Campos não encontrados retornar null.`,
             },

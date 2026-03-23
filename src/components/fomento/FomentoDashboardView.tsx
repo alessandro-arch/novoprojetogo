@@ -81,7 +81,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
   }).length;
 
   // Area breakdown
-  const areaData = ["pesquisa", "inovacao", "extensao", "servicos"].map((a) => {
+  const areaData = ["pesquisa", "inovacao", "extensao", "ensino", "servicos"].map((a) => {
     const filtered = p.filter((x) => x.area === a);
     return {
       area: AREA_LABELS[a] || a,

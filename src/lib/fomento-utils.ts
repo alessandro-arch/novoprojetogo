@@ -32,7 +32,19 @@ export const AREA_LABELS: Record<string, string> = {
   pesquisa: "Pesquisa",
   inovacao: "Inovação",
   extensao: "Extensão",
+  ensino: "Ensino",
   servicos: "Serviços",
+};
+
+export const NATUREZA_LABELS: Record<string, string> = {
+  auxilio_financeiro: "Auxílio Financeiro",
+  bolsa: "Bolsa",
+};
+
+export const VINCULO_LABELS: Record<string, string> = {
+  ppg: "Programa de Pós-Graduação",
+  graduacao: "Graduação",
+  nenhum: "Nenhum",
 };
 
 export const FONTE_LABELS: Record<string, string> = {
