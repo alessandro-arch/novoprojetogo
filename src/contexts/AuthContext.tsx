@@ -16,6 +16,7 @@ interface AuthContextType {
   loading: boolean;
   globalRole: AppRole | null;
   membership: UserMembership | null;
+  fomentoRole: string | null;
   signOut: () => Promise<void>;
   refreshRoles: () => Promise<void>;
 }
@@ -26,6 +27,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   globalRole: null,
   membership: null,
+  fomentoRole: null,
   signOut: async () => {},
   refreshRoles: async () => {},
 });
@@ -38,6 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [globalRole, setGlobalRole] = useState<AppRole | null>(null);
   const [membership, setMembership] = useState<UserMembership | null>(null);
+  const [fomentoRole, setFomentoRole] = useState<string | null>(null);
 
   let queryClient: ReturnType<typeof useQueryClient> | null = null;
   try {
@@ -83,6 +86,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } else {
       setMembership(null);
     }
+
+    // Fetch fomento_role from profiles
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("fomento_role")
+      .eq("user_id", userId)
+      .single();
+
+    setFomentoRole((profile as any)?.fomento_role ?? null);
   }, []);
 
   const refreshRoles = useCallback(async () => {
@@ -137,6 +149,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setSession(null);
     setGlobalRole(null);
     setMembership(null);
+    setFomentoRole(null);
 
     // 3. Clear React Query cache
     if (queryClient) {
@@ -148,7 +161,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [queryClient]);
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, globalRole, membership, signOut, refreshRoles }}>
+    <AuthContext.Provider value={{ user, session, loading, globalRole, membership, fomentoRole, signOut, refreshRoles }}>
       {children}
     </AuthContext.Provider>
   );
