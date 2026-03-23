@@ -518,12 +518,11 @@ Campos não encontrados retornar null.`,
           <div>
             <Label className="mb-2 block">Vínculo Acadêmico</Label>
             <RadioGroup value={vinculo_academico} onValueChange={setVinculo} className="flex flex-wrap gap-4">
-              <div className="flex items-center gap-2"><RadioGroupItem value="ppg" id="vinc-ppg" /><Label htmlFor="vinc-ppg">PPG</Label></div>
+              <div className="flex items-center gap-2"><RadioGroupItem value="ppg" id="vinc-ppg" /><Label htmlFor="vinc-ppg">Programa de Pós-Graduação</Label></div>
               <div className="flex items-center gap-2"><RadioGroupItem value="graduacao" id="vinc-grad" /><Label htmlFor="vinc-grad">Graduação</Label></div>
-              <div className="flex items-center gap-2"><RadioGroupItem value="ambos" id="vinc-amb" /><Label htmlFor="vinc-amb">Ambos</Label></div>
               <div className="flex items-center gap-2"><RadioGroupItem value="nenhum" id="vinc-nen" /><Label htmlFor="vinc-nen">Nenhum</Label></div>
             </RadioGroup>
-            {(vinculo_academico === "ppg" || vinculo_academico === "ambos") && (
+            {vinculo_academico === "ppg" && (
               <div className="mt-3">
                 <Label>Nome do PPG</Label>
                 <Input value={ppg_nome} onChange={(e) => setPpgNome(e.target.value)} placeholder="Ex: PPG em Ciências Ambientais" />
