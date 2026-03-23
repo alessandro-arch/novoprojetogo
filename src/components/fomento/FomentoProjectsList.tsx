@@ -61,7 +61,7 @@ const FomentoProjectsList = ({ onNewProject, onEditProject }: Props) => {
   });
 
   const exportCSV = () => {
-    const headers = ["Processo UVV", "Pesquisador", "Título", "Área", "Fonte", "Financiador", "Status", "Vigência Início", "Vigência Fim", "Valor Total"];
+    const headers = ["Processo Interno", "Pesquisador", "Título", "Área", "Fonte", "Financiador", "Status", "Vigência Início", "Vigência Fim", "Valor Total"];
     const rows = filtered.map((p) => [
       p.processo_uvv || "", p.pesquisador_principal, p.titulo,
       AREA_LABELS[p.area || ""] || p.area || "", FONTE_LABELS[p.fonte || ""] || p.fonte || "",
@@ -143,7 +143,7 @@ const FomentoProjectsList = ({ onNewProject, onEditProject }: Props) => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Processo UVV</TableHead>
+                  <TableHead>Processo Interno</TableHead>
                   <TableHead>Pesquisador</TableHead>
                   <TableHead>Título</TableHead>
                   <TableHead>Área</TableHead>

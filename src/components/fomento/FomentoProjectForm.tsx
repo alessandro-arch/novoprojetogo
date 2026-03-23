@@ -412,7 +412,7 @@ Campos não encontrados retornar null.`,
       {/* [B] Identification */}
       <SectionCard id="ident" title="[B] Identificação">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div><Label>Processo UVV</Label><Input value={processo_uvv} onChange={(e) => setProcessoUvv(e.target.value)} /></div>
+          <div><Label>Processo Interno</Label><Input value={processo_uvv} onChange={(e) => setProcessoUvv(e.target.value)} /></div>
           <div><Label>Pesquisador Principal *</Label><Input value={pesquisador_principal} onChange={(e) => setPesquisador(e.target.value)} required /></div>
           <div><Label>Órgão Financiador</Label><Input value={orgao_financiador} onChange={(e) => setOrgao(e.target.value)} /></div>
           <div className="md:col-span-2"><Label>Título do Projeto *</Label><Input value={titulo} onChange={(e) => setTitulo(e.target.value)} required /></div>
@@ -461,7 +461,7 @@ Campos não encontrados retornar null.`,
             {(vinculo_academico === "ppg" || vinculo_academico === "ambos") && (
               <div className="mt-3">
                 <Label>Nome do PPG</Label>
-                <Input value={ppg_nome} onChange={(e) => setPpgNome(e.target.value)} placeholder="PPG em Biotecnologia Vegetal (UENF-UVV)" />
+                <Input value={ppg_nome} onChange={(e) => setPpgNome(e.target.value)} placeholder="Ex: PPG em Ciências Ambientais" />
               </div>
             )}
           </div>
