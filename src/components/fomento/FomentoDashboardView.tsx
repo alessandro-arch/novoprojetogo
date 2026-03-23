@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DollarSign, Briefcase, Users, AlertTriangle, Pencil } from "lucide-react";
+import { DollarSign, Briefcase, Users, AlertTriangle, Pencil, FileText } from "lucide-react";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { formatBRL, formatDateBR, daysRemaining, STATUS_LABELS, AREA_LABELS } from "@/lib/fomento-utils";
 
