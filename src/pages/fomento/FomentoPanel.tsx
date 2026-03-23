@@ -1,12 +1,13 @@
 import { useFomentoAuth } from "@/contexts/FomentoAuthContext";
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
-import { Loader2, LayoutDashboard, FolderKanban, AlertTriangle, ShieldCheck } from "lucide-react";
+import { Loader2, LayoutDashboard, FolderKanban, AlertTriangle, ShieldCheck, Building2 } from "lucide-react";
 import PanelLayout, { NavItem } from "@/components/layout/PanelLayout";
 import FomentoDashboardView from "@/components/fomento/FomentoDashboardView";
 import FomentoProjectsList from "@/components/fomento/FomentoProjectsList";
 import FomentoProjectForm from "@/components/fomento/FomentoProjectForm";
 import FomentoAlerts from "@/components/fomento/FomentoAlerts";
 import FomentoAdmin from "@/components/fomento/FomentoAdmin";
+import FomentoMasterPanel from "@/components/fomento/FomentoMasterPanel";
 
 const FomentoPanel = () => {
   const { loading, fomentoRole, signOut } = useFomentoAuth();
@@ -30,7 +31,7 @@ const FomentoPanel = () => {
     return <Navigate to="/fomento/dashboard" replace />;
   }
 
-  const activeNav = section === "projetos" ? "projetos" : section;
+  const activeNav = section === "projetos" ? "projetos" : section === "master" ? "master" : section;
 
   const navItems: NavItem[] = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -39,6 +40,7 @@ const FomentoPanel = () => {
   ];
 
   if (fomentoRole === "admin") {
+    navItems.push({ key: "master", label: "Organizações", icon: Building2 });
     navItems.push({ key: "admin", label: "Administração", icon: ShieldCheck });
   }
 
@@ -65,20 +67,30 @@ const FomentoPanel = () => {
     }
 
     if (section === "projetos") {
-      // /fomento/projetos/novo
       if (segments[1] === "novo") {
         return <FomentoProjectForm onBack={handleBackToList} />;
       }
-      // /fomento/projetos/:id/editar
       if (segments[1] && segments[2] === "editar") {
         return <FomentoProjectForm projectId={segments[1]} onBack={handleBackToList} />;
       }
-      // /fomento/projetos
       return <FomentoProjectsList onNewProject={handleNewProject} onEditProject={handleEditProject} />;
     }
 
     if (section === "alertas") {
       return <FomentoAlerts onEditProject={handleEditProject} />;
+    }
+
+    if (section === "master" && fomentoRole === "admin") {
+      // /fomento/master/nova
+      if (segments[1] === "nova") {
+        return <FomentoMasterPanel subRoute="nova" onNavigate={navigate} />;
+      }
+      // /fomento/master/:id/editar
+      if (segments[1] && segments[2] === "editar") {
+        return <FomentoMasterPanel subRoute="editar" orgId={segments[1]} onNavigate={navigate} />;
+      }
+      // /fomento/master
+      return <FomentoMasterPanel onNavigate={navigate} />;
     }
 
     if (section === "admin" && fomentoRole === "admin") {
