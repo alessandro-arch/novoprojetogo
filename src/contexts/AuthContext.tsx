@@ -27,6 +27,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   globalRole: null,
   membership: null,
+  fomentoRole: null,
   signOut: async () => {},
   refreshRoles: async () => {},
 });
