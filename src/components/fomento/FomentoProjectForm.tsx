@@ -617,11 +617,15 @@ Campos não encontrados retornar null.`,
       </SectionCard>
 
       {/* [G] Documents */}
-      {isEditing && projectId && (
-        <SectionCard {...sectionProps} id="docs" title="[G] Documentos do Projeto">
+      <SectionCard {...sectionProps} id="docs" title="[G] Documentos do Projeto">
+        {projectId ? (
           <FomentoDocumentsSection projectId={projectId} />
-        </SectionCard>
-      )}
+        ) : (
+          <p className="text-sm text-muted-foreground text-center py-6">
+            Salve o projeto primeiro para anexar documentos.
+          </p>
+        )}
+      </SectionCard>
 
       {/* Bottom save button */}
       <div className="flex justify-end pt-2">
