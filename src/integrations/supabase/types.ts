@@ -451,6 +451,48 @@ export type Database = {
         }
         Relationships: []
       }
+      fomento_organizations: {
+        Row: {
+          admin_email: string | null
+          admin_name: string | null
+          admin_user_id: string | null
+          created_at: string
+          emec_code: string | null
+          id: string
+          name: string
+          plan: string
+          sigla: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_email?: string | null
+          admin_name?: string | null
+          admin_user_id?: string | null
+          created_at?: string
+          emec_code?: string | null
+          id?: string
+          name: string
+          plan?: string
+          sigla?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_email?: string | null
+          admin_name?: string | null
+          admin_user_id?: string | null
+          created_at?: string
+          emec_code?: string | null
+          id?: string
+          name?: string
+          plan?: string
+          sigla?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fomento_projects: {
         Row: {
           ano: number | null
