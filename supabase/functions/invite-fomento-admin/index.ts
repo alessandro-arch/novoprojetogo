@@ -44,7 +44,43 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, full_name, org_id } = await req.json();
+    const { email, full_name, org_id, resend, check_status } = await req.json();
+
+    // ─── Check admin status endpoint ──────────────────────
+    if (check_status && org_id) {
+      const { data: org } = await adminClient
+        .from("fomento_organizations")
+        .select("admin_user_id, admin_email, admin_status")
+        .eq("id", org_id)
+        .single();
+
+      if (!org?.admin_user_id) {
+        return new Response(
+          JSON.stringify({ admin_status: "sem_admin" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Check last_sign_in_at from auth
+      const { data: authUser } = await adminClient.auth.admin.getUserById(org.admin_user_id);
+      let status = org.admin_status || "pendente";
+
+      if (authUser?.user?.last_sign_in_at) {
+        status = "ativo";
+        // Update stored status if different
+        if (org.admin_status !== "ativo") {
+          await adminClient
+            .from("fomento_organizations")
+            .update({ admin_status: "ativo" })
+            .eq("id", org_id);
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ admin_status: status, last_sign_in_at: authUser?.user?.last_sign_in_at || null }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (!email || !full_name || !org_id) {
       return new Response(JSON.stringify({ error: "email, full_name, and org_id are required" }), {
@@ -60,10 +96,27 @@ Deno.serve(async (req) => {
     );
 
     let userId: string;
+    let isNew = false;
 
     if (existingUser) {
       userId = existingUser.id;
+
+      // If resend flag, re-invite existing user
+      if (resend) {
+        const { error: resendError } = await adminClient.auth.admin.inviteUserByEmail(email, {
+          data: { full_name },
+          redirectTo: "https://projetogo.lovable.app/fomento/login",
+        });
+        // Supabase may throw "already confirmed" — still log it
+        if (resendError && !resendError.message?.includes("already")) {
+          return new Response(JSON.stringify({ error: resendError.message }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
     } else {
+      isNew = true;
       // Invite new user via magic link
       const { data: inviteData, error: inviteError } =
         await adminClient.auth.admin.inviteUserByEmail(email, {
@@ -98,14 +151,28 @@ Deno.serve(async (req) => {
         .insert({ user_id: userId, fomento_role: "admin", full_name, email });
     }
 
-    // Update org with admin info
+    // Update org with admin info + set status to pendente
     await adminClient
       .from("fomento_organizations")
-      .update({ admin_user_id: userId, admin_name: full_name, admin_email: email })
+      .update({
+        admin_user_id: userId,
+        admin_name: full_name,
+        admin_email: email,
+        admin_status: "pendente",
+      })
       .eq("id", org_id);
 
+    // Log invite
+    await adminClient
+      .from("fomento_invite_log")
+      .insert({
+        organization_id: org_id,
+        email,
+        enviado_por: caller.id,
+      });
+
     return new Response(
-      JSON.stringify({ success: true, user_id: userId, is_new: !existingUser }),
+      JSON.stringify({ success: true, user_id: userId, is_new: isNew, resent: !!resend }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

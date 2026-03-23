@@ -451,10 +451,43 @@ export type Database = {
         }
         Relationships: []
       }
+      fomento_invite_log: {
+        Row: {
+          email: string
+          enviado_em: string
+          enviado_por: string
+          id: string
+          organization_id: string
+        }
+        Insert: {
+          email: string
+          enviado_em?: string
+          enviado_por: string
+          id?: string
+          organization_id: string
+        }
+        Update: {
+          email?: string
+          enviado_em?: string
+          enviado_por?: string
+          id?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fomento_invite_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "fomento_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fomento_organizations: {
         Row: {
           admin_email: string | null
           admin_name: string | null
+          admin_status: string
           admin_user_id: string | null
           created_at: string
           emec_code: string | null
@@ -468,6 +501,7 @@ export type Database = {
         Insert: {
           admin_email?: string | null
           admin_name?: string | null
+          admin_status?: string
           admin_user_id?: string | null
           created_at?: string
           emec_code?: string | null
@@ -481,6 +515,7 @@ export type Database = {
         Update: {
           admin_email?: string | null
           admin_name?: string | null
+          admin_status?: string
           admin_user_id?: string | null
           created_at?: string
           emec_code?: string | null
