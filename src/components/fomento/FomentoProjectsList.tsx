@@ -163,6 +163,7 @@ const FomentoProjectsList = ({ onNewProject, onEditProject }: Props) => {
                   <TableHead>Status</TableHead>
                   <TableHead>Vigência</TableHead>
                   <TableHead className="text-right">Valor Total</TableHead>
+                  <TableHead>Docs</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
