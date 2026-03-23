@@ -1,49 +1,34 @@
 
 
-## Plan: URL-Based Routing for Fomento Module
+## Plan: Remove Institutional References from Fomento Module
 
-Currently, FomentoPanel uses internal `useState` to switch views. This plan converts it to URL-based routing so each section has a proper URL path.
-
-### Approach
-
-Keep `FomentoPanel` as the layout wrapper (sidebar via `PanelLayout`), but derive `activeNav` from `useLocation().pathname` and use `useNavigate()` for sidebar clicks. Sub-views (project form new/edit) also use URL params.
+Purely text/label changes across 5 files. No functionality, routes, or database changes.
 
 ### Changes
 
-| File | Action |
-|------|--------|
-| `src/pages/fomento/FomentoPanel.tsx` | Rewrite — derive nav from URL, use navigate for nav changes, render views based on path |
-| `src/App.tsx` | No change needed — `"/fomento/*"` wildcard already catches all sub-routes |
+**1. `src/pages/Index.tsx`** (line 18)
+- Remove `badge: "PRPPGE · UVV"` from the Fomento card
+- Description already says "Monitoramento de captação de recursos e termos de outorga" — no change needed
 
-### FomentoPanel.tsx rewrite
+**2. `src/pages/fomento/FomentoLogin.tsx`** (lines 78-82)
+- Remove the `<Badge>PRPPGE · UVV</Badge>` block
+- Change subtitle (line ~87) to: "Monitore e gerencie a captação de recursos da sua instituição"
 
-```text
-URL path                         → View rendered
-/fomento/dashboard               → FomentoDashboardView
-/fomento/projetos                 → FomentoProjectsList
-/fomento/projetos/novo            → FomentoProjectForm (no projectId)
-/fomento/projetos/:id/editar      → FomentoProjectForm (with projectId)
-/fomento/alertas                  → FomentoAlerts
-/fomento/admin                    → FomentoAdmin (admin only)
-/fomento (bare)                   → redirect to /fomento/dashboard
-```
+**3. `src/pages/fomento/FomentoPanel.tsx`** (line 94)
+- Change `subtitle="PRPPGE · UVV"` → `subtitle="Gestão de Captação de Recursos"`
 
-**Key logic:**
-- `const location = useLocation()` + `const navigate = useNavigate()`
-- Extract path segment after `/fomento/` to determine active nav key
-- `onNavChange` calls `navigate("/fomento/" + key)` instead of `setState`
-- For project edit, extract ID from path via simple string parsing (no need for react-router params since it's under a wildcard)
-- `onEditProject` navigates to `/fomento/projetos/{id}/editar`
-- `onNewProject` navigates to `/fomento/projetos/novo`
-- `onBack` (from form) navigates to `/fomento/projetos`
-- Bare `/fomento` or `/fomento/` redirects to `/fomento/dashboard` via `Navigate`
+**4. `src/components/fomento/FomentoProjectForm.tsx`**
+- Line 415: Change label `"Processo UVV"` → `"Processo Interno"`
+- Line 464: Remove placeholder `"PPG em Biotecnologia Vegetal (UENF-UVV)"` → empty or `"Ex: PPG em Ciências Ambientais"`
 
-The `PanelLayout` sidebar highlights the correct item because `activeNav` is derived from the URL. No changes to PanelLayout or child components needed — they already accept `onEditProject`/`onBack` callbacks.
+**5. `src/components/fomento/FomentoProjectsList.tsx`**
+- Line 64 (CSV header): `"Processo UVV"` → `"Processo Interno"`
+- Line 146 (table header): `"Processo UVV"` → `"Processo Interno"`
 
-### What stays untouched
-- All child components (Dashboard, ProjectsList, ProjectForm, Alerts, Admin)
-- PanelLayout component
-- App.tsx routing
-- FomentoAuthContext
-- FomentoProtectedRoute
+### Not changed
+- Database column `processo_uvv` stays as-is (plan says no DB changes)
+- Variable names `processo_uvv` / `setProcessoUvv` stay (internal, not user-facing)
+- `supabase/functions/seed-cnpq-areas` — "Biotecnologia Vegetal" is a CNPq area name, not institutional
+- No existing `@uvv.br` placeholders found in the code
+- ProjetoGO original pages untouched
 
