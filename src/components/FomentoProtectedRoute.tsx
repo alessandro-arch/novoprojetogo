@@ -1,4 +1,4 @@
-import { useAuth } from "@/contexts/AuthContext";
+import { useFomentoAuth } from "@/contexts/FomentoAuthContext";
 import { Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
@@ -7,7 +7,7 @@ interface FomentoProtectedRouteProps {
 }
 
 const FomentoProtectedRoute = ({ children }: FomentoProtectedRouteProps) => {
-  const { user, session, loading, fomentoRole } = useAuth();
+  const { user, session, loading, fomentoRole } = useFomentoAuth();
 
   if (loading) {
     return (
