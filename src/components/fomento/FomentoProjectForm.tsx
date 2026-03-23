@@ -63,6 +63,7 @@ const FomentoProjectForm = ({ projectId, onBack }: Props) => {
   const [apiKey, setApiKey] = useState(() => localStorage.getItem("fomento_anthropic_key") || "");
   const [extracting, setExtracting] = useState(false);
   const [extractionStatus, setExtractionStatus] = useState<"idle" | "success" | "error">("idle");
+  const [retryMessage, setRetryMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Sections open state
@@ -158,6 +159,44 @@ const FomentoProjectForm = ({ projectId, onBack }: Props) => {
   }, [existingTeam]);
 
   // AI Extraction
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY_MS = 15000;
+
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  const callAnthropicApi = async (base64: string): Promise<Response> => {
+    return fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-beta": "pdfs-2024-09-25",
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{
+          role: "user",
+          content: [
+            { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } },
+            {
+              type: "text",
+              text: `Extraia do documento e retorne APENAS JSON puro sem markdown:
+{ "pesquisador_principal":"", "titulo":"", "edital":"", "orgao_financiador":"",
+  "ano":null, "data_assinatura":"YYYY-MM-DD", "vigencia_inicio":"YYYY-MM-DD",
+  "vigencia_fim":"YYYY-MM-DD", "valor_total":null,
+  "fonte":"publica ou privada", "natureza":"outorga ou parceria",
+  "rubricas":[{"tipo":"","valor":null}] }
+Campos não encontrados retornar null.`,
+            },
+          ],
+        }],
+      }),
+    });
+  };
+
   const handleAiExtract = async (file: File) => {
     if (!apiKey.trim()) {
       toast({ title: "Informe a API Key da Anthropic.", variant: "destructive" });
@@ -166,45 +205,46 @@ const FomentoProjectForm = ({ projectId, onBack }: Props) => {
     localStorage.setItem("fomento_anthropic_key", apiKey);
     setExtracting(true);
     setExtractionStatus("idle");
+    setRetryMessage(null);
 
     try {
       const buffer = await file.arrayBuffer();
       const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
 
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-          "anthropic-beta": "pdfs-2024-09-25",
-          "anthropic-dangerous-direct-browser-access": "true",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          messages: [{
-            role: "user",
-            content: [
-              { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } },
-              {
-                type: "text",
-                text: `Extraia do documento e retorne APENAS JSON puro sem markdown:
-{ "pesquisador_principal":"", "titulo":"", "edital":"", "orgao_financiador":"",
-  "ano":null, "data_assinatura":"YYYY-MM-DD", "vigencia_inicio":"YYYY-MM-DD",
-  "vigencia_fim":"YYYY-MM-DD", "valor_total":null,
-  "fonte":"publica ou privada", "natureza":"outorga ou parceria",
-  "rubricas":[{"tipo":"","valor":null}] }
-Campos não encontrados retornar null.`,
-              },
-            ],
-          }],
-        }),
-      });
+      let response: Response | null = null;
+      let lastError: string | null = null;
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData?.error?.message || `HTTP ${response.status}`);
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        response = await callAnthropicApi(base64);
+
+        if (response.status === 429) {
+          lastError = "Rate limit atingido";
+          if (attempt < MAX_RETRIES) {
+            setRetryMessage(`Limite de requisições atingido. Tentando novamente em 15 segundos... (tentativa ${attempt} de ${MAX_RETRIES})`);
+            toast({
+              title: `Limite de requisições atingido.`,
+              description: `Tentando novamente em 15 segundos... (tentativa ${attempt} de ${MAX_RETRIES})`,
+            });
+            await delay(RETRY_DELAY_MS);
+            continue;
+          }
+          // All retries exhausted
+          setRetryMessage(null);
+          throw new Error("Limite de requisições excedido após 3 tentativas. Preencha os campos manualmente.");
+        }
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData?.error?.message || `HTTP ${response.status}`);
+        }
+
+        // Success
+        setRetryMessage(null);
+        break;
+      }
+
+      if (!response || !response.ok) {
+        throw new Error(lastError || "Falha na extração");
       }
 
       const result = await response.json();
@@ -229,6 +269,7 @@ Campos não encontrados retornar null.`,
       setExtractionStatus("success");
       toast({ title: "Dados extraídos com sucesso! Revise os campos." });
     } catch (err: any) {
+      setRetryMessage(null);
       setExtractionStatus("error");
       toast({ title: "Erro na extração via IA.", description: err.message, variant: "destructive" });
     } finally {
@@ -392,7 +433,11 @@ Campos não encontrados retornar null.`,
               {extracting ? (
                 <div className="flex flex-col items-center gap-2">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  <p className="text-sm text-muted-foreground">Extraindo dados do PDF…</p>
+                  {retryMessage ? (
+                    <p className="text-sm text-destructive font-medium">{retryMessage}</p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Extraindo dados do PDF…</p>
+                  )}
                 </div>
               ) : (
                 <>
