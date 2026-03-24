@@ -38,6 +38,7 @@ interface ExtractedBolsista {
   ppg_nome: string;
   status_bolsista: string;
   selected: boolean;
+  isDuplicate?: boolean;
 }
 
 type Phase = "upload" | "processing" | "review";
