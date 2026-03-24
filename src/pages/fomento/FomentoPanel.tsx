@@ -10,7 +10,7 @@ import FomentoAdmin from "@/components/fomento/FomentoAdmin";
 import FomentoMasterPanel from "@/components/fomento/FomentoMasterPanel";
 
 const FomentoPanel = () => {
-  const { loading, fomentoRole, signOut } = useFomentoAuth();
+  const { loading, fomentoRole, isSuperadmin, signOut } = useFomentoAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -39,9 +39,14 @@ const FomentoPanel = () => {
     { key: "alertas", label: "Alertas de Vigência", icon: AlertTriangle },
   ];
 
-  if (fomentoRole === "admin") {
-    navItems.push({ key: "master", label: "Organizações", icon: Building2 });
+  // Admin de org pode ver Administração (gestão de usuários da própria org)
+  if (fomentoRole === "admin" || isSuperadmin) {
     navItems.push({ key: "admin", label: "Administração", icon: ShieldCheck });
+  }
+
+  // Apenas superadmin vê Organizações (painel master)
+  if (isSuperadmin) {
+    navItems.push({ key: "master", label: "Organizações", icon: Building2 });
   }
 
   const handleNavChange = (key: string) => {
@@ -80,20 +85,19 @@ const FomentoPanel = () => {
       return <FomentoAlerts onEditProject={handleEditProject} />;
     }
 
-    if (section === "master" && fomentoRole === "admin") {
-      // /fomento/master/nova
+    // Painel master: APENAS superadmin
+    if (section === "master" && isSuperadmin) {
       if (segments[1] === "nova") {
         return <FomentoMasterPanel subRoute="nova" onNavigate={navigate} />;
       }
-      // /fomento/master/:id/editar
       if (segments[1] && segments[2] === "editar") {
         return <FomentoMasterPanel subRoute="editar" orgId={segments[1]} onNavigate={navigate} />;
       }
-      // /fomento/master
       return <FomentoMasterPanel onNavigate={navigate} />;
     }
 
-    if (section === "admin" && fomentoRole === "admin") {
+    // Administração: superadmin ou admin de org
+    if (section === "admin" && (isSuperadmin || fomentoRole === "admin")) {
       return <FomentoAdmin />;
     }
 

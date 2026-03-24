@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useFomentoAuth } from "@/contexts/FomentoAuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -17,19 +18,31 @@ interface FomentoUser {
   email: string;
   full_name: string;
   fomento_role: string;
+  fomento_org_id: string | null;
 }
+
+const ROLE_LABELS: Record<string, string> = {
+  superadmin: "Superadmin",
+  admin: "Admin",
+  gestor: "Gestor",
+};
 
 const FomentoAdmin = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isSuperadmin, fomentoOrgId } = useFomentoAuth();
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("gestor");
   const [inviteLoading, setInviteLoading] = useState(false);
 
   const { data: users, isLoading } = useQuery({
-    queryKey: ["fomento-users"],
+    queryKey: ["fomento-users", fomentoOrgId, isSuperadmin],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("list_fomento_users");
+      // Superadmin sees all users; org admin sees only users of their org
+      const orgFilter = isSuperadmin ? undefined : fomentoOrgId;
+      const { data, error } = await supabase.rpc("list_fomento_users", {
+        _org_id: orgFilter ?? null,
+      });
       if (error) throw error;
       return data as FomentoUser[];
     },
@@ -88,6 +101,11 @@ const FomentoAdmin = () => {
     );
   }
 
+  // Available roles for invite: superadmin can assign admin; org admin can only assign gestor
+  const availableRoles = isSuperadmin
+    ? [{ value: "gestor", label: "Gestor" }, { value: "admin", label: "Admin" }]
+    : [{ value: "gestor", label: "Gestor" }];
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold font-heading text-foreground">Administração</h1>
@@ -101,8 +119,9 @@ const FomentoAdmin = () => {
             <Select value={inviteRole} onValueChange={setInviteRole}>
               <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="gestor">Gestor</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
+                {availableRoles.map((r) => (
+                  <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Button onClick={handleInvite} disabled={inviteLoading || !inviteEmail.trim()}>
@@ -134,52 +153,65 @@ const FomentoAdmin = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  (users ?? []).map((u) => (
-                    <TableRow key={u.user_id}>
-                      <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
-                      <TableCell>{u.email}</TableCell>
-                      <TableCell>
-                        <Badge variant={u.fomento_role === "admin" ? "default" : "secondary"} className="capitalize">
-                          {u.fomento_role}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setRoleMutation.mutate({
-                              userId: u.user_id,
-                              role: u.fomento_role === "admin" ? "gestor" : "admin",
-                            })}
+                  (users ?? []).map((u) => {
+                    const isSuperadminUser = u.fomento_role === "superadmin";
+                    // Non-superadmin cannot modify superadmin users
+                    const canModify = isSuperadmin || !isSuperadminUser;
+
+                    return (
+                      <TableRow key={u.user_id}>
+                        <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
+                        <TableCell>{u.email}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={isSuperadminUser ? "default" : u.fomento_role === "admin" ? "default" : "secondary"}
+                            className="capitalize"
                           >
-                            Tornar {u.fomento_role === "admin" ? "Gestor" : "Admin"}
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="text-destructive">
-                                <Trash2 className="w-4 h-4" />
+                            {ROLE_LABELS[u.fomento_role] || u.fomento_role}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {canModify && !isSuperadminUser ? (
+                            <div className="flex gap-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setRoleMutation.mutate({
+                                  userId: u.user_id,
+                                  role: u.fomento_role === "admin" ? "gestor" : "admin",
+                                })}
+                              >
+                                Tornar {u.fomento_role === "admin" ? "Gestor" : "Admin"}
                               </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Remover acesso?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  O usuário "{u.full_name || u.email}" perderá acesso ao módulo Fomento.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => setRoleMutation.mutate({ userId: u.user_id, role: null })} className="bg-destructive text-destructive-foreground">
-                                  Remover
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="text-destructive">
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Remover acesso?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      O usuário "{u.full_name || u.email}" perderá acesso ao módulo Fomento.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => setRoleMutation.mutate({ userId: u.user_id, role: null })} className="bg-destructive text-destructive-foreground">
+                                      Remover
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>

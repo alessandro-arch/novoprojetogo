@@ -20,7 +20,7 @@ interface Props {
 }
 
 const FomentoProjectsList = ({ onNewProject, onEditProject }: Props) => {
-  const { fomentoRole } = useFomentoAuth();
+  const { fomentoRole, isSuperadmin, fomentoOrgId } = useFomentoAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
@@ -28,10 +28,16 @@ const FomentoProjectsList = ({ onNewProject, onEditProject }: Props) => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterFonte, setFilterFonte] = useState("all");
 
+  const canDelete = isSuperadmin || fomentoRole === "admin";
+
   const { data: projects, isLoading } = useQuery({
-    queryKey: ["fomento-projects"],
+    queryKey: ["fomento-projects", fomentoOrgId, isSuperadmin],
     queryFn: async () => {
-      const { data, error } = await supabase.from("fomento_projects").select("*").order("created_at", { ascending: false });
+      let query = supabase.from("fomento_projects").select("*").order("created_at", { ascending: false });
+      if (!isSuperadmin && fomentoOrgId) {
+        query = query.or(`organization_id.eq.${fomentoOrgId},organization_id.is.null`);
+      }
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -198,7 +204,7 @@ const FomentoProjectsList = ({ onNewProject, onEditProject }: Props) => {
                           <Button variant="ghost" size="icon" onClick={() => onEditProject(p.id)}>
                             <Pencil className="w-4 h-4" />
                           </Button>
-                          {fomentoRole === "admin" && (
+                          {canDelete && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="icon" className="text-destructive">
