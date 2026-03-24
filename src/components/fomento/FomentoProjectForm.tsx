@@ -54,7 +54,7 @@ const SectionCard = ({ id, title, children, openSections, toggleSection }: Secti
 );
 
 const FomentoProjectForm = ({ projectId, onBack }: Props) => {
-  const { user } = useFomentoAuth();
+  const { user, fomentoOrgId } = useFomentoAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isEditing = !!projectId;
