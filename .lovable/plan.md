@@ -1,50 +1,90 @@
 
 
-## Batch Import for Fomento Projects
+## Plano: Novo Módulo "Parcerias" no Fomento
 
-### Overview
+### Resumo
+Criar um módulo completo de Parcerias no painel Fomento, com tabela no banco de dados, listagem com filtros/KPIs, e formulário de cadastro/edição.
 
-Add a "Importar em Lote" button to the projects list and a new batch import page at `/fomento/projetos/importar-lote`. The page allows uploading multiple PDFs, extracting data via Anthropic AI sequentially, reviewing/editing results inline, and saving selected projects in bulk.
+---
 
-### Files to Create
+### 1. Migração de Banco de Dados
 
-| File | Purpose |
-|---|---|
-| `src/components/fomento/FomentoBatchImport.tsx` | Full batch import page (~500 lines) |
+Criar tabela `fomento_parcerias` com os campos:
 
-### Files to Modify
+| Coluna | Tipo | Notas |
+|---|---|---|
+| id | uuid PK | gen_random_uuid() |
+| organization_id | uuid | FK para fomento_organizations, nullable |
+| numero_contrato | text | Número do Contrato/Processo |
+| titulo | text NOT NULL | Título da Parceria |
+| tipo | text | Contrato, Convênio, Acordo de Cooperação, Termo de Fomento |
+| status | text | em_negociacao, ativa, encerrada, suspensa |
+| instituicao_nome | text | Nome da Instituição Parceira |
+| cnpj | text | Com máscara no front |
+| tipo_instituicao | text | publica_federal, publica_estadual, privada, internacional |
+| num_beneficiarios | integer | default 0 |
+| num_parcelas | integer | default 0 |
+| valor_mensal_aluno | numeric | default 0 |
+| valor_total | numeric | Calculado no front (benef × parcelas × valor_mensal) |
+| created_by | uuid | nullable |
+| created_at | timestamptz | default now() |
+| updated_at | timestamptz | default now() |
 
-| File | Change |
-|---|---|
-| `src/components/fomento/FomentoProjectsList.tsx` | Add "Importar em Lote" button next to "Novo Projeto" |
-| `src/pages/fomento/FomentoPanel.tsx` | Add route for `importar-lote` segment, add navigation handler |
+RLS: mesmas policies do padrão fomento (`has_fomento_access` para select/insert/update, `has_fomento_admin` para delete).
 
-### FomentoProjectsList Changes
+Trigger `update_updated_at_column` no update.
 
-Add a second button with `Upload` icon labeled "Importar em Lote" that calls `onBatchImport` prop. Update the Props interface and the panel to pass the handler.
+Trigger de validação para tipo e status.
 
-### FomentoPanel Changes
+---
 
-- Add `handleBatchImport` navigating to `/fomento/projetos/importar-lote`
-- Pass `onBatchImport` to `FomentoProjectsList`
-- Add route: `if (segments[1] === "importar-lote") return <FomentoBatchImport onBack={handleBackToProjects} />`
+### 2. Menu Principal (FomentoPanel.tsx)
 
-### FomentoBatchImport Component
+- Adicionar item "Parcerias" com ícone `Handshake` entre "Alertas de Vigência" e "Administração"
+- Roteamento: `/fomento/parcerias`, `/fomento/parcerias/nova`, `/fomento/parcerias/:id/editar`
 
-**State machine with 3 phases:**
+---
 
-1. **Upload Phase**: API key field (from localStorage), drag-and-drop zone accepting multiple PDFs (max 20), file list with remove buttons, "Iniciar Extração" button.
+### 3. Componente de Listagem: `FomentoParceirasList.tsx`
 
-2. **Processing Phase**: Sequential extraction using the same `callAnthropicApi` pattern from `FomentoProjectForm`. 3-second delay between files. Rate limit 429 → wait 20s, retry up to 3 times. Progress table showing file name, status icon (⏳/🔄/✅/⚠️/❌), extracted researcher, value, and retry button for failed items. Summary counters at the bottom.
+- **KPI Cards no topo**: Total de parcerias ativas, Valor total captado (soma valor_total das ativas), Número total de beneficiários (soma das ativas)
+- **Filtros**: Select por Status e Select por Tipo
+- **Tabela**: Número contrato, Título, Tipo, Instituição, Beneficiários, Valor Total, Status (badge colorido)
+- Botões: Nova Parceria, Editar, Excluir (admin)
 
-3. **Review Phase**: Editable table with columns: #, Pesquisador, Título, Edital, Financiador, Valor Total, Área, Status IA. Row coloring: green (complete), yellow (partial), red (missing required). Checkboxes for selection. "Editar completo" button opens a Dialog with the full field set. "Salvar Selecionados (X)" button inserts checked rows into `fomento_projects` with auto-generated `processo_uvv` via RPC. Validation: pesquisador and título required. Toast on success, redirect to `/fomento/projetos`.
+Badges de status:
+- em_negociacao → amarelo
+- ativa → verde
+- encerrada → cinza
+- suspensa → vermelho
 
-**AI extraction prompt**: Reuses the exact same Anthropic API call pattern and prompt from `FomentoProjectForm`, including PDF beta headers, markdown cleanup, and JSON parsing.
+---
 
-**Key technical details:**
-- Uses the same `effectiveOrgId` resolution pattern for organization_id
-- Calls `generate_fomento_processo` RPC for each saved project
-- Sequential processing with `await delay(3000)` between files
-- Rate limit handling: 20s wait, 3 retries, then mark as error
-- Re-process individual failed files via retry button
+### 4. Componente de Formulário: `FomentoParceiraForm.tsx`
+
+Três seções colapsáveis (padrão SectionCard existente):
+
+**[A] Identificação**: Número do Contrato, Título, Tipo (select), Status (select)
+
+**[B] Instituição Parceira**: Nome, CNPJ (máscara XX.XXX.XXX/XXXX-XX), Tipo da Instituição (select)
+
+**[C] Financeiro**: Nº beneficiários, Nº parcelas, Valor mensal por aluno (input moeda), Valor total (calculado automaticamente, read-only)
+
+---
+
+### 5. Utilitários (fomento-utils.ts)
+
+Adicionar labels:
+```typescript
+PARCERIA_TIPO_LABELS, PARCERIA_STATUS_LABELS, TIPO_INSTITUICAO_LABELS
+```
+
+---
+
+### Detalhes Técnicos
+
+- A tabela usa `organization_id` para isolamento multi-tenant (mesmo padrão das demais tabelas fomento)
+- O campo `valor_total` é calculado no frontend antes do save: `num_beneficiarios * num_parcelas * valor_mensal_aluno`
+- Máscara de CNPJ aplicada via handler de onChange no input
+- Queries seguem o padrão existente com `@tanstack/react-query` e filtro por `fomentoOrgId`
 
