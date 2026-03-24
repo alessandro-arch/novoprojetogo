@@ -38,6 +38,7 @@ interface ExtractedBolsista {
   ppg_nome: string;
   status_bolsista: string;
   selected: boolean;
+  isDuplicate?: boolean;
 }
 
 type Phase = "upload" | "processing" | "review";
@@ -167,6 +168,24 @@ const FomentoBolsistaBatchImport = ({ onBack }: Props) => {
     return b;
   };
 
+  const checkDuplicates = async (results: ExtractedBolsista[]): Promise<ExtractedBolsista[]> => {
+    const names = results.filter(b => b.nome_bolsista).map(b => b.nome_bolsista.toLowerCase().trim());
+    if (!names.length) return results;
+
+    const { data: existing } = await supabase.from("fomento_bolsistas" as any).select("nome_bolsista, edital");
+    if (!existing?.length) return results;
+
+    const existingKeys = new Set(
+      (existing as any[]).map((e: any) => `${(e.nome_bolsista || "").toLowerCase().trim()}|${(e.edital || "").toLowerCase().trim()}`)
+    );
+
+    return results.map(b => {
+      const key = `${b.nome_bolsista.toLowerCase().trim()}|${b.edital.toLowerCase().trim()}`;
+      const isDuplicate = existingKeys.has(key);
+      return { ...b, isDuplicate, selected: isDuplicate ? false : b.selected };
+    });
+  };
+
   const startExtraction = async () => {
     cancelRef.current = false;
     const initial = files.map(f => emptyBolsista(f.name));
@@ -187,6 +206,13 @@ const FomentoBolsistaBatchImport = ({ onBack }: Props) => {
       if (i < files.length - 1 && !cancelRef.current) await delay(3000);
     }
     setProcessingIdx(-1);
+
+    const checked = await checkDuplicates(results);
+    setBolsistas(checked);
+    const dupCount = checked.filter(b => b.isDuplicate).length;
+    if (dupCount > 0) {
+      toast({ title: `${dupCount} bolsista(s) já existente(s) detectado(s) e desmarcado(s).` });
+    }
     setPhase("review");
   };
 
@@ -365,13 +391,18 @@ const FomentoBolsistaBatchImport = ({ onBack }: Props) => {
                   </TableHeader>
                   <TableBody>
                     {bolsistas.map((b, i) => (
-                      <TableRow key={i} className={phase === "review" ? rowBg(b) : ""}>
+                      <TableRow key={i} className={`${phase === "review" ? rowBg(b) : ""} ${b.isDuplicate ? "opacity-60" : ""}`}>
                         {phase === "review" && (
                           <TableCell>
                             <Checkbox checked={b.selected} onCheckedChange={() => toggleSelect(i)} />
                           </TableCell>
                         )}
-                        <TableCell className="max-w-[150px] truncate text-xs font-mono">{b.fileName}</TableCell>
+                        <TableCell className="max-w-[150px] truncate text-xs font-mono">
+                          <div className="flex items-center gap-1">
+                            {b.fileName}
+                            {b.isDuplicate && <Badge variant="destructive" className="text-[10px] px-1 py-0">Duplicado</Badge>}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1.5">
                             <StatusIcon status={b.status} />
