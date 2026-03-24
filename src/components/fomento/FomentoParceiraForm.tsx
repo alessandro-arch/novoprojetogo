@@ -17,6 +17,16 @@ interface Props {
   onBack: () => void;
 }
 
+const PPG_OPTIONS = [
+  "Ciências Farmacêuticas",
+  "Ciência Animal",
+  "Biotecnologia Vegetal",
+  "Assistência Farmacêutica",
+  "Arquitetura e Cidade",
+  "Sociologia Política",
+  "Segurança Pública",
+];
+
 const emptForm = {
   numero_contrato: "",
   titulo: "",
@@ -26,6 +36,7 @@ const emptForm = {
   instituicao_nome: "",
   cnpj: "",
   tipo_instituicao: "",
+  ppg_nome: "",
   num_beneficiarios: 0,
   num_parcelas: 0,
   valor_mensal_aluno: 0,
@@ -70,6 +81,7 @@ const FomentoParceiraForm = ({ parceriaId, onBack }: Props) => {
         instituicao_nome: existing.instituicao_nome || "",
         cnpj: existing.cnpj || "",
         tipo_instituicao: existing.tipo_instituicao || "",
+        ppg_nome: existing.ppg_nome || "",
         num_beneficiarios: existing.num_beneficiarios || 0,
         num_parcelas: existing.num_parcelas || 0,
         valor_mensal_aluno: existing.valor_mensal_aluno || 0,
@@ -193,6 +205,15 @@ const FomentoParceiraForm = ({ parceriaId, onBack }: Props) => {
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
                 {Object.entries(TIPO_INSTITUICAO_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Programa de Pós-Graduação</Label>
+            <Select value={form.ppg_nome} onValueChange={(v) => set("ppg_nome", v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                {PPG_OPTIONS.map((ppg) => <SelectItem key={ppg} value={ppg}>{ppg}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
