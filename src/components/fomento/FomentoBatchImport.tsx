@@ -13,7 +13,35 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowLeft, Upload, Bot, Loader2, Save, X, RotateCcw, FileText, CheckCircle2, AlertTriangle, XCircle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { AREA_LABELS, FONTE_LABELS, STATUS_LABELS } from "@/lib/fomento-utils";
+import { AREA_LABELS, FONTE_LABELS, STATUS_LABELS, NATUREZA_LABELS } from "@/lib/fomento-utils";
+
+const VALID_AREAS = Object.keys(AREA_LABELS);
+const VALID_FONTES = Object.keys(FONTE_LABELS);
+const VALID_NATUREZAS = Object.keys(NATUREZA_LABELS);
+const VALID_STATUSES = Object.keys(STATUS_LABELS);
+const VALID_VINCULOS = ["ppg", "graduacao", "nenhum"];
+
+/** Sanitize a value to match allowed enum keys, or return null */
+const sanitizeEnum = (value: string | null | undefined, validKeys: string[]): string | null => {
+  if (!value) return null;
+  const v = value.trim().toLowerCase();
+  if (validKeys.includes(v)) return v;
+  // Try matching by label
+  const labelMap: Record<string, string> = {};
+  if (validKeys === VALID_AREAS) Object.entries(AREA_LABELS).forEach(([k, lab]) => { labelMap[lab.toLowerCase()] = k; });
+  else if (validKeys === VALID_FONTES) Object.entries(FONTE_LABELS).forEach(([k, lab]) => { labelMap[lab.toLowerCase()] = k; });
+  else if (validKeys === VALID_NATUREZAS) Object.entries(NATUREZA_LABELS).forEach(([k, lab]) => { labelMap[lab.toLowerCase()] = k; });
+  else if (validKeys === VALID_STATUSES) Object.entries(STATUS_LABELS).forEach(([k, lab]) => { labelMap[lab.toLowerCase()] = k; });
+  if (labelMap[v]) return labelMap[v];
+  // Fuzzy: check if any key or label is contained
+  for (const [lab, key] of Object.entries(labelMap)) {
+    if (v.includes(lab) || lab.includes(v)) return key;
+  }
+  for (const key of validKeys) {
+    if (v.includes(key) || key.includes(v)) return key;
+  }
+  return null;
+};
 
 interface Props { onBack: () => void; }
 
@@ -262,14 +290,14 @@ const FomentoBatchImport = ({ onBack }: Props) => {
           edital: proj.edital || null,
           orgao_financiador: proj.orgao_financiador || null,
           valor_total: proj.valor_total ? Number(proj.valor_total) : null,
-          area: proj.area || null,
-          fonte: proj.fonte || null,
-          natureza: proj.natureza || null,
+          area: sanitizeEnum(proj.area, VALID_AREAS),
+          fonte: sanitizeEnum(proj.fonte, VALID_FONTES),
+          natureza: sanitizeEnum(proj.natureza, VALID_NATUREZAS),
           ano: proj.ano ? Number(proj.ano) : null,
           data_assinatura: proj.data_assinatura || null,
           vigencia_inicio: proj.vigencia_inicio || null,
           vigencia_fim: proj.vigencia_fim || null,
-          status: proj.status_projeto || "em_execucao",
+          status: sanitizeEnum(proj.status_projeto, VALID_STATUSES) || "em_execucao",
           extracted_by_ai: true,
           created_by: user?.id || null,
           organization_id: effectiveOrgId,
