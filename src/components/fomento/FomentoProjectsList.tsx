@@ -25,6 +25,7 @@ const FomentoProjectsList = ({ onNewProject, onEditProject, onBatchImport }: Pro
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [filterAno, setFilterAno] = useState<string>(String(new Date().getFullYear()));
   const [filterArea, setFilterArea] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterFonte, setFilterFonte] = useState("all");
