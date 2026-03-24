@@ -227,6 +227,17 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     .sort((a, b) => b[1] - a[1])
     .map(([name, value]) => ({ name: name.toUpperCase(), value }));
 
+  // Pesquisadores por PPG (apenas projetos)
+  const ppgResearcherMap = new Map<string, Set<string>>();
+  p.forEach((x) => {
+    const key = (x.ppg_nome || "Sem PPG").toUpperCase();
+    if (!ppgResearcherMap.has(key)) ppgResearcherMap.set(key, new Set());
+    ppgResearcherMap.get(key)!.add(x.pesquisador_principal);
+  });
+  const ppgResearcherData = Array.from(ppgResearcherMap.entries())
+    .map(([name, researchers]) => ({ name, value: researchers.size }))
+    .sort((a, b) => b.value - a.value);
+
   const in90d = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
   const expiring = p
     .filter((x) => x.status === "em_execucao" && x.vigencia_fim && new Date(x.vigencia_fim) >= now && new Date(x.vigencia_fim) <= in90d)
@@ -477,6 +488,28 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
                     );
                   });
                 })()}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Pesquisadores por PPG</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {ppgResearcherData.map((item, i) => {
+                  const maxVal = Math.max(...ppgResearcherData.map(d => d.value), 1);
+                  const pct = (item.value / maxVal) * 100;
+                  return (
+                    <div key={item.name} className="flex items-center gap-3">
+                      <span className="w-4 h-4 shrink-0 rounded" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                      <span className="text-xs text-muted-foreground w-48 shrink-0 truncate" title={item.name}>{item.name}</span>
+                      <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
+                        <div className="h-full rounded" style={{ width: `${pct}%`, backgroundColor: COLORS[i % COLORS.length] }} />
+                      </div>
+                      <span className="text-xs font-medium text-foreground w-10 text-right shrink-0">{item.value}</span>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
