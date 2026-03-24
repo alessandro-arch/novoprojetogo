@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useFomentoAuth } from "@/contexts/FomentoAuthContext";
@@ -78,6 +78,12 @@ const FomentoProjectsList = ({ onNewProject, onEditProject, onBatchImport }: Pro
   };
 
   const availableYears = [...new Set((projects ?? []).map(getProjectYear).filter(Boolean) as number[])].sort((a, b) => b - a);
+
+  useEffect(() => {
+    if (filterAno !== "all" && availableYears.length > 0 && !availableYears.includes(Number(filterAno))) {
+      setFilterAno(String(availableYears[0]));
+    }
+  }, [availableYears, filterAno]);
 
   const filtered = (projects ?? []).filter((p) => {
     const q = search.toLowerCase();
