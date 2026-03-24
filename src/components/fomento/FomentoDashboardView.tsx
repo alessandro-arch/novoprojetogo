@@ -196,6 +196,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
       tooltip: `${formatBRL(totalCaptadoProjetos)} em projetos + ${formatBRL(totalComprometidoBolsas)} em bolsas`,
     },
     { label: "Projetos Ativos", value: String(ativos), icon: Briefcase, color: "text-primary", bg: "bg-[hsl(var(--info-light))]" },
+    { label: "Bolsas", value: formatBRL(totalComprometidoBolsas), icon: GraduationCap, color: "text-[hsl(270,50%,50%)]", bg: "bg-[hsl(270,50%,90%)]" },
     { label: "Pesquisadores", value: String(pesquisadores), icon: Users, color: "text-[hsl(var(--warning))]", bg: "bg-[hsl(var(--warning-light))]" },
     { label: "Vencendo em 60d", value: String(vencendo60), icon: AlertTriangle, color: vencendo60 > 0 ? "text-destructive" : "text-muted-foreground", bg: vencendo60 > 0 ? "bg-[hsl(var(--danger-light))]" : "bg-muted" },
     { label: "Total de Documentos", value: String(totalDocs ?? 0), icon: FileText, color: "text-primary", bg: "bg-[hsl(var(--info-light))]" },
@@ -207,7 +208,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
         <h1 className="text-2xl font-bold font-heading text-foreground">Dashboard</h1>
 
         {/* Project KPIs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
           {kpis.map((k) => (
             <Card key={k.label} className="shadow-sm">
               <CardContent className="p-5 flex items-center gap-4">
