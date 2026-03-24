@@ -28,6 +28,7 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
   const [filterModalidade, setFilterModalidade] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterOrientador, setFilterOrientador] = useState("all");
+  const [sortOrder, setSortOrder] = useState<"default" | "asc" | "desc">("default");
 
   const canDelete = isSuperadmin || fomentoRole === "admin";
 
