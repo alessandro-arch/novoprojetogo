@@ -17,7 +17,7 @@ import FomentoParceirasList from "@/components/fomento/FomentoParceirasList";
 import FomentoParceiraForm from "@/components/fomento/FomentoParceiraForm";
 
 const FomentoPanel = () => {
-  const { loading, fomentoRole, isSuperadmin, signOut } = useFomentoAuth();
+  const { loading, fomentoRole, isSuperadmin, isAuditor, signOut } = useFomentoAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
