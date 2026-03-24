@@ -1,43 +1,28 @@
 
 
-## Fix: Update `validate_fomento_role` trigger to accept `superadmin`
+## Update Landing Page to Previous Layout + Fomento Module
 
-The error is clear: the `validate_fomento_role()` trigger function still only allows `'admin'` and `'gestor'`. It was never updated to accept `'superadmin'`.
+Restore the full marketing landing page structure from the screenshots while keeping the Fomento module section.
 
-### Database Migration
+### Changes
 
-One migration to update the function:
+**`src/pages/Index.tsx`** — Rewrite to compose existing landing components plus a new Fomento section:
 
-```sql
-CREATE OR REPLACE FUNCTION public.validate_fomento_role()
- RETURNS trigger
- LANGUAGE plpgsql
- SET search_path TO 'public'
-AS $function$
-BEGIN
-  IF NEW.fomento_role IS NOT NULL 
-     AND NEW.fomento_role NOT IN ('superadmin', 'admin', 'gestor') THEN
-    RAISE EXCEPTION 'fomento_role must be superadmin, admin, gestor, or NULL';
-  END IF;
-  RETURN NEW;
-END;
-$function$;
-```
-
-Also update `set_fomento_role` to accept `'superadmin'`:
-
-```sql
-CREATE OR REPLACE FUNCTION public.set_fomento_role(...)
--- Add 'superadmin' to the allowed values check
-```
-
-And update `has_fomento_admin` to also match `'superadmin'` so superadmins retain admin-level access for RLS policies.
+1. `HeroSection` — existing component (header + hero with CTAs)
+2. `FeaturesSection` — 6 feature cards in 3x2 grid
+3. `ChallengesSection` — 4 challenge cards in 2x2 grid
+4. `BenefitsSection` — 5 benefit items
+5. `AudienceSection` — 3 audience cards
+6. **New: Fomento module section** — dedicated section highlighting ProjetoGO Fomento with its features (IA, dashboards, alerts, etc.) and a CTA to `/fomento/login`. Styled as a distinct card or section with the "Novo módulo" badge, preserving the current Fomento features list.
+7. `CTASection` — "Quer ver a plataforma em ação?" with demo CTA
+8. Second `CTASection` — "Pronto para transformar a gestão dos seus editais?" with Portal + Proponente CTAs
+9. `Footer` — existing 4-column footer
 
 ### Files Changed
 
 | File | Change |
 |---|---|
-| 1 SQL migration | Update 3 functions to recognize `superadmin` |
+| `src/pages/Index.tsx` | Replace current content with composition of landing components + Fomento section |
 
-No frontend changes needed — this is purely a database-side fix.
+No changes needed to existing landing components — they already match the screenshots.
 
