@@ -29,9 +29,15 @@ serve(async (req) => {
   "ano":null, "data_assinatura":"YYYY-MM-DD", "vigencia_inicio":"YYYY-MM-DD",
   "vigencia_fim":"YYYY-MM-DD", "valor_total":null,
   "fonte":"publica ou privada", "natureza":"auxilio_financeiro ou bolsa",
-  "area":"",
+  "area":"pesquisa|inovacao|extensao|ensino|servicos|estagio_tecnico|participacao_evento|publicacao",
   "rubricas":[{"tipo":"","valor":null}] }
-Campos não encontrados retornar null.`;
+
+REGRAS IMPORTANTES:
+- O campo "ano" DEVE ser o ano de INÍCIO DA VIGÊNCIA (vigencia_inicio). Extraia o ano de vigencia_inicio e use-o.
+- O campo "area" DEVE ser exatamente um destes valores: pesquisa, inovacao, extensao, ensino, servicos, estagio_tecnico, participacao_evento, publicacao. Escolha o mais adequado ao conteúdo do documento.
+- O campo "fonte" DEVE ser exatamente "publica" ou "privada".
+- O campo "natureza" DEVE ser exatamente "auxilio_financeiro" ou "bolsa".
+- Campos não encontrados retornar null.`;
 
     const promptBolsista = `Extraia do documento de bolsa e retorne APENAS JSON puro sem markdown:
 { "nome_bolsista":"", "email_bolsista":"", "modalidade":"ic|mestrado|doutorado|pos_doc|apoio_tecnico|extensao",

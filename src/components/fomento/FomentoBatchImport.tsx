@@ -180,7 +180,17 @@ const FomentoBatchImport = ({ onBack }: Props) => {
       proj.area = parsed.area || "";
       proj.fonte = parsed.fonte || "";
       proj.natureza = parsed.natureza || "";
-      proj.ano = parsed.ano ? String(parsed.ano) : "";
+      // Derive ano from vigencia_inicio if AI didn't extract it
+      const rawAno = parsed.ano ? String(parsed.ano) : "";
+      if (rawAno) {
+        proj.ano = rawAno;
+      } else if (parsed.vigencia_inicio) {
+        try {
+          proj.ano = String(new Date(parsed.vigencia_inicio + "T12:00:00").getFullYear());
+        } catch { proj.ano = ""; }
+      } else {
+        proj.ano = "";
+      }
       proj.data_assinatura = parsed.data_assinatura || "";
       proj.vigencia_inicio = parsed.vigencia_inicio || "";
       proj.vigencia_fim = parsed.vigencia_fim || "";
@@ -293,7 +303,7 @@ const FomentoBatchImport = ({ onBack }: Props) => {
           area: sanitizeEnum(proj.area, VALID_AREAS),
           fonte: sanitizeEnum(proj.fonte, VALID_FONTES),
           natureza: sanitizeEnum(proj.natureza, VALID_NATUREZAS),
-          ano: proj.ano ? Number(proj.ano) : null,
+          ano: proj.ano ? Number(proj.ano) : (proj.vigencia_inicio ? new Date(proj.vigencia_inicio + "T12:00:00").getFullYear() : null),
           data_assinatura: proj.data_assinatura || null,
           vigencia_inicio: proj.vigencia_inicio || null,
           vigencia_fim: proj.vigencia_fim || null,
