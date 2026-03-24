@@ -608,6 +608,9 @@ Campos não encontrados retornar null.`,
               <div className="flex items-center gap-2"><RadioGroupItem value="extensao" id="area-ext" /><Label htmlFor="area-ext">Extensão</Label></div>
               <div className="flex items-center gap-2"><RadioGroupItem value="ensino" id="area-ens" /><Label htmlFor="area-ens">Ensino</Label></div>
               <div className="flex items-center gap-2"><RadioGroupItem value="servicos" id="area-serv" /><Label htmlFor="area-serv">Serviços</Label></div>
+              <div className="flex items-center gap-2"><RadioGroupItem value="estagio_tecnico" id="area-est" /><Label htmlFor="area-est">Estágio Técnico</Label></div>
+              <div className="flex items-center gap-2"><RadioGroupItem value="participacao_evento" id="area-part" /><Label htmlFor="area-part">Participação em Evento</Label></div>
+              <div className="flex items-center gap-2"><RadioGroupItem value="publicacao" id="area-pub" /><Label htmlFor="area-pub">Publicação</Label></div>
             </RadioGroup>
             {area === "servicos" && (
               <div className="mt-3"><Label>Tipo de Serviço</Label><Input value={tipo_servico} onChange={(e) => setTipoServico(e.target.value)} /></div>
