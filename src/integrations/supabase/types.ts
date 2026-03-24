@@ -2280,6 +2280,7 @@ export type Database = {
       }
       has_fomento_access: { Args: { _user_id: string }; Returns: boolean }
       has_fomento_admin: { Args: { _user_id: string }; Returns: boolean }
+      has_fomento_write_access: { Args: { _user_id: string }; Returns: boolean }
       has_org_role: {
         Args: {
           _org_id: string

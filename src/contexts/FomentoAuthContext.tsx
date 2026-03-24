@@ -99,7 +99,7 @@ export const FomentoAuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <FomentoAuthContext.Provider value={{ user, session, loading, fomentoRole, fomentoOrgId, profileName, isSuperadmin, signOut, refreshRole }}>
+    <FomentoAuthContext.Provider value={{ user, session, loading, fomentoRole, fomentoOrgId, profileName, isSuperadmin, isAuditor, signOut, refreshRole }}>
       {children}
     </FomentoAuthContext.Provider>
   );
