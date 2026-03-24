@@ -316,15 +316,25 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
 
           <Card className="shadow-sm">
             <CardHeader className="pb-2"><CardTitle className="text-sm">Por Rubrica</CardTitle></CardHeader>
-            <CardContent className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={rubricaData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={({ name }) => name} fontSize={10}>
-                    {rubricaData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                  </Pie>
-                  <ReTooltip formatter={(v: number) => formatBRL(v)} />
-                </PieChart>
-              </ResponsiveContainer>
+            <CardContent>
+              <div className="space-y-2">
+                {rubricaData
+                  .sort((a, b) => b.value - a.value)
+                  .map((item, i) => {
+                    const maxVal = Math.max(...rubricaData.map(d => d.value), 1);
+                    const pct = (item.value / maxVal) * 100;
+                    return (
+                      <div key={item.name} className="flex items-center gap-3">
+                        <span className="w-4 h-4 shrink-0 rounded" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                        <span className="text-xs text-muted-foreground w-48 shrink-0 truncate" title={item.name}>{item.name}</span>
+                        <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
+                          <div className="h-full rounded" style={{ width: `${pct}%`, backgroundColor: COLORS[i % COLORS.length] }} />
+                        </div>
+                        <span className="text-xs font-medium text-foreground w-28 text-right shrink-0">{formatBRL(item.value)}</span>
+                      </div>
+                    );
+                  })}
+              </div>
             </CardContent>
           </Card>
         </div>
