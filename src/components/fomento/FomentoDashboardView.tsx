@@ -23,7 +23,8 @@ interface Props {
 }
 
 const FomentoDashboardView = ({ onEditProject }: Props) => {
-  const { isSuperadmin, fomentoOrgId } = useFomentoAuth();
+  const { isSuperadmin, fomentoOrgId, fomentoRole } = useFomentoAuth();
+  const isAuditor = fomentoRole === "auditor";
 
   const { data: projects, isLoading: loadingProjects } = useQuery({
     queryKey: ["fomento-projects", fomentoOrgId, isSuperadmin],
