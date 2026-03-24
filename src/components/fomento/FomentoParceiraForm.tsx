@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ArrowLeft, Save } from "lucide-react";
-import { formatBRL, PARCERIA_TIPO_LABELS, PARCERIA_STATUS_LABELS, TIPO_INSTITUICAO_LABELS } from "@/lib/fomento-utils";
+import { formatBRL, PARCERIA_TIPO_LABELS, PARCERIA_STATUS_LABELS, TIPO_INSTITUICAO_LABELS, NATUREZA_LABELS } from "@/lib/fomento-utils";
 import { toast } from "sonner";
 
 interface Props {
