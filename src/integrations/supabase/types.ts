@@ -691,6 +691,7 @@ export type Database = {
           created_by: string | null
           id: string
           instituicao_nome: string | null
+          modalidade: string | null
           num_beneficiarios: number | null
           num_parcelas: number | null
           numero_contrato: string | null
@@ -709,6 +710,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           instituicao_nome?: string | null
+          modalidade?: string | null
           num_beneficiarios?: number | null
           num_parcelas?: number | null
           numero_contrato?: string | null
@@ -727,6 +729,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           instituicao_nome?: string | null
+          modalidade?: string | null
           num_beneficiarios?: number | null
           num_parcelas?: number | null
           numero_contrato?: string | null
