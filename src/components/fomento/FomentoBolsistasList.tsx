@@ -28,6 +28,7 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
   const [filterModalidade, setFilterModalidade] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterOrientador, setFilterOrientador] = useState("all");
+  const [sortOrder, setSortOrder] = useState<"default" | "asc" | "desc">("default");
 
   const canDelete = isSuperadmin || fomentoRole === "admin";
 
@@ -70,9 +71,15 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
     return matchSearch && matchMod && matchStatus && matchOrient;
   });
 
+  const sorted = sortOrder === "default" ? filtered : [...filtered].sort((a, b) => {
+    const nameA = (a.nome_bolsista || "").toLowerCase();
+    const nameB = (b.nome_bolsista || "").toLowerCase();
+    return sortOrder === "asc" ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+  });
+
   const exportCSV = () => {
     const headers = ["Bolsista", "Orientador", "Modalidade", "Edital", "Cotas", "Início", "Fim", "Valor/mês", "Total", "Status"];
-    const rows = filtered.map((b) => [
+    const rows = sorted.map((b) => [
       b.nome_bolsista, b.orientador || "", MODALIDADE_LABELS[b.modalidade || ""] || b.modalidade || "",
       b.edital || "", b.cotas_total ?? "", formatDateBR(b.data_inicio), formatDateBR(b.data_fim),
       b.valor_mensal != null ? String(b.valor_mensal) : "", b.valor_total != null ? String(b.valor_total) : "",
@@ -108,7 +115,7 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
 
       <Card className="shadow-sm">
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input placeholder="Buscar bolsista, orientador…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
@@ -134,6 +141,14 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
                 {orientadores.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as "default" | "asc" | "desc")}>
+              <SelectTrigger><SelectValue placeholder="Ordenar" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Mais recentes</SelectItem>
+                <SelectItem value="asc">Nome A → Z</SelectItem>
+                <SelectItem value="desc">Nome Z → A</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -157,9 +172,9 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 ? (
+                {sorted.length === 0 ? (
                   <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Nenhum bolsista encontrado.</TableCell></TableRow>
-                ) : filtered.map((b) => (
+                ) : sorted.map((b) => (
                   <TableRow key={b.id}>
                     <TableCell className="font-medium max-w-[180px] truncate">{b.nome_bolsista}</TableCell>
                     <TableCell className="max-w-[150px] truncate">{b.orientador || "—"}</TableCell>
