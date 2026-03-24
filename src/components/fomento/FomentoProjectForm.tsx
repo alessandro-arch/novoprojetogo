@@ -661,6 +661,13 @@ Campos não encontrados retornar null.`,
         )}
       </SectionCard>
 
+      {/* [H] Bolsistas Vinculados */}
+      {projectId && (
+        <SectionCard {...sectionProps} id="bolsistas" title="[H] Bolsistas Vinculados">
+          <LinkedBolsistas projectId={projectId} navigate={navigate} />
+        </SectionCard>
+      )}
+
       {/* Bottom save button */}
       <div className="flex justify-end pt-2">
         <Button onClick={handleSave} disabled={saving} size="lg" className="gap-2">
