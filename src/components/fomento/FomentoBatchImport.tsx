@@ -190,8 +190,6 @@ const FomentoBatchImport = ({ onBack }: Props) => {
   };
 
   const startExtraction = async () => {
-    if (!apiKey.trim()) { toast({ title: "Informe a API Key da Anthropic.", variant: "destructive" }); return; }
-    localStorage.setItem("fomento_anthropic_key", apiKey);
     cancelRef.current = false;
 
     const initial = files.map(f => emptyProject(f.name));
