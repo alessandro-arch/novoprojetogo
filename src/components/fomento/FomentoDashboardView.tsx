@@ -217,6 +217,16 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
   });
   const rubricaData = Array.from(rubricaMap.entries()).map(([name, value]) => ({ name, value }));
 
+  // Captação por PPG (apenas projetos)
+  const ppgMap = new Map<string, number>();
+  p.forEach((x) => {
+    const key = x.ppg_nome || "Sem PPG";
+    ppgMap.set(key, (ppgMap.get(key) || 0) + (Number(x.valor_total) || 0));
+  });
+  const ppgData = Array.from(ppgMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, value]) => ({ name: name.toUpperCase(), value }));
+
   const in90d = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
   const expiring = p
     .filter((x) => x.status === "em_execucao" && x.vigencia_fim && new Date(x.vigencia_fim) >= now && new Date(x.vigencia_fim) <= in90d)
