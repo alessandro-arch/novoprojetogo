@@ -410,13 +410,18 @@ const FomentoBatchImport = ({ onBack }: Props) => {
                   </TableHeader>
                   <TableBody>
                     {projects.map((p, i) => (
-                      <TableRow key={i} className={phase === "review" ? rowBg(p) : ""}>
+                      <TableRow key={i} className={`${phase === "review" ? rowBg(p) : ""} ${p.isDuplicate ? "opacity-60" : ""}`}>
                         {phase === "review" && (
                           <TableCell>
                             <Checkbox checked={p.selected} onCheckedChange={() => toggleSelect(i)} />
                           </TableCell>
                         )}
-                        <TableCell className="max-w-[150px] truncate text-xs font-mono">{p.fileName}</TableCell>
+                        <TableCell className="max-w-[150px] truncate text-xs font-mono">
+                          <div className="flex items-center gap-1">
+                            {p.fileName}
+                            {p.isDuplicate && <Badge variant="destructive" className="text-[10px] px-1 py-0">Duplicado</Badge>}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1.5">
                             <StatusIcon status={p.status} />
