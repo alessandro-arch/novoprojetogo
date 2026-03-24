@@ -224,6 +224,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     { label: "Bolsas", value: formatBRL(totalComprometidoBolsas), icon: GraduationCap, color: "text-[hsl(270,50%,50%)]", bg: "bg-[hsl(270,50%,90%)]" },
     { label: "Bolsas Mestrado", value: String(modalidadeStats.find(m => m.key === "mestrado")?.count ?? 0), icon: GraduationCap, color: "text-primary", bg: "bg-[hsl(var(--info-light))]" },
     { label: "Bolsas Doutorado", value: String(modalidadeStats.find(m => m.key === "doutorado")?.count ?? 0), icon: GraduationCap, color: "text-[hsl(var(--warning))]", bg: "bg-[hsl(var(--warning-light))]" },
+    { label: "Bolsas via Parcerias", value: formatBRL(totalBolsasParcerias), icon: Handshake, color: "text-[hsl(152,55%,42%)]", bg: "bg-[hsl(152,55%,90%)]", tooltip: `Valor de bolsas em parcerias ativas com modalidade "Bolsa"` },
     { label: "Parcerias Ativas", value: String(totalParceriasAtivas), icon: Handshake, color: "text-[hsl(152,55%,42%)]", bg: "bg-[hsl(152,55%,90%)]", tooltip: `Valor total: ${formatBRL(totalCaptadoParcerias)}` },
     { label: "Pesquisadores", value: String(pesquisadores), icon: Users, color: "text-[hsl(var(--warning))]", bg: "bg-[hsl(var(--warning-light))]" },
     { label: "Vencendo em 60d", value: String(vencendo60), icon: AlertTriangle, color: vencendo60 > 0 ? "text-destructive" : "text-muted-foreground", bg: vencendo60 > 0 ? "bg-[hsl(var(--danger-light))]" : "bg-muted" },
