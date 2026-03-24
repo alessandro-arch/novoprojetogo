@@ -451,6 +451,108 @@ export type Database = {
         }
         Relationships: []
       }
+      fomento_bolsistas: {
+        Row: {
+          area_conhecimento: string | null
+          coordenador: string | null
+          coorientador: string | null
+          cotas_total: number | null
+          cpf_bolsista: string | null
+          created_at: string | null
+          created_by: string | null
+          data_fim: string | null
+          data_inicio: string | null
+          edital: string | null
+          email_bolsista: string | null
+          extracted_by_ai: boolean | null
+          id: string
+          modalidade: string | null
+          nome_bolsista: string
+          numero_termo: string | null
+          organization_id: string | null
+          orgao_financiador: string | null
+          orientador: string | null
+          ppg_nome: string | null
+          project_id: string | null
+          status: string | null
+          titulo_plano: string | null
+          updated_at: string | null
+          valor_mensal: number | null
+          valor_total: number | null
+        }
+        Insert: {
+          area_conhecimento?: string | null
+          coordenador?: string | null
+          coorientador?: string | null
+          cotas_total?: number | null
+          cpf_bolsista?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          edital?: string | null
+          email_bolsista?: string | null
+          extracted_by_ai?: boolean | null
+          id?: string
+          modalidade?: string | null
+          nome_bolsista: string
+          numero_termo?: string | null
+          organization_id?: string | null
+          orgao_financiador?: string | null
+          orientador?: string | null
+          ppg_nome?: string | null
+          project_id?: string | null
+          status?: string | null
+          titulo_plano?: string | null
+          updated_at?: string | null
+          valor_mensal?: number | null
+          valor_total?: number | null
+        }
+        Update: {
+          area_conhecimento?: string | null
+          coordenador?: string | null
+          coorientador?: string | null
+          cotas_total?: number | null
+          cpf_bolsista?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          edital?: string | null
+          email_bolsista?: string | null
+          extracted_by_ai?: boolean | null
+          id?: string
+          modalidade?: string | null
+          nome_bolsista?: string
+          numero_termo?: string | null
+          organization_id?: string | null
+          orgao_financiador?: string | null
+          orientador?: string | null
+          ppg_nome?: string | null
+          project_id?: string | null
+          status?: string | null
+          titulo_plano?: string | null
+          updated_at?: string | null
+          valor_mensal?: number | null
+          valor_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fomento_bolsistas_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "fomento_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fomento_bolsistas_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "fomento_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fomento_documents: {
         Row: {
           created_at: string | null

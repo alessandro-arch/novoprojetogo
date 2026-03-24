@@ -52,6 +52,31 @@ export const FONTE_LABELS: Record<string, string> = {
   privada: "Privada",
 };
 
+export const MODALIDADE_LABELS: Record<string, string> = {
+  ic: "Iniciação Científica",
+  mestrado: "Mestrado",
+  doutorado: "Doutorado",
+  pos_doc: "Pós-Doutorado",
+  apoio_tecnico: "Apoio Técnico",
+  extensao: "Extensão",
+};
+
+export const BOLSISTA_STATUS_LABELS: Record<string, string> = {
+  ativo: "Ativo",
+  suspenso: "Suspenso",
+  cancelado: "Cancelado",
+  concluido: "Concluído",
+};
+
+export const MODALIDADE_VALORES_SUGERIDOS: Record<string, number> = {
+  ic: 500,
+  mestrado: 2100,
+  doutorado: 3100,
+  pos_doc: 5200,
+  apoio_tecnico: 0,
+  extensao: 0,
+};
+
 export const TIPO_DOC_LABELS: Record<string, string> = {
   termo_outorga: "Termo de Outorga",
   termo_parceria: "Termo de Parceria",
