@@ -65,6 +65,7 @@ const FomentoParceiraForm = ({ parceriaId, onBack }: Props) => {
         numero_contrato: existing.numero_contrato || "",
         titulo: existing.titulo || "",
         tipo: existing.tipo || "",
+        modalidade: existing.modalidade || "",
         status: existing.status || "em_negociacao",
         instituicao_nome: existing.instituicao_nome || "",
         cnpj: existing.cnpj || "",
