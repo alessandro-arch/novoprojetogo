@@ -446,10 +446,6 @@ const FomentoProjectForm = ({ projectId, onBack }: Props) => {
       {true && (
         <SectionCard {...sectionProps} id="ai" title="[A] Extração via IA">
           <div className="space-y-3">
-            <div>
-              <Label>Anthropic API Key</Label>
-              <Input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="sk-ant-..." />
-            </div>
             <div
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleFileDrop}
