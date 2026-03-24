@@ -343,10 +343,10 @@ const FomentoBolsistaForm = ({ bolsistaId, onBack }: Props) => {
       <SectionCard {...sectionProps} id="vinculo" title="[G] Vínculo a Projeto (Opcional)">
         <div>
           <Label>Projeto</Label>
-          <Select value={project_id} onValueChange={setProjectId}>
+          <Select value={project_id || "__none__"} onValueChange={(v) => setProjectId(v === "__none__" ? "" : v)}>
             <SelectTrigger><SelectValue placeholder="Nenhum projeto vinculado" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Nenhum</SelectItem>
+              <SelectItem value="__none__">Nenhum</SelectItem>
               {(projects ?? []).map((p) => (
                 <SelectItem key={p.id} value={p.id}>{p.titulo} — {p.pesquisador_principal}</SelectItem>
               ))}
