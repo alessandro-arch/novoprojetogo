@@ -80,6 +80,7 @@ const statusLabel: Record<ExtractedProject["status"], string> = {
 const FomentoBatchImport = ({ onBack }: Props) => {
   const { user, fomentoOrgId } = useFomentoAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [phase, setPhase] = useState<Phase>("upload");
