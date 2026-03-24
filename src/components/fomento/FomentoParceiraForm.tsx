@@ -21,6 +21,7 @@ const emptForm = {
   numero_contrato: "",
   titulo: "",
   tipo: "",
+  modalidade: "",
   status: "em_negociacao",
   instituicao_nome: "",
   cnpj: "",
