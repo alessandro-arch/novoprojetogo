@@ -599,6 +599,7 @@ export type Database = {
           fonte: string | null
           id: string
           natureza: string | null
+          organization_id: string | null
           orgao_financiador: string | null
           pesquisador_principal: string
           ppg_nome: string | null
@@ -628,6 +629,7 @@ export type Database = {
           fonte?: string | null
           id?: string
           natureza?: string | null
+          organization_id?: string | null
           orgao_financiador?: string | null
           pesquisador_principal: string
           ppg_nome?: string | null
@@ -657,6 +659,7 @@ export type Database = {
           fonte?: string | null
           id?: string
           natureza?: string | null
+          organization_id?: string | null
           orgao_financiador?: string | null
           pesquisador_principal?: string
           ppg_nome?: string | null
@@ -670,7 +673,15 @@ export type Database = {
           vigencia_inicio?: string | null
           vinculo_academico?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fomento_projects_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "fomento_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fomento_rubricas: {
         Row: {
@@ -1206,6 +1217,7 @@ export type Database = {
           cpf_last4: string | null
           created_at: string
           email: string | null
+          fomento_org_id: string | null
           fomento_role: string | null
           full_name: string | null
           id: string
@@ -1243,6 +1255,7 @@ export type Database = {
           cpf_last4?: string | null
           created_at?: string
           email?: string | null
+          fomento_org_id?: string | null
           fomento_role?: string | null
           full_name?: string | null
           id?: string
@@ -1280,6 +1293,7 @@ export type Database = {
           cpf_last4?: string | null
           created_at?: string
           email?: string | null
+          fomento_org_id?: string | null
           fomento_role?: string | null
           full_name?: string | null
           id?: string
@@ -1304,7 +1318,15 @@ export type Database = {
           user_id?: string
           whatsapp?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_fomento_org_id_fkey"
+            columns: ["fomento_org_id"]
+            isOneToOne: false
+            referencedRelation: "fomento_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_bank_accounts: {
         Row: {
