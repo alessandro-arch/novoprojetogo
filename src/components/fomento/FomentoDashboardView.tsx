@@ -54,6 +54,19 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     },
   });
 
+  const { data: bolsistas } = useQuery({
+    queryKey: ["fomento-bolsistas-dashboard", fomentoOrgId, isSuperadmin],
+    queryFn: async () => {
+      let query = supabase.from("fomento_bolsistas" as any).select("*");
+      if (!isSuperadmin && fomentoOrgId) {
+        query = query.or(`organization_id.eq.${fomentoOrgId},organization_id.is.null`);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
   const isLoading = loadingProjects || loadingRubricas;
 
   if (isLoading) {
