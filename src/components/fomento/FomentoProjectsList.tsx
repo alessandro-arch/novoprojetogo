@@ -25,6 +25,7 @@ const FomentoProjectsList = ({ onNewProject, onEditProject, onBatchImport }: Pro
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [filterAno, setFilterAno] = useState<string>(String(new Date().getFullYear()));
   const [filterArea, setFilterArea] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterFonte, setFilterFonte] = useState("all");
@@ -69,13 +70,23 @@ const FomentoProjectsList = ({ onNewProject, onEditProject, onBatchImport }: Pro
     },
   });
 
+  const getProjectYear = (p: any): number | null => {
+    if (p.ano) return p.ano;
+    if (p.vigencia_inicio) return new Date(p.vigencia_inicio + "T12:00:00").getFullYear();
+    if (p.created_at) return new Date(p.created_at).getFullYear();
+    return null;
+  };
+
+  const availableYears = [...new Set((projects ?? []).map(getProjectYear).filter(Boolean) as number[])].sort((a, b) => b - a);
+
   const filtered = (projects ?? []).filter((p) => {
     const q = search.toLowerCase();
     const matchSearch = !q || p.titulo.toLowerCase().includes(q) || p.pesquisador_principal.toLowerCase().includes(q);
+    const matchAno = filterAno === "all" || getProjectYear(p) === Number(filterAno);
     const matchArea = filterArea === "all" || p.area === filterArea;
     const matchStatus = filterStatus === "all" || p.status === filterStatus;
     const matchFonte = filterFonte === "all" || p.fonte === filterFonte;
-    return matchSearch && matchArea && matchStatus && matchFonte;
+    return matchSearch && matchAno && matchArea && matchStatus && matchFonte;
   });
 
   const exportCSV = () => {
@@ -129,7 +140,16 @@ const FomentoProjectsList = ({ onNewProject, onEditProject, onBatchImport }: Pro
       {/* Filters */}
       <Card className="shadow-sm">
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            <Select value={filterAno} onValueChange={setFilterAno}>
+              <SelectTrigger className="font-semibold border-primary/30 bg-primary/5">
+                <SelectValue placeholder="Ano" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os anos</SelectItem>
+                {availableYears.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input placeholder="Buscar título ou pesquisador…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
