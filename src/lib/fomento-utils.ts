@@ -34,6 +34,8 @@ export const AREA_LABELS: Record<string, string> = {
   extensao: "Extensão",
   ensino: "Ensino",
   servicos: "Serviços",
+  estagio_tecnico: "Estágio Técnico",
+  participacao_evento: "Participação em Evento",
 };
 
 export const NATUREZA_LABELS: Record<string, string> = {
