@@ -696,6 +696,7 @@ export type Database = {
           num_parcelas: number | null
           numero_contrato: string | null
           organization_id: string | null
+          ppg_nome: string | null
           status: string | null
           tipo: string | null
           tipo_instituicao: string | null
@@ -715,6 +716,7 @@ export type Database = {
           num_parcelas?: number | null
           numero_contrato?: string | null
           organization_id?: string | null
+          ppg_nome?: string | null
           status?: string | null
           tipo?: string | null
           tipo_instituicao?: string | null
@@ -734,6 +736,7 @@ export type Database = {
           num_parcelas?: number | null
           numero_contrato?: string | null
           organization_id?: string | null
+          ppg_nome?: string | null
           status?: string | null
           tipo?: string | null
           tipo_instituicao?: string | null

@@ -208,6 +208,15 @@ const FomentoParceiraForm = ({ parceriaId, onBack }: Props) => {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-2">
+            <Label>Programa de Pós-Graduação</Label>
+            <Select value={form.ppg_nome} onValueChange={(v) => set("ppg_nome", v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                {PPG_OPTIONS.map((ppg) => <SelectItem key={ppg} value={ppg}>{ppg}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </SectionCard>
 

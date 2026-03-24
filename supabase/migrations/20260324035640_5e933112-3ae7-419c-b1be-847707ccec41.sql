@@ -1,0 +1,1 @@
+ALTER TABLE public.fomento_parcerias ADD COLUMN ppg_nome text;
