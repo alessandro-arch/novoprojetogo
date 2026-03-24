@@ -289,6 +289,99 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
           </CardContent>
         </Card>
       )}
+
+      {/* Bolsistas Section */}
+      {(() => {
+        const bList = bolsistas ?? [];
+        const bolsistasAtivos = bList.filter((b) => b.status === "ativo");
+        const totalMensal = bolsistasAtivos.reduce((s, b) => s + (Number(b.valor_mensal) || 0), 0);
+        
+        const modMap = new Map<string, number>();
+        bolsistasAtivos.forEach((b) => {
+          const key = b.modalidade || "sem_modalidade";
+          modMap.set(key, (modMap.get(key) || 0) + 1);
+        });
+        const modData = Array.from(modMap.entries()).map(([name, value]) => ({
+          name: MODALIDADE_LABELS[name] || name, value,
+        }));
+
+        const orientMap = new Map<string, number>();
+        bList.forEach((b) => {
+          const key = b.orientador || "Não informado";
+          orientMap.set(key, (orientMap.get(key) || 0) + 1);
+        });
+        const orientData = Array.from(orientMap.entries())
+          .sort((a, b) => b[1] - a[1]).slice(0, 10)
+          .map(([name, value]) => ({ name: name.length > 20 ? name.slice(0, 20) + "…" : name, value }));
+
+        return (
+          <>
+            <h2 className="text-lg font-bold font-heading text-foreground mt-4 flex items-center gap-2">
+              <GraduationCap className="w-5 h-5" /> Bolsistas
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Card className="shadow-sm">
+                <CardContent className="p-5 flex items-center gap-4">
+                  <div className="w-11 h-11 rounded-xl bg-[hsl(var(--info-light))] flex items-center justify-center">
+                    <GraduationCap className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Bolsistas Ativos</p>
+                    <p className="text-lg font-bold text-foreground">{bolsistasAtivos.length}</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="shadow-sm">
+                <CardContent className="p-5 flex items-center gap-4">
+                  <div className="w-11 h-11 rounded-xl bg-[hsl(var(--success-light))] flex items-center justify-center">
+                    <DollarSign className="w-5 h-5 text-[hsl(var(--success))]" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Valor Mensal em Bolsas</p>
+                    <p className="text-lg font-bold text-foreground">{formatBRL(totalMensal)}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {(modData.length > 0 || orientData.length > 0) && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {modData.length > 0 && (
+                  <Card className="shadow-sm">
+                    <CardHeader className="pb-2"><CardTitle className="text-sm">Distribuição por Modalidade</CardTitle></CardHeader>
+                    <CardContent className="h-72">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={modData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={({ name }) => name} fontSize={10}>
+                            {modData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                )}
+                {orientData.length > 0 && (
+                  <Card className="shadow-sm">
+                    <CardHeader className="pb-2"><CardTitle className="text-sm">Bolsistas por Orientador</CardTitle></CardHeader>
+                    <CardContent className="h-72">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={orientData} layout="vertical" margin={{ left: 10, right: 20 }}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis type="number" fontSize={10} />
+                          <YAxis type="category" dataKey="name" width={120} fontSize={11} />
+                          <Tooltip />
+                          <Bar dataKey="value" fill="hsl(270, 50%, 50%)" radius={[0, 4, 4, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
+          </>
+        );
+      })()}
     </div>
   );
 };
