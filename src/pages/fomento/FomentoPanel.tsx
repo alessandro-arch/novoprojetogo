@@ -58,6 +58,7 @@ const FomentoPanel = () => {
 
   const handleEditBolsista = (id: string) => navigate(`/fomento/bolsistas/${id}/editar`);
   const handleNewBolsista = () => navigate("/fomento/bolsistas/novo");
+  const handleBolsistaBatchImport = () => navigate("/fomento/bolsistas/importar-lote");
   const handleBackToBolsistas = () => navigate("/fomento/bolsistas");
 
   const renderContent = () => {
