@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Search, Download, Pencil, Trash2, Upload } from "lucide-react";
+import { Plus, Search, Download, Pencil, Trash2, Upload, GraduationCap } from "lucide-react";
+import { CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { formatBRL, formatDateBR, MODALIDADE_LABELS, BOLSISTA_STATUS_LABELS } from "@/lib/fomento-utils";
 
