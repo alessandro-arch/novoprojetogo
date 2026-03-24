@@ -217,6 +217,16 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
   });
   const rubricaData = Array.from(rubricaMap.entries()).map(([name, value]) => ({ name, value }));
 
+  // Captação por PPG (apenas projetos)
+  const ppgMap = new Map<string, number>();
+  p.forEach((x) => {
+    const key = x.ppg_nome || "Sem PPG";
+    ppgMap.set(key, (ppgMap.get(key) || 0) + (Number(x.valor_total) || 0));
+  });
+  const ppgData = Array.from(ppgMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, value]) => ({ name: name.toUpperCase(), value }));
+
   const in90d = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
   const expiring = p
     .filter((x) => x.status === "em_execucao" && x.vigencia_fim && new Date(x.vigencia_fim) >= now && new Date(x.vigencia_fim) <= in90d)
@@ -408,6 +418,52 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
                   const sorted = [...rubricaData].sort((a, b) => b.value - a.value);
                   const total = sorted.reduce((s, d) => s + d.value, 0) || 1;
                   return sorted.map((item, i) => {
+                    const pctOfTotal = (item.value / total) * 100;
+                    return (
+                      <div key={item.name} className="flex items-center gap-3">
+                        <span className="w-4 h-4 shrink-0 rounded" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                        <span className="text-xs text-muted-foreground w-48 shrink-0 truncate" title={item.name}>{item.name}</span>
+                        <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
+                          <div className="h-full rounded" style={{ width: `${pctOfTotal}%`, backgroundColor: COLORS[i % COLORS.length] }} />
+                        </div>
+                        <span className="text-xs font-medium text-foreground w-16 text-right shrink-0">{pctOfTotal.toFixed(1)}%</span>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Captação por Programa de Pós-Graduação (R$)</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {ppgData.map((item, i) => {
+                  const maxVal = Math.max(...ppgData.map(d => d.value), 1);
+                  const pct = (item.value / maxVal) * 100;
+                  return (
+                    <div key={item.name} className="flex items-center gap-3">
+                      <span className="w-4 h-4 shrink-0 rounded" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                      <span className="text-xs text-muted-foreground w-48 shrink-0 truncate" title={item.name}>{item.name}</span>
+                      <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
+                        <div className="h-full rounded" style={{ width: `${pct}%`, backgroundColor: COLORS[i % COLORS.length] }} />
+                      </div>
+                      <span className="text-xs font-medium text-foreground w-28 text-right shrink-0">{formatBRL(item.value)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Captação por PPG (%)</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {(() => {
+                  const total = ppgData.reduce((s, d) => s + d.value, 0) || 1;
+                  return ppgData.map((item, i) => {
                     const pctOfTotal = (item.value / total) * 100;
                     return (
                       <div key={item.name} className="flex items-center gap-3">
