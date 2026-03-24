@@ -267,6 +267,14 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
                 <div className="min-w-0 flex-1 overflow-hidden">
                   <div className="flex items-center gap-1">
                     <p className="text-xs text-muted-foreground truncate">{k.label}</p>
+                    {"tooltip" in k && k.tooltip && (
+                      <UiTooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-3 h-3 shrink-0 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs text-xs">{k.tooltip}</TooltipContent>
+                      </UiTooltip>
+                    )}
                   </div>
                   <p className="text-lg font-bold text-foreground truncate">{k.value}</p>
                 </div>
