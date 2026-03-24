@@ -100,7 +100,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     return fim >= now && fim <= in60d;
   }).length;
 
-  const areaData = ["pesquisa", "inovacao", "extensao", "ensino", "servicos"].map((a) => {
+  const areaData = ["pesquisa", "inovacao", "extensao", "ensino", "servicos", "estagio_tecnico", "participacao_evento", "publicacao"].map((a) => {
     const filtered = p.filter((x) => x.area === a);
     return {
       area: AREA_LABELS[a] || a,
