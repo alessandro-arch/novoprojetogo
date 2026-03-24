@@ -520,8 +520,8 @@ Campos não encontrados retornar null.`,
         <Badge variant="destructive">⚠️ Erro na extração — preencha manualmente</Badge>
       )}
 
-      {/* [A] AI Extraction */}
-      {!isEditing && (
+      {/* [A] AI Extraction — available on new and edit */}
+      {true && (
         <SectionCard {...sectionProps} id="ai" title="[A] Extração via IA">
           <div className="space-y-3">
             <div>
