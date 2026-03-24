@@ -8,6 +8,7 @@ import FomentoProjectForm from "@/components/fomento/FomentoProjectForm";
 import FomentoBatchImport from "@/components/fomento/FomentoBatchImport";
 import FomentoBolsistasList from "@/components/fomento/FomentoBolsistasList";
 import FomentoBolsistaForm from "@/components/fomento/FomentoBolsistaForm";
+import FomentoBolsistaBatchImport from "@/components/fomento/FomentoBolsistaBatchImport";
 import FomentoAlerts from "@/components/fomento/FomentoAlerts";
 import FomentoAdmin from "@/components/fomento/FomentoAdmin";
 import FomentoMasterPanel from "@/components/fomento/FomentoMasterPanel";
