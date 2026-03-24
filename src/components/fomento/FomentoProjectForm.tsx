@@ -12,10 +12,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ArrowLeft, ChevronDown, Plus, Trash2, Upload, Bot, Loader2, Save } from "lucide-react";
+import { ArrowLeft, ChevronDown, Plus, Trash2, Upload, Bot, Loader2, Save, GraduationCap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { formatBRL } from "@/lib/fomento-utils";
+import { formatBRL, MODALIDADE_LABELS, BOLSISTA_STATUS_LABELS } from "@/lib/fomento-utils";
 import FomentoDocumentsSection from "./FomentoDocumentsSection";
+import { useNavigate } from "react-router-dom";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface Props {
   projectId?: string;
@@ -53,10 +55,59 @@ const SectionCard = ({ id, title, children, openSections, toggleSection }: Secti
   </Collapsible>
 );
 
+const LinkedBolsistas = ({ projectId, navigate }: { projectId: string; navigate: (path: string) => void }) => {
+  const { data: linked, isLoading } = useQuery({
+    queryKey: ["fomento-bolsistas-linked", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("fomento_bolsistas" as any).select("*").eq("project_id", projectId);
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+  if (isLoading) return <Skeleton className="h-20 rounded-lg" />;
+  const items = linked ?? [];
+  return (
+    <div className="space-y-3">
+      {items.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-4">Nenhum bolsista vinculado a este projeto.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Bolsista</TableHead>
+                <TableHead>Modalidade</TableHead>
+                <TableHead>Orientador</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Valor/mês</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.map((b) => (
+                <TableRow key={b.id} className="cursor-pointer hover:bg-accent/50" onClick={() => navigate(`/fomento/bolsistas/${b.id}/editar`)}>
+                  <TableCell className="font-medium">{b.nome_bolsista}</TableCell>
+                  <TableCell><Badge variant="outline">{MODALIDADE_LABELS[b.modalidade || ""] || b.modalidade || "—"}</Badge></TableCell>
+                  <TableCell>{b.orientador || "—"}</TableCell>
+                  <TableCell><Badge variant={b.status === "ativo" ? "default" : "secondary"}>{BOLSISTA_STATUS_LABELS[b.status || ""] || "—"}</Badge></TableCell>
+                  <TableCell className="text-right font-mono">{b.valor_mensal != null ? formatBRL(Number(b.valor_mensal)) : "—"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+      <Button variant="outline" size="sm" onClick={() => navigate(`/fomento/bolsistas/novo?project_id=${projectId}`)} className="gap-1">
+        <GraduationCap className="w-4 h-4" /> Novo Bolsista vinculado
+      </Button>
+    </div>
+  );
+};
+
 const FomentoProjectForm = ({ projectId, onBack }: Props) => {
   const { user, fomentoOrgId } = useFomentoAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const isEditing = !!projectId;
 
   // Form state
@@ -96,7 +147,7 @@ const FomentoProjectForm = ({ projectId, onBack }: Props) => {
 
   // Sections open state
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    ai: true, ident: true, class: true, fin: true, equipe: true, vigencia: true, docs: true,
+    ai: true, ident: true, class: true, fin: true, equipe: true, vigencia: true, docs: true, bolsistas: true,
   });
 
   const toggleSection = (key: string) => setOpenSections((s) => ({ ...s, [key]: !s[key] }));
@@ -657,6 +708,13 @@ Campos não encontrados retornar null.`,
           </p>
         )}
       </SectionCard>
+
+      {/* [H] Bolsistas Vinculados */}
+      {projectId && (
+        <SectionCard {...sectionProps} id="bolsistas" title="[H] Bolsistas Vinculados">
+          <LinkedBolsistas projectId={projectId} navigate={navigate} />
+        </SectionCard>
+      )}
 
       {/* Bottom save button */}
       <div className="flex justify-end pt-2">
