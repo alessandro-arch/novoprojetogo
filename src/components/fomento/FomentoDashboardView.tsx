@@ -214,19 +214,19 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
                 <div className={`w-11 h-11 rounded-xl ${k.bg} flex items-center justify-center`}>
                   <k.icon className={`w-5 h-5 ${k.color}`} />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1 overflow-hidden">
                   <div className="flex items-center gap-1">
-                    <p className="text-xs text-muted-foreground">{k.label}</p>
+                    <p className="text-xs text-muted-foreground truncate">{k.label}</p>
                     {"tooltip" in k && k.tooltip && (
                       <UiTooltip>
                         <TooltipTrigger asChild>
-                          <Info className="w-3 h-3 text-muted-foreground cursor-help" />
+                          <Info className="w-3 h-3 shrink-0 text-muted-foreground cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs text-xs">{k.tooltip}</TooltipContent>
                       </UiTooltip>
                     )}
                   </div>
-                  <p className="text-lg font-bold text-foreground">{k.value}</p>
+                  <p className="text-lg font-bold text-foreground truncate">{k.value}</p>
                 </div>
               </CardContent>
             </Card>
