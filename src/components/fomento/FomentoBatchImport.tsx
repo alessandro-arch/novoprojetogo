@@ -180,7 +180,17 @@ const FomentoBatchImport = ({ onBack }: Props) => {
       proj.area = parsed.area || "";
       proj.fonte = parsed.fonte || "";
       proj.natureza = parsed.natureza || "";
-      proj.ano = parsed.ano ? String(parsed.ano) : "";
+      // Derive ano from vigencia_inicio if AI didn't extract it
+      const rawAno = parsed.ano ? String(parsed.ano) : "";
+      if (rawAno) {
+        proj.ano = rawAno;
+      } else if (parsed.vigencia_inicio) {
+        try {
+          proj.ano = String(new Date(parsed.vigencia_inicio + "T12:00:00").getFullYear());
+        } catch { proj.ano = ""; }
+      } else {
+        proj.ano = "";
+      }
       proj.data_assinatura = parsed.data_assinatura || "";
       proj.vigencia_inicio = parsed.vigencia_inicio || "";
       proj.vigencia_fim = parsed.vigencia_fim || "";
