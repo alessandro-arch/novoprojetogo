@@ -140,7 +140,16 @@ const FomentoProjectsList = ({ onNewProject, onEditProject, onBatchImport }: Pro
       {/* Filters */}
       <Card className="shadow-sm">
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            <Select value={filterAno} onValueChange={setFilterAno}>
+              <SelectTrigger className="font-semibold border-primary/30 bg-primary/5">
+                <SelectValue placeholder="Ano" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os anos</SelectItem>
+                {availableYears.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input placeholder="Buscar título ou pesquisador…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
