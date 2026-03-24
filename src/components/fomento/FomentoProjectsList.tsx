@@ -20,7 +20,7 @@ interface Props {
   onBatchImport?: () => void;
 }
 
-const FomentoProjectsList = ({ onNewProject, onEditProject }: Props) => {
+const FomentoProjectsList = ({ onNewProject, onEditProject, onBatchImport }: Props) => {
   const { fomentoRole, isSuperadmin, fomentoOrgId } = useFomentoAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
