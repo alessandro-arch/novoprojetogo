@@ -139,33 +139,7 @@ const FomentoBatchImport = ({ onBack }: Props) => {
       for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
       const base64 = btoa(binary);
 
-      let response: Response | null = null;
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        response = await callAnthropicApi(base64);
-        if (response.status === 429) {
-          if (attempt < 3) {
-            setRetryMsg(`Aguardando 20s antes de continuar... (tentativa ${attempt} de 3)`);
-            await delay(20000);
-            setRetryMsg(null);
-            continue;
-          }
-          throw new Error("Rate limit excedido após 3 tentativas");
-        }
-        if (!response.ok) {
-          const err = await response.json().catch(() => ({}));
-          throw new Error(err?.error?.message || `HTTP ${response.status}`);
-        }
-        break;
-      }
-
-      if (!response || !response.ok) throw new Error("Falha na extração");
-
-      const data = await response.json();
-      const rawText = data.content.map((b: any) => b.text || "").join("");
-      const cleaned = rawText.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
-      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("JSON não encontrado");
-      const parsed = JSON.parse(jsonMatch[0]);
+      const parsed = await callExtractApi(base64);
 
       proj.pesquisador_principal = parsed.pesquisador_principal || "";
       proj.titulo = parsed.titulo || "";
