@@ -14,8 +14,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ArrowLeft, ChevronDown, Plus, Trash2, Upload, Bot, Loader2, Save, GraduationCap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { formatBRL } from "@/lib/fomento-utils";
+import { formatBRL, MODALIDADE_LABELS, BOLSISTA_STATUS_LABELS } from "@/lib/fomento-utils";
 import FomentoDocumentsSection from "./FomentoDocumentsSection";
+import { useNavigate } from "react-router-dom";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 interface Props {
   projectId?: string;
