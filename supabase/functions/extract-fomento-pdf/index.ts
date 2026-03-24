@@ -69,10 +69,9 @@ PDF (base64): ${pdfBase64}`;
             role: "user",
             content: [
               {
-                type: "file",
-                file: {
-                  filename: "document.pdf",
-                  file_data: `data:application/pdf;base64,${pdfBase64}`,
+                type: "image_url",
+                image_url: {
+                  url: `data:application/pdf;base64,${pdfBase64}`,
                 },
               },
               {
