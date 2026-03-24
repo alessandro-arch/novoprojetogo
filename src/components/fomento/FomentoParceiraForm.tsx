@@ -17,6 +17,16 @@ interface Props {
   onBack: () => void;
 }
 
+const PPG_OPTIONS = [
+  "Ciências Farmacêuticas",
+  "Ciência Animal",
+  "Biotecnologia Vegetal",
+  "Assistência Farmacêutica",
+  "Arquitetura e Cidade",
+  "Sociologia Política",
+  "Segurança Pública",
+];
+
 const emptForm = {
   numero_contrato: "",
   titulo: "",
@@ -26,6 +36,7 @@ const emptForm = {
   instituicao_nome: "",
   cnpj: "",
   tipo_instituicao: "",
+  ppg_nome: "",
   num_beneficiarios: 0,
   num_parcelas: 0,
   valor_mensal_aluno: 0,
