@@ -2086,6 +2086,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      generate_fomento_processo: { Args: { _org_id: string }; Returns: string }
       generate_form_code: { Args: { p_org_id: string }; Returns: string }
       generate_submission_protocol: {
         Args: { p_edital_id: string }

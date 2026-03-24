@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useFomentoAuth } from "@/contexts/FomentoAuthContext";
@@ -6,11 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { UserPlus, Trash2, ShieldCheck } from "lucide-react";
+import { UserPlus, Trash2, ShieldCheck, Building2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface FomentoUser {
@@ -34,6 +35,31 @@ const FomentoAdmin = () => {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("gestor");
   const [inviteLoading, setInviteLoading] = useState(false);
+  const [orgSigla, setOrgSigla] = useState("");
+  const [siglaLoading, setSiglaLoading] = useState(false);
+
+  // Fetch org sigla
+  useEffect(() => {
+    if (!fomentoOrgId) return;
+    supabase.from("fomento_organizations").select("sigla").eq("id", fomentoOrgId).single()
+      .then(({ data }) => { if (data?.sigla) setOrgSigla(data.sigla); });
+  }, [fomentoOrgId]);
+
+  const handleSaveSigla = async () => {
+    if (!fomentoOrgId) return;
+    setSiglaLoading(true);
+    try {
+      const { error } = await supabase.from("fomento_organizations")
+        .update({ sigla: orgSigla.trim().toUpperCase() })
+        .eq("id", fomentoOrgId);
+      if (error) throw error;
+      toast({ title: "Sigla atualizada com sucesso." });
+    } catch (err: any) {
+      toast({ title: "Erro ao salvar sigla.", description: err.message, variant: "destructive" });
+    } finally {
+      setSiglaLoading(false);
+    }
+  };
 
   const { data: users, isLoading } = useQuery({
     queryKey: ["fomento-users", fomentoOrgId, isSuperadmin],
@@ -109,6 +135,30 @@ const FomentoAdmin = () => {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold font-heading text-foreground">Administração</h1>
+
+      {/* Org Config */}
+      {fomentoOrgId && (
+        <Card className="shadow-sm">
+          <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Building2 className="w-4 h-4" /> Configuração da Organização</CardTitle></CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row gap-3 items-end">
+              <div className="flex-1 space-y-1">
+                <Label>Sigla da Instituição</Label>
+                <Input
+                  placeholder="Ex: UVV, UFES, IFES"
+                  value={orgSigla}
+                  onChange={(e) => setOrgSigla(e.target.value.toUpperCase())}
+                  className="max-w-[200px] uppercase"
+                />
+                <p className="text-xs text-muted-foreground">Usada para gerar automaticamente o código de Processo Interno (ex: UVV-2026-0001)</p>
+              </div>
+              <Button onClick={handleSaveSigla} disabled={siglaLoading || !orgSigla.trim()} size="sm" className="gap-1">
+                <Save className="w-3.5 h-3.5" /> {siglaLoading ? "Salvando…" : "Salvar"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Invite */}
       <Card className="shadow-sm">
