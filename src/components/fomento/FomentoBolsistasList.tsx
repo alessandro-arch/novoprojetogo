@@ -172,9 +172,9 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 ? (
+                {sorted.length === 0 ? (
                   <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Nenhum bolsista encontrado.</TableCell></TableRow>
-                ) : filtered.map((b) => (
+                ) : sorted.map((b) => (
                   <TableRow key={b.id}>
                     <TableCell className="font-medium max-w-[180px] truncate">{b.nome_bolsista}</TableCell>
                     <TableCell className="max-w-[150px] truncate">{b.orientador || "—"}</TableCell>
