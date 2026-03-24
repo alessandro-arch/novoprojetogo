@@ -113,6 +113,7 @@ const FomentoParceirasList = ({ onNewParceria, onEditParceria }: Props) => {
                 <TableHead>Nº Contrato</TableHead>
                 <TableHead>Título</TableHead>
                 <TableHead>Tipo</TableHead>
+                <TableHead>Modalidade</TableHead>
                 <TableHead>Instituição</TableHead>
                 <TableHead className="text-right">Beneficiários</TableHead>
                 <TableHead className="text-right">Valor Total</TableHead>
