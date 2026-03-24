@@ -8,6 +8,7 @@ import FomentoProjectForm from "@/components/fomento/FomentoProjectForm";
 import FomentoBatchImport from "@/components/fomento/FomentoBatchImport";
 import FomentoBolsistasList from "@/components/fomento/FomentoBolsistasList";
 import FomentoBolsistaForm from "@/components/fomento/FomentoBolsistaForm";
+import FomentoBolsistaBatchImport from "@/components/fomento/FomentoBolsistaBatchImport";
 import FomentoAlerts from "@/components/fomento/FomentoAlerts";
 import FomentoAdmin from "@/components/fomento/FomentoAdmin";
 import FomentoMasterPanel from "@/components/fomento/FomentoMasterPanel";
@@ -57,6 +58,7 @@ const FomentoPanel = () => {
 
   const handleEditBolsista = (id: string) => navigate(`/fomento/bolsistas/${id}/editar`);
   const handleNewBolsista = () => navigate("/fomento/bolsistas/novo");
+  const handleBolsistaBatchImport = () => navigate("/fomento/bolsistas/importar-lote");
   const handleBackToBolsistas = () => navigate("/fomento/bolsistas");
 
   const renderContent = () => {
@@ -71,8 +73,9 @@ const FomentoPanel = () => {
 
     if (section === "bolsistas") {
       if (segments[1] === "novo") return <FomentoBolsistaForm onBack={handleBackToBolsistas} />;
+      if (segments[1] === "importar-lote") return <FomentoBolsistaBatchImport onBack={handleBackToBolsistas} />;
       if (segments[1] && segments[2] === "editar") return <FomentoBolsistaForm bolsistaId={segments[1]} onBack={handleBackToBolsistas} />;
-      return <FomentoBolsistasList onNewBolsista={handleNewBolsista} onEditBolsista={handleEditBolsista} />;
+      return <FomentoBolsistasList onNewBolsista={handleNewBolsista} onEditBolsista={handleEditBolsista} onBatchImport={handleBolsistaBatchImport} />;
     }
 
     if (section === "alertas") return <FomentoAlerts onEditProject={handleEditProject} />;
