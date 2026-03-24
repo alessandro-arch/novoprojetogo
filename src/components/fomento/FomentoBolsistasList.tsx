@@ -17,9 +17,10 @@ import { formatBRL, formatDateBR, MODALIDADE_LABELS, BOLSISTA_STATUS_LABELS } fr
 interface Props {
   onNewBolsista: () => void;
   onEditBolsista: (id: string) => void;
+  onBatchImport?: () => void;
 }
 
-const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista }: Props) => {
+const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: Props) => {
   const { fomentoRole, isSuperadmin, fomentoOrgId } = useFomentoAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
