@@ -139,7 +139,6 @@ const FomentoProjectForm = ({ projectId, onBack }: Props) => {
   const [extractedByAi, setExtractedByAi] = useState(false);
 
   // AI extraction state
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem("fomento_anthropic_key") || "");
   const [extracting, setExtracting] = useState(false);
   const [extractionStatus, setExtractionStatus] = useState<"idle" | "success" | "error">("idle");
   const [retryMessage, setRetryMessage] = useState<string | null>(null);
