@@ -52,6 +52,7 @@ const FomentoPanel = () => {
 
   const handleEditProject = (id: string) => navigate(`/fomento/projetos/${id}/editar`);
   const handleNewProject = () => navigate("/fomento/projetos/novo");
+  const handleBatchImport = () => navigate("/fomento/projetos/importar-lote");
   const handleBackToProjects = () => navigate("/fomento/projetos");
 
   const handleEditBolsista = (id: string) => navigate(`/fomento/bolsistas/${id}/editar`);
