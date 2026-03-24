@@ -73,8 +73,8 @@ export const BOLSISTA_STATUS_LABELS: Record<string, string> = {
 
 export const MODALIDADE_VALORES_SUGERIDOS: Record<string, number> = {
   ic: 500,
-  mestrado: 2100,
-  doutorado: 3100,
+  mestrado: 3200,
+  doutorado: 4500,
   pos_doc: 5200,
   apoio_tecnico: 0,
   extensao: 0,
