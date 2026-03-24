@@ -97,6 +97,11 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
         <h1 className="text-2xl font-bold font-heading text-foreground">Bolsistas</h1>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={exportCSV} className="gap-1"><Download className="w-4 h-4" /> CSV</Button>
+          {onBatchImport && (
+            <Button variant="outline" size="sm" onClick={onBatchImport} className="gap-1">
+              <Upload className="w-4 h-4" /> Importar em Lote
+            </Button>
+          )}
           <Button size="sm" onClick={onNewBolsista} className="gap-1"><Plus className="w-4 h-4" /> Novo Bolsista</Button>
         </div>
       </div>
