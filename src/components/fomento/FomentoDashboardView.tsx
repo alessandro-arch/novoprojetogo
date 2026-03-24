@@ -227,6 +227,17 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     .sort((a, b) => b[1] - a[1])
     .map(([name, value]) => ({ name: name.toUpperCase(), value }));
 
+  // Pesquisadores por PPG (apenas projetos)
+  const ppgResearcherMap = new Map<string, Set<string>>();
+  p.forEach((x) => {
+    const key = (x.ppg_nome || "Sem PPG").toUpperCase();
+    if (!ppgResearcherMap.has(key)) ppgResearcherMap.set(key, new Set());
+    ppgResearcherMap.get(key)!.add(x.pesquisador_principal);
+  });
+  const ppgResearcherData = Array.from(ppgResearcherMap.entries())
+    .map(([name, researchers]) => ({ name, value: researchers.size }))
+    .sort((a, b) => b.value - a.value);
+
   const in90d = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
   const expiring = p
     .filter((x) => x.status === "em_execucao" && x.vigencia_fim && new Date(x.vigencia_fim) >= now && new Date(x.vigencia_fim) <= in90d)
