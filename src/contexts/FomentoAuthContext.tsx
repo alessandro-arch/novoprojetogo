@@ -23,6 +23,7 @@ const FomentoAuthContext = createContext<FomentoAuthContextType>({
   fomentoOrgId: null,
   profileName: null,
   isSuperadmin: false,
+  isAuditor: false,
   signOut: async () => {},
   refreshRole: async () => {},
 });
