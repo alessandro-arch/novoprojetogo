@@ -249,7 +249,6 @@ const FomentoBolsistaForm = ({ bolsistaId, onBack }: Props) => {
       {!isEditing && (
         <SectionCard {...sectionProps} id="ai" title="[A] Extração via IA (PDF de Bolsa)">
           <div className="space-y-3">
-            <div><Label>Anthropic API Key</Label><Input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="sk-ant-..." /></div>
             <div onDragOver={(e) => e.preventDefault()} onDrop={handleFileDrop} className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/50 transition-colors">
               {extracting ? (
                 <div className="flex flex-col items-center gap-2">
