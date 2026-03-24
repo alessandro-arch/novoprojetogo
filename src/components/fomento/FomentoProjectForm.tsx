@@ -556,7 +556,30 @@ const FomentoProjectForm = ({ projectId, onBack }: Props) => {
             {vinculo_academico === "ppg" && (
               <div className="mt-3">
                 <Label>Nome do PPG</Label>
-                <Input value={ppg_nome} onChange={(e) => setPpgNome(e.target.value)} placeholder="Ex: PPG em Ciências Ambientais" />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal mt-1">
+                      {ppg_nome || "Selecione o PPG..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Buscar PPG..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhum PPG encontrado.</CommandEmpty>
+                        <CommandGroup>
+                          {PPG_OPTIONS.map((ppg) => (
+                            <CommandItem key={ppg} value={ppg} onSelect={(v) => setPpgNome(v === ppg_nome ? "" : ppg)}>
+                              <Check className={`mr-2 h-4 w-4 ${ppg_nome === ppg ? "opacity-100" : "opacity-0"}`} />
+                              {ppg}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
             )}
           </div>
