@@ -68,7 +68,9 @@ const FomentoParceirasList = ({ onNewParceria, onEditParceria }: Props) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-foreground">Parcerias</h2>
-        <Button onClick={onNewParceria}><Plus className="w-4 h-4 mr-1" /> Nova Parceria</Button>
+        {!isAuditor && (
+          <Button onClick={onNewParceria}><Plus className="w-4 h-4 mr-1" /> Nova Parceria</Button>
+        )}
       </div>
 
       {/* KPI Cards */}
