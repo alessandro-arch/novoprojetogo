@@ -303,13 +303,6 @@ const FomentoBatchImport = ({ onBack }: Props) => {
       {/* UPLOAD PHASE */}
       {phase === "upload" && (
         <div className="space-y-4">
-          <Card className="shadow-sm">
-            <CardHeader><CardTitle className="text-sm">Chave da API Anthropic</CardTitle></CardHeader>
-            <CardContent>
-              <Input type="password" placeholder="sk-ant-..." value={apiKey} onChange={e => setApiKey(e.target.value)} />
-              <p className="text-xs text-muted-foreground mt-1">Salva localmente no navegador.</p>
-            </CardContent>
-          </Card>
 
           <Card className="shadow-sm">
             <CardContent className="p-6">
