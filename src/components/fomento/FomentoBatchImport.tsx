@@ -247,8 +247,13 @@ const FomentoBatchImport = ({ onBack }: Props) => {
           created_by: user?.id || null,
           organization_id: effectiveOrgId,
         });
-        if (!error) saved++;
+        if (error) {
+          console.error("Erro ao inserir projeto:", proj.titulo, error);
+        } else {
+          saved++;
+        }
       }
+      queryClient.invalidateQueries({ queryKey: ["fomento-projects"] });
       toast({ title: `${saved} projeto(s) importado(s) com sucesso.` });
       onBack();
     } catch (err: any) {
