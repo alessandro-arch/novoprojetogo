@@ -57,7 +57,7 @@ const handler = async (req: Request): Promise<Response> => {
     const viewUrl = `${appUrl}/proponente`;
 
     const emailResponse = await resend.emails.send({
-      from: "ProjetoGO <onboarding@resend.dev>",
+      from: "ProjetoGO <noreply@innovago.app>",
       to: [recipientEmail],
       subject: `Proposta submetida com sucesso — Protocolo ${protocol}`,
       html: `
