@@ -236,10 +236,12 @@ const FomentoProjectsList = ({ onNewProject, onEditProject, onBatchImport }: Pro
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => onEditProject(p.id)}>
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          {canDelete && (
+                          {!isAuditor && (
+                            <Button variant="ghost" size="icon" onClick={() => onEditProject(p.id)}>
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                          )}
+                          {canDelete && !isAuditor && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="icon" className="text-destructive">

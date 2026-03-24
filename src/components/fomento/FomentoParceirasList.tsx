@@ -144,10 +144,12 @@ const FomentoParceirasList = ({ onNewParceria, onEditParceria }: Props) => {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => onEditParceria(p.id)}><Pencil className="w-4 h-4" /></Button>
-                      <Button size="icon" variant="ghost" className="text-destructive" onClick={() => { if (confirm("Excluir esta parceria?")) deleteMutation.mutate(p.id); }}><Trash2 className="w-4 h-4" /></Button>
-                    </div>
+                    {!isAuditor && (
+                      <div className="flex justify-end gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => onEditParceria(p.id)}><Pencil className="w-4 h-4" /></Button>
+                        <Button size="icon" variant="ghost" className="text-destructive" onClick={() => { if (confirm("Excluir esta parceria?")) deleteMutation.mutate(p.id); }}><Trash2 className="w-4 h-4" /></Button>
+                      </div>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

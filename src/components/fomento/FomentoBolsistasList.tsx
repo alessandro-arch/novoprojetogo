@@ -239,8 +239,10 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => onEditBolsista(b.id)}><Pencil className="w-4 h-4" /></Button>
-                        {canDelete && (
+                        {!isAuditor && (
+                          <Button variant="ghost" size="icon" onClick={() => onEditBolsista(b.id)}><Pencil className="w-4 h-4" /></Button>
+                        )}
+                        {canDelete && !isAuditor && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button variant="ghost" size="icon" className="text-destructive"><Trash2 className="w-4 h-4" /></Button>
