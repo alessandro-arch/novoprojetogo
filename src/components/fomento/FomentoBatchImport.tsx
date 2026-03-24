@@ -120,38 +120,14 @@ const FomentoBatchImport = ({ onBack }: Props) => {
   const handleDrop = (e: React.DragEvent) => { e.preventDefault(); addFiles(e.dataTransfer.files); };
   const handleDragOver = (e: React.DragEvent) => e.preventDefault();
 
-  // AI extraction
-  const callAnthropicApi = async (base64: string): Promise<Response> => {
-    return fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "anthropic-beta": "pdfs-2024-09-25",
-        "anthropic-dangerous-direct-browser-access": "true",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
-        messages: [{
-          role: "user",
-          content: [
-            { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } },
-            {
-              type: "text",
-              text: `Extraia do documento e retorne APENAS JSON puro sem markdown:
-{ "pesquisador_principal":"", "titulo":"", "edital":"", "orgao_financiador":"",
-  "ano":null, "data_assinatura":"YYYY-MM-DD", "vigencia_inicio":"YYYY-MM-DD",
-  "vigencia_fim":"YYYY-MM-DD", "valor_total":null,
-  "fonte":"publica ou privada", "natureza":"auxilio_financeiro ou bolsa",
-  "area":"" }
-Campos não encontrados retornar null.`,
-            },
-          ],
-        }],
-      }),
+  // AI extraction via edge function
+  const callExtractApi = async (base64: string): Promise<any> => {
+    const { data: result, error } = await supabase.functions.invoke("extract-fomento-pdf", {
+      body: { pdfBase64: base64, type: "project" },
     });
+    if (error) throw new Error(error.message || "Erro na extração");
+    if (result?.error) throw new Error(result.error);
+    return result.data;
   };
 
   const extractSingle = async (file: File, idx: number): Promise<ExtractedProject> => {
