@@ -35,7 +35,7 @@ const FomentoPanel = () => {
     return <Navigate to="/fomento/dashboard" replace />;
   }
 
-  const activeNav = section === "projetos" ? "projetos" : section === "bolsistas" ? "bolsistas" : section === "master" ? "master" : section;
+  const activeNav = section === "projetos" ? "projetos" : section === "bolsistas" ? "bolsistas" : section === "parcerias" ? "parcerias" : section === "master" ? "master" : section;
 
   const navItems: NavItem[] = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
