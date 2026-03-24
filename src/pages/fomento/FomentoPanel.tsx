@@ -64,8 +64,9 @@ const FomentoPanel = () => {
 
     if (section === "projetos") {
       if (segments[1] === "novo") return <FomentoProjectForm onBack={handleBackToProjects} />;
+      if (segments[1] === "importar-lote") return <FomentoBatchImport onBack={handleBackToProjects} />;
       if (segments[1] && segments[2] === "editar") return <FomentoProjectForm projectId={segments[1]} onBack={handleBackToProjects} />;
-      return <FomentoProjectsList onNewProject={handleNewProject} onEditProject={handleEditProject} />;
+      return <FomentoProjectsList onNewProject={handleNewProject} onEditProject={handleEditProject} onBatchImport={handleBatchImport} />;
     }
 
     if (section === "bolsistas") {
