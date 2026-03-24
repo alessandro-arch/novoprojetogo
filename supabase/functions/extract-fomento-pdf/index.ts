@@ -69,10 +69,9 @@ PDF (base64): ${pdfBase64}`;
             role: "user",
             content: [
               {
-                type: "file",
-                file: {
-                  filename: "document.pdf",
-                  file_data: `data:application/pdf;base64,${pdfBase64}`,
+                type: "image_url",
+                image_url: {
+                  url: `data:application/pdf;base64,${pdfBase64}`,
                 },
               },
               {
@@ -109,6 +108,7 @@ PDF (base64): ${pdfBase64}`;
 
     const data = await response.json();
     const rawText = data.choices?.[0]?.message?.content || "";
+    console.log("AI raw response length:", rawText.length, "first 500 chars:", rawText.substring(0, 500));
 
     // Clean markdown wrappers if present
     const cleaned = rawText
@@ -117,13 +117,23 @@ PDF (base64): ${pdfBase64}`;
       .trim();
     const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
+      console.error("No JSON found in response:", cleaned.substring(0, 500));
       return new Response(
         JSON.stringify({ error: "Nenhum JSON válido encontrado na resposta da IA" }),
         { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const parsed = JSON.parse(jsonMatch[0]);
+    let parsed: any;
+    try {
+      parsed = JSON.parse(jsonMatch[0]);
+    } catch (parseErr) {
+      console.error("JSON parse error:", parseErr, "matched:", jsonMatch[0].substring(0, 500));
+      return new Response(
+        JSON.stringify({ error: "Resposta da IA não contém JSON válido" }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     return new Response(JSON.stringify({ data: parsed }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
