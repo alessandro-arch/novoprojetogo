@@ -550,9 +550,11 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="icon" onClick={() => onEditProject(p.id)}>
-                              <Pencil className="w-4 h-4" />
-                            </Button>
+                            {!isAuditor && (
+                              <Button variant="ghost" size="icon" onClick={() => onEditProject(p.id)}>
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       );

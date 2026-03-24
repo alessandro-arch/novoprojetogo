@@ -216,7 +216,7 @@ const FomentoAdmin = () => {
                         <TableCell>
                           <Badge
                             variant={isSuperadminUser ? "default" : u.fomento_role === "admin" ? "default" : "secondary"}
-                            className="capitalize"
+                            className={`capitalize ${u.fomento_role === "auditor" ? "bg-[#EF9F27]/15 text-[#EF9F27] border-[#EF9F27]/30" : ""}`}
                           >
                             {ROLE_LABELS[u.fomento_role] || u.fomento_role}
                           </Badge>

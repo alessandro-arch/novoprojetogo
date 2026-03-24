@@ -118,9 +118,11 @@ const FomentoAlerts = ({ onEditProject }: Props) => {
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant={urgency as any}>{days}d restantes</Badge>
-                    <Button variant="outline" size="sm" onClick={() => onEditProject(p.id)} className="gap-1">
-                      <Pencil className="w-3.5 h-3.5" /> Editar
-                    </Button>
+                    {!isAuditor && (
+                      <Button variant="outline" size="sm" onClick={() => onEditProject(p.id)} className="gap-1">
+                        <Pencil className="w-3.5 h-3.5" /> Editar
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
