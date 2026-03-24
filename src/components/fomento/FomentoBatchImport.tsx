@@ -35,6 +35,7 @@ interface ExtractedProject {
   vigencia_fim: string;
   status_projeto: string;
   selected: boolean;
+  isDuplicate?: boolean;
 }
 
 type Phase = "upload" | "processing" | "review";
