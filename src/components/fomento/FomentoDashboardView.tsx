@@ -1,13 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useFomentoAuth } from "@/contexts/FomentoAuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DollarSign, Briefcase, Users, AlertTriangle, Pencil, FileText } from "lucide-react";
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { formatBRL, formatDateBR, daysRemaining, STATUS_LABELS, AREA_LABELS } from "@/lib/fomento-utils";
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { formatBRL, formatDateBR, daysRemaining, AREA_LABELS } from "@/lib/fomento-utils";
 
 const COLORS = [
   "hsl(215, 65%, 30%)", "hsl(38, 80%, 52%)", "hsl(152, 55%, 42%)",
@@ -20,10 +21,16 @@ interface Props {
 }
 
 const FomentoDashboardView = ({ onEditProject }: Props) => {
+  const { isSuperadmin, fomentoOrgId } = useFomentoAuth();
+
   const { data: projects, isLoading: loadingProjects } = useQuery({
-    queryKey: ["fomento-projects"],
+    queryKey: ["fomento-projects", fomentoOrgId, isSuperadmin],
     queryFn: async () => {
-      const { data, error } = await supabase.from("fomento_projects").select("*");
+      let query = supabase.from("fomento_projects").select("*");
+      if (!isSuperadmin && fomentoOrgId) {
+        query = query.or(`organization_id.eq.${fomentoOrgId},organization_id.is.null`);
+      }
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -80,7 +87,6 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     return fim >= now && fim <= in60d;
   }).length;
 
-  // Area breakdown
   const areaData = ["pesquisa", "inovacao", "extensao", "ensino", "servicos"].map((a) => {
     const filtered = p.filter((x) => x.area === a);
     return {
@@ -90,7 +96,6 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     };
   });
 
-  // Top researchers
   const researcherMap = new Map<string, number>();
   p.forEach((x) => {
     const cur = researcherMap.get(x.pesquisador_principal) || 0;
@@ -101,7 +106,6 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     .slice(0, 10)
     .map(([name, value]) => ({ name: name.length > 20 ? name.slice(0, 20) + "…" : name, value }));
 
-  // By funding agency
   const agencyMap = new Map<string, number>();
   p.forEach((x) => {
     const key = x.orgao_financiador || "Não informado";
@@ -109,21 +113,18 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
   });
   const agencyData = Array.from(agencyMap.entries()).map(([name, value]) => ({ name, value }));
 
-  // By year
   const yearMap = new Map<number, number>();
   p.forEach((x) => {
     if (x.ano) yearMap.set(x.ano, (yearMap.get(x.ano) || 0) + (Number(x.valor_total) || 0));
   });
   const yearData = Array.from(yearMap.entries()).sort((a, b) => a[0] - b[0]).map(([year, value]) => ({ year: String(year), value }));
 
-  // By rubrica
   const rubricaMap = new Map<string, number>();
   r.forEach((x) => {
     rubricaMap.set(x.tipo, (rubricaMap.get(x.tipo) || 0) + Number(x.valor));
   });
   const rubricaData = Array.from(rubricaMap.entries()).map(([name, value]) => ({ name, value }));
 
-  // Expiring in 90d
   const in90d = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
   const expiring = p
     .filter((x) => x.status === "em_execucao" && x.vigencia_fim && new Date(x.vigencia_fim) >= now && new Date(x.vigencia_fim) <= in90d)
@@ -141,7 +142,6 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold font-heading text-foreground">Dashboard</h1>
 
-      {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {kpis.map((k) => (
           <Card key={k.label} className="shadow-sm">
@@ -158,7 +158,6 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
         ))}
       </div>
 
-      {/* Area breakdown */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {areaData.map((a) => (
           <Card key={a.area} className="shadow-sm">
@@ -171,7 +170,6 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
         ))}
       </div>
 
-      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="shadow-sm">
           <CardHeader className="pb-2"><CardTitle className="text-sm">Top Pesquisadores por Valor Captado</CardTitle></CardHeader>
@@ -232,7 +230,6 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
         </Card>
       </div>
 
-      {/* Expiring table */}
       {expiring.length > 0 && (
         <Card className="shadow-sm">
           <CardHeader><CardTitle className="text-sm">Vigências Vencendo em 90 dias</CardTitle></CardHeader>

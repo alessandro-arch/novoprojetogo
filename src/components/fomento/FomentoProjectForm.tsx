@@ -54,7 +54,7 @@ const SectionCard = ({ id, title, children, openSections, toggleSection }: Secti
 );
 
 const FomentoProjectForm = ({ projectId, onBack }: Props) => {
-  const { user } = useFomentoAuth();
+  const { user, fomentoOrgId } = useFomentoAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isEditing = !!projectId;
@@ -357,6 +357,7 @@ Campos não encontrados retornar null.`,
         bolsistas_extensao: parseInt(bolsistas_extensao) || 0,
         extracted_by_ai: extractedByAi,
         created_by: user?.id,
+        organization_id: fomentoOrgId || null,
       };
 
       let savedId = projectId;

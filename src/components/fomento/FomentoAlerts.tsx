@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useFomentoAuth } from "@/contexts/FomentoAuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,12 +16,17 @@ interface Props {
 const RANGES = [30, 60, 90, 180] as const;
 
 const FomentoAlerts = ({ onEditProject }: Props) => {
+  const { isSuperadmin, fomentoOrgId } = useFomentoAuth();
   const [range, setRange] = useState<number>(90);
 
   const { data: projects, isLoading } = useQuery({
-    queryKey: ["fomento-projects"],
+    queryKey: ["fomento-projects", fomentoOrgId, isSuperadmin],
     queryFn: async () => {
-      const { data, error } = await supabase.from("fomento_projects").select("*");
+      let query = supabase.from("fomento_projects").select("*");
+      if (!isSuperadmin && fomentoOrgId) {
+        query = query.or(`organization_id.eq.${fomentoOrgId},organization_id.is.null`);
+      }
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },

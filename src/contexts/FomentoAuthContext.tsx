@@ -7,7 +7,9 @@ interface FomentoAuthContextType {
   session: Session | null;
   loading: boolean;
   fomentoRole: string | null;
+  fomentoOrgId: string | null;
   profileName: string | null;
+  isSuperadmin: boolean;
   signOut: () => Promise<void>;
   refreshRole: () => Promise<void>;
 }
@@ -17,7 +19,9 @@ const FomentoAuthContext = createContext<FomentoAuthContextType>({
   session: null,
   loading: true,
   fomentoRole: null,
+  fomentoOrgId: null,
   profileName: null,
+  isSuperadmin: false,
   signOut: async () => {},
   refreshRole: async () => {},
 });
@@ -29,17 +33,21 @@ export const FomentoAuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [fomentoRole, setFomentoRole] = useState<string | null>(null);
+  const [fomentoOrgId, setFomentoOrgId] = useState<string | null>(null);
   const [profileName, setProfileName] = useState<string | null>(null);
+
+  const isSuperadmin = fomentoRole === "superadmin";
 
   const fetchFomentoRole = useCallback(async (userId: string) => {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("fomento_role, full_name")
+      .select("fomento_role, full_name, fomento_org_id")
       .eq("user_id", userId)
       .single();
 
     setFomentoRole((profile as any)?.fomento_role ?? null);
     setProfileName((profile as any)?.full_name ?? null);
+    setFomentoOrgId((profile as any)?.fomento_org_id ?? null);
   }, []);
 
   const refreshRole = useCallback(async () => {
@@ -57,6 +65,7 @@ export const FomentoAuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           setFomentoRole(null);
           setProfileName(null);
+          setFomentoOrgId(null);
         }
 
         if (_event === "SIGNED_OUT") setLoading(false);
@@ -82,11 +91,12 @@ export const FomentoAuthProvider = ({ children }: { children: ReactNode }) => {
     setSession(null);
     setFomentoRole(null);
     setProfileName(null);
+    setFomentoOrgId(null);
     window.location.replace("/");
   }, []);
 
   return (
-    <FomentoAuthContext.Provider value={{ user, session, loading, fomentoRole, profileName, signOut, refreshRole }}>
+    <FomentoAuthContext.Provider value={{ user, session, loading, fomentoRole, fomentoOrgId, profileName, isSuperadmin, signOut, refreshRole }}>
       {children}
     </FomentoAuthContext.Provider>
   );
