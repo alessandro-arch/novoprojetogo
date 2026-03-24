@@ -303,7 +303,7 @@ const FomentoBatchImport = ({ onBack }: Props) => {
           area: sanitizeEnum(proj.area, VALID_AREAS),
           fonte: sanitizeEnum(proj.fonte, VALID_FONTES),
           natureza: sanitizeEnum(proj.natureza, VALID_NATUREZAS),
-          ano: proj.ano ? Number(proj.ano) : null,
+          ano: proj.ano ? Number(proj.ano) : (proj.vigencia_inicio ? new Date(proj.vigencia_inicio + "T12:00:00").getFullYear() : null),
           data_assinatura: proj.data_assinatura || null,
           vigencia_inicio: proj.vigencia_inicio || null,
           vigencia_fim: proj.vigencia_fim || null,
