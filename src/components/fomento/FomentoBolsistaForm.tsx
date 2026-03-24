@@ -147,61 +147,27 @@ const FomentoBolsistaForm = ({ bolsistaId, onBack }: Props) => {
   const mensalNum = parseFloat(valor_mensal) || 0;
   const totalCalc = cotasNum * mensalNum;
 
-  // AI Extraction
-  const MAX_RETRIES = 3;
-  const RETRY_DELAY_MS = 15000;
-  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
+  // AI Extraction via edge function
   const handleAiExtract = async (file: File) => {
-    if (!apiKey.trim()) { toast({ title: "Informe a API Key da Anthropic.", variant: "destructive" }); return; }
-    localStorage.setItem("fomento_anthropic_key", apiKey);
     setExtracting(true); setExtractionStatus("idle"); setRetryMessage(null);
 
     try {
       const buffer = await file.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+      const bytes = new Uint8Array(buffer);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      const base64 = btoa(binary);
 
-      let response: Response | null = null;
-      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-        response = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01",
-            "anthropic-beta": "pdfs-2024-09-25", "anthropic-dangerous-direct-browser-access": "true",
-          },
-          body: JSON.stringify({
-            model: "claude-sonnet-4-20250514", max_tokens: 1000,
-            messages: [{ role: "user", content: [
-              { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } },
-              { type: "text", text: `Extraia do documento de bolsa e retorne APENAS JSON puro sem markdown:
-{ "nome_bolsista":"", "email_bolsista":"", "modalidade":"ic|mestrado|doutorado|pos_doc|apoio_tecnico|extensao",
-  "orientador":"", "coorientador":null, "coordenador":"", "edital":"", "orgao_financiador":"",
-  "numero_termo":"", "cotas_total":null, "data_inicio":"YYYY-MM-DD", "data_fim":"YYYY-MM-DD",
-  "titulo_plano":"", "area_conhecimento":"", "ppg_nome":"" }
-NÃO extrair valor_mensal. Campos não encontrados retornar null.` },
-            ]}],
-          }),
-        });
+      setRetryMessage("Extraindo dados do PDF via IA…");
+      const { data: result, error } = await supabase.functions.invoke("extract-fomento-pdf", {
+        body: { pdfBase64: base64, type: "bolsista" },
+      });
+      setRetryMessage(null);
 
-        if (response.status === 429) {
-          if (attempt < MAX_RETRIES) {
-            setRetryMessage(`Limite de requisições. Tentando em 15s… (${attempt}/${MAX_RETRIES})`);
-            await delay(RETRY_DELAY_MS); continue;
-          }
-          throw new Error("Limite de requisições excedido após 3 tentativas.");
-        }
-        if (!response.ok) { const err = await response.json().catch(() => ({})); throw new Error(err?.error?.message || `HTTP ${response.status}`); }
-        setRetryMessage(null); break;
-      }
+      if (error) throw new Error(error.message || "Erro na extração");
+      if (result?.error) throw new Error(result.error);
 
-      if (!response || !response.ok) throw new Error("Falha na extração");
-      const data = await response.json();
-      const rawText = data.content.map((b: any) => b.text || "").join("");
-      const cleaned = rawText.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
-      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("Nenhum JSON válido encontrado");
-      const p = JSON.parse(jsonMatch[0]);
-
+      const p = result.data;
       if (p.nome_bolsista) setNome(p.nome_bolsista);
       if (p.email_bolsista) setEmail(p.email_bolsista);
       if (p.modalidade) setModalidade(p.modalidade);
