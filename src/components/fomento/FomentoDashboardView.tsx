@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip as UiTooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { DollarSign, Briefcase, Users, AlertTriangle, Pencil, FileText, GraduationCap, Info } from "lucide-react";
+import { DollarSign, Briefcase, Users, AlertTriangle, Pencil, FileText, GraduationCap, Info, Handshake } from "lucide-react";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from "recharts";
 import { Progress } from "@/components/ui/progress";
 import { formatBRL, formatDateBR, daysRemaining, AREA_LABELS, MODALIDADE_LABELS } from "@/lib/fomento-utils";
