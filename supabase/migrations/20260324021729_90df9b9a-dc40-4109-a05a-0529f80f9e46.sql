@@ -1,0 +1,1 @@
+UPDATE fomento_bolsistas SET valor_mensal = 4500 WHERE modalidade = 'doutorado';
