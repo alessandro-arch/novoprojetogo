@@ -18,7 +18,6 @@ import { formatBRL, MODALIDADE_LABELS, BOLSISTA_STATUS_LABELS } from "@/lib/fome
 import FomentoDocumentsSection from "./FomentoDocumentsSection";
 import { useNavigate } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 
 interface Props {
   projectId?: string;
