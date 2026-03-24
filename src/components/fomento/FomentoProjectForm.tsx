@@ -59,6 +59,7 @@ const FomentoProjectForm = ({ projectId, onBack }: Props) => {
   const { user, fomentoOrgId } = useFomentoAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const isEditing = !!projectId;
 
   // Form state
