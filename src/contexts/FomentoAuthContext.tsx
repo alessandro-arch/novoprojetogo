@@ -10,6 +10,7 @@ interface FomentoAuthContextType {
   fomentoOrgId: string | null;
   profileName: string | null;
   isSuperadmin: boolean;
+  isAuditor: boolean;
   signOut: () => Promise<void>;
   refreshRole: () => Promise<void>;
 }
