@@ -166,6 +166,24 @@ const FomentoBatchImport = ({ onBack }: Props) => {
     return proj;
   };
 
+  const checkDuplicates = async (results: ExtractedProject[]): Promise<ExtractedProject[]> => {
+    const titles = results.filter(p => p.titulo).map(p => p.titulo.toLowerCase().trim());
+    if (!titles.length) return results;
+
+    const { data: existing } = await supabase.from("fomento_projects").select("titulo, pesquisador_principal");
+    if (!existing?.length) return results;
+
+    const existingKeys = new Set(
+      existing.map((e: any) => `${(e.titulo || "").toLowerCase().trim()}|${(e.pesquisador_principal || "").toLowerCase().trim()}`)
+    );
+
+    return results.map(p => {
+      const key = `${p.titulo.toLowerCase().trim()}|${p.pesquisador_principal.toLowerCase().trim()}`;
+      const isDuplicate = existingKeys.has(key);
+      return { ...p, isDuplicate, selected: isDuplicate ? false : p.selected };
+    });
+  };
+
   const startExtraction = async () => {
     cancelRef.current = false;
 
@@ -187,6 +205,14 @@ const FomentoBatchImport = ({ onBack }: Props) => {
       if (i < files.length - 1 && !cancelRef.current) await delay(3000);
     }
     setProcessingIdx(-1);
+
+    // Check for duplicates before entering review
+    const checked = await checkDuplicates(results);
+    setProjects(checked);
+    const dupCount = checked.filter(p => p.isDuplicate).length;
+    if (dupCount > 0) {
+      toast({ title: `${dupCount} projeto(s) já existente(s) detectado(s) e desmarcado(s).` });
+    }
     setPhase("review");
   };
 
