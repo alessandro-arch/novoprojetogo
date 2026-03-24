@@ -16,7 +16,8 @@ interface Props {
 const RANGES = [30, 60, 90, 180] as const;
 
 const FomentoAlerts = ({ onEditProject }: Props) => {
-  const { isSuperadmin, fomentoOrgId } = useFomentoAuth();
+  const { isSuperadmin, fomentoOrgId, fomentoRole } = useFomentoAuth();
+  const isAuditor = fomentoRole === "auditor";
   const [range, setRange] = useState<number>(90);
 
   const { data: projects, isLoading } = useQuery({
