@@ -70,13 +70,23 @@ const FomentoProjectsList = ({ onNewProject, onEditProject, onBatchImport }: Pro
     },
   });
 
+  const getProjectYear = (p: any): number | null => {
+    if (p.ano) return p.ano;
+    if (p.vigencia_inicio) return new Date(p.vigencia_inicio + "T12:00:00").getFullYear();
+    if (p.created_at) return new Date(p.created_at).getFullYear();
+    return null;
+  };
+
+  const availableYears = [...new Set((projects ?? []).map(getProjectYear).filter(Boolean) as number[])].sort((a, b) => b - a);
+
   const filtered = (projects ?? []).filter((p) => {
     const q = search.toLowerCase();
     const matchSearch = !q || p.titulo.toLowerCase().includes(q) || p.pesquisador_principal.toLowerCase().includes(q);
+    const matchAno = filterAno === "all" || getProjectYear(p) === Number(filterAno);
     const matchArea = filterArea === "all" || p.area === filterArea;
     const matchStatus = filterStatus === "all" || p.status === filterStatus;
     const matchFonte = filterFonte === "all" || p.fonte === filterFonte;
-    return matchSearch && matchArea && matchStatus && matchFonte;
+    return matchSearch && matchAno && matchArea && matchStatus && matchFonte;
   });
 
   const exportCSV = () => {
