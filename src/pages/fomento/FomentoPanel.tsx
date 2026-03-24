@@ -73,8 +73,9 @@ const FomentoPanel = () => {
 
     if (section === "bolsistas") {
       if (segments[1] === "novo") return <FomentoBolsistaForm onBack={handleBackToBolsistas} />;
+      if (segments[1] === "importar-lote") return <FomentoBolsistaBatchImport onBack={handleBackToBolsistas} />;
       if (segments[1] && segments[2] === "editar") return <FomentoBolsistaForm bolsistaId={segments[1]} onBack={handleBackToBolsistas} />;
-      return <FomentoBolsistasList onNewBolsista={handleNewBolsista} onEditBolsista={handleEditBolsista} />;
+      return <FomentoBolsistasList onNewBolsista={handleNewBolsista} onEditBolsista={handleEditBolsista} onBatchImport={handleBolsistaBatchImport} />;
     }
 
     if (section === "alertas") return <FomentoAlerts onEditProject={handleEditProject} />;
