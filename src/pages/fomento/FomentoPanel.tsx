@@ -37,7 +37,7 @@ const FomentoPanel = () => {
   const navItems: NavItem[] = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { key: "projetos", label: "Projetos", icon: FolderKanban },
-    { key: "bolsistas", label: "Bolsistas", icon: GraduationCap },
+    { key: "bolsistas", label: "Bolsistas (Cotas)", icon: GraduationCap },
     { key: "alertas", label: "Alertas de Vigência", icon: AlertTriangle },
   ];
 
