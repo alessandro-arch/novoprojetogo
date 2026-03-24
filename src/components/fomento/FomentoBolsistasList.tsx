@@ -71,6 +71,12 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
     return matchSearch && matchMod && matchStatus && matchOrient;
   });
 
+  const sorted = sortOrder === "default" ? filtered : [...filtered].sort((a, b) => {
+    const nameA = (a.nome_bolsista || "").toLowerCase();
+    const nameB = (b.nome_bolsista || "").toLowerCase();
+    return sortOrder === "asc" ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+  });
+
   const exportCSV = () => {
     const headers = ["Bolsista", "Orientador", "Modalidade", "Edital", "Cotas", "Início", "Fim", "Valor/mês", "Total", "Status"];
     const rows = filtered.map((b) => [
