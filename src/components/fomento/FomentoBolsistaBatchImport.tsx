@@ -391,13 +391,18 @@ const FomentoBolsistaBatchImport = ({ onBack }: Props) => {
                   </TableHeader>
                   <TableBody>
                     {bolsistas.map((b, i) => (
-                      <TableRow key={i} className={phase === "review" ? rowBg(b) : ""}>
+                      <TableRow key={i} className={`${phase === "review" ? rowBg(b) : ""} ${b.isDuplicate ? "opacity-60" : ""}`}>
                         {phase === "review" && (
                           <TableCell>
                             <Checkbox checked={b.selected} onCheckedChange={() => toggleSelect(i)} />
                           </TableCell>
                         )}
-                        <TableCell className="max-w-[150px] truncate text-xs font-mono">{b.fileName}</TableCell>
+                        <TableCell className="max-w-[150px] truncate text-xs font-mono">
+                          <div className="flex items-center gap-1">
+                            {b.fileName}
+                            {b.isDuplicate && <Badge variant="destructive" className="text-[10px] px-1 py-0">Duplicado</Badge>}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1.5">
                             <StatusIcon status={b.status} />
