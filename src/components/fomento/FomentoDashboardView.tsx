@@ -434,6 +434,52 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
               </div>
             </CardContent>
           </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Captação por Programa de Pós-Graduação (R$)</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {ppgData.map((item, i) => {
+                  const maxVal = Math.max(...ppgData.map(d => d.value), 1);
+                  const pct = (item.value / maxVal) * 100;
+                  return (
+                    <div key={item.name} className="flex items-center gap-3">
+                      <span className="w-4 h-4 shrink-0 rounded" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                      <span className="text-xs text-muted-foreground w-48 shrink-0 truncate" title={item.name}>{item.name}</span>
+                      <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
+                        <div className="h-full rounded" style={{ width: `${pct}%`, backgroundColor: COLORS[i % COLORS.length] }} />
+                      </div>
+                      <span className="text-xs font-medium text-foreground w-28 text-right shrink-0">{formatBRL(item.value)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Captação por PPG (%)</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {(() => {
+                  const total = ppgData.reduce((s, d) => s + d.value, 0) || 1;
+                  return ppgData.map((item, i) => {
+                    const pctOfTotal = (item.value / total) * 100;
+                    return (
+                      <div key={item.name} className="flex items-center gap-3">
+                        <span className="w-4 h-4 shrink-0 rounded" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                        <span className="text-xs text-muted-foreground w-48 shrink-0 truncate" title={item.name}>{item.name}</span>
+                        <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
+                          <div className="h-full rounded" style={{ width: `${pctOfTotal}%`, backgroundColor: COLORS[i % COLORS.length] }} />
+                        </div>
+                        <span className="text-xs font-medium text-foreground w-16 text-right shrink-0">{pctOfTotal.toFixed(1)}%</span>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Expiring table */}
