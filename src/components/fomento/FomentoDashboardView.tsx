@@ -209,12 +209,12 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
       <div className="space-y-6">
         <h1 className="text-2xl font-bold font-heading text-foreground">Dashboard</h1>
 
-        {/* Project KPIs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-          {kpis.map((k) => (
+        {/* Project KPIs - Row 1 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {kpis.slice(0, 4).map((k) => (
             <Card key={k.label} className="shadow-sm">
               <CardContent className="p-5 flex items-center gap-4">
-                <div className={`w-11 h-11 rounded-xl ${k.bg} flex items-center justify-center`}>
+                <div className={`w-11 h-11 shrink-0 rounded-xl ${k.bg} flex items-center justify-center`}>
                   <k.icon className={`w-5 h-5 ${k.color}`} />
                 </div>
                 <div className="min-w-0 flex-1 overflow-hidden">
@@ -228,6 +228,25 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
                         <TooltipContent className="max-w-xs text-xs">{k.tooltip}</TooltipContent>
                       </UiTooltip>
                     )}
+                  </div>
+                  <p className="text-lg font-bold text-foreground truncate">{k.value}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Project KPIs - Row 2 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {kpis.slice(4).map((k) => (
+            <Card key={k.label} className="shadow-sm">
+              <CardContent className="p-5 flex items-center gap-4">
+                <div className={`w-11 h-11 shrink-0 rounded-xl ${k.bg} flex items-center justify-center`}>
+                  <k.icon className={`w-5 h-5 ${k.color}`} />
+                </div>
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <div className="flex items-center gap-1">
+                    <p className="text-xs text-muted-foreground truncate">{k.label}</p>
                   </div>
                   <p className="text-lg font-bold text-foreground truncate">{k.value}</p>
                 </div>
