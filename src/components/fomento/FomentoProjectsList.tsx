@@ -17,6 +17,7 @@ import { formatBRL, formatDateBR, STATUS_LABELS, AREA_LABELS, FONTE_LABELS } fro
 interface Props {
   onNewProject: () => void;
   onEditProject: (id: string) => void;
+  onBatchImport?: () => void;
 }
 
 const FomentoProjectsList = ({ onNewProject, onEditProject }: Props) => {
