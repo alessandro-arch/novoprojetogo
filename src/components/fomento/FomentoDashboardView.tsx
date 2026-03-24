@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip as UiTooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { DollarSign, Briefcase, Users, AlertTriangle, Pencil, FileText, GraduationCap, Info } from "lucide-react";
+import { DollarSign, Briefcase, Users, AlertTriangle, Pencil, FileText, GraduationCap, Info, Handshake } from "lucide-react";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from "recharts";
 import { Progress } from "@/components/ui/progress";
 import { formatBRL, formatDateBR, daysRemaining, AREA_LABELS, MODALIDADE_LABELS } from "@/lib/fomento-utils";
@@ -69,6 +69,19 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     },
   });
 
+  const { data: parcerias } = useQuery({
+    queryKey: ["fomento-parcerias-dashboard", fomentoOrgId, isSuperadmin],
+    queryFn: async () => {
+      let query = supabase.from("fomento_parcerias").select("*");
+      if (!isSuperadmin && fomentoOrgId) {
+        query = query.or(`organization_id.eq.${fomentoOrgId},organization_id.is.null`);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const isLoading = loadingProjects || loadingRubricas;
 
   if (isLoading) {
@@ -112,7 +125,13 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     return s + mensal * cotas;
   }, 0);
 
-  const totalCaptado = totalCaptadoProjetos + totalComprometidoBolsas;
+  // Parcerias KPIs
+  const parceriasList = parcerias ?? [];
+  const parceriasAtivas = parceriasList.filter((p: any) => p.status === "ativa");
+  const totalParceriasAtivas = parceriasAtivas.length;
+  const totalCaptadoParcerias = parceriasAtivas.reduce((s: number, p: any) => s + (Number(p.valor_total) || 0), 0);
+
+  const totalCaptado = totalCaptadoProjetos + totalComprometidoBolsas + totalCaptadoParcerias;
 
   const modalidades = ["ic", "mestrado", "doutorado", "pos_doc", "apoio_tecnico"] as const;
   const modalidadeStats = modalidades.map((m) => {
@@ -193,12 +212,13 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
       icon: DollarSign,
       color: "text-[hsl(var(--success))]",
       bg: "bg-[hsl(var(--success-light))]",
-      tooltip: `${formatBRL(totalCaptadoProjetos)} em projetos + ${formatBRL(totalComprometidoBolsas)} em bolsas`,
+      tooltip: `${formatBRL(totalCaptadoProjetos)} em projetos + ${formatBRL(totalComprometidoBolsas)} em bolsas + ${formatBRL(totalCaptadoParcerias)} em parcerias`,
     },
     { label: "Projetos Ativos", value: String(ativos), icon: Briefcase, color: "text-primary", bg: "bg-[hsl(var(--info-light))]" },
     { label: "Bolsas", value: formatBRL(totalComprometidoBolsas), icon: GraduationCap, color: "text-[hsl(270,50%,50%)]", bg: "bg-[hsl(270,50%,90%)]" },
     { label: "Bolsas Mestrado", value: String(modalidadeStats.find(m => m.key === "mestrado")?.count ?? 0), icon: GraduationCap, color: "text-primary", bg: "bg-[hsl(var(--info-light))]" },
     { label: "Bolsas Doutorado", value: String(modalidadeStats.find(m => m.key === "doutorado")?.count ?? 0), icon: GraduationCap, color: "text-[hsl(var(--warning))]", bg: "bg-[hsl(var(--warning-light))]" },
+    { label: "Parcerias Ativas", value: String(totalParceriasAtivas), icon: Handshake, color: "text-[hsl(152,55%,42%)]", bg: "bg-[hsl(152,55%,90%)]", tooltip: `Valor total: ${formatBRL(totalCaptadoParcerias)}` },
     { label: "Pesquisadores", value: String(pesquisadores), icon: Users, color: "text-[hsl(var(--warning))]", bg: "bg-[hsl(var(--warning-light))]" },
     { label: "Vencendo em 60d", value: String(vencendo60), icon: AlertTriangle, color: vencendo60 > 0 ? "text-destructive" : "text-muted-foreground", bg: vencendo60 > 0 ? "bg-[hsl(var(--danger-light))]" : "bg-muted" },
     { label: "Total de Documentos", value: String(totalDocs ?? 0), icon: FileText, color: "text-primary", bg: "bg-[hsl(var(--info-light))]" },
@@ -247,6 +267,14 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
                 <div className="min-w-0 flex-1 overflow-hidden">
                   <div className="flex items-center gap-1">
                     <p className="text-xs text-muted-foreground truncate">{k.label}</p>
+                    {"tooltip" in k && k.tooltip && (
+                      <UiTooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-3 h-3 shrink-0 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs text-xs">{k.tooltip}</TooltipContent>
+                      </UiTooltip>
+                    )}
                   </div>
                   <p className="text-lg font-bold text-foreground truncate">{k.value}</p>
                 </div>
