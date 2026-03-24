@@ -130,8 +130,8 @@ const FomentoAdmin = () => {
 
   // Available roles for invite: superadmin can assign admin; org admin can only assign gestor
   const availableRoles = isSuperadmin
-    ? [{ value: "gestor", label: "Gestor" }, { value: "admin", label: "Admin" }]
-    : [{ value: "gestor", label: "Gestor" }];
+    ? [{ value: "gestor", label: "Gestor" }, { value: "admin", label: "Admin" }, { value: "auditor", label: "Auditor" }]
+    : [{ value: "gestor", label: "Gestor" }, { value: "auditor", label: "Auditor" }];
 
   return (
     <div className="space-y-6">
