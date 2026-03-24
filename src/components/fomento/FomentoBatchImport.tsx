@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFomentoAuth } from "@/contexts/FomentoAuthContext";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,6 +80,7 @@ const statusLabel: Record<ExtractedProject["status"], string> = {
 const FomentoBatchImport = ({ onBack }: Props) => {
   const { user, fomentoOrgId } = useFomentoAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [phase, setPhase] = useState<Phase>("upload");
@@ -245,8 +247,13 @@ const FomentoBatchImport = ({ onBack }: Props) => {
           created_by: user?.id || null,
           organization_id: effectiveOrgId,
         });
-        if (!error) saved++;
+        if (error) {
+          console.error("Erro ao inserir projeto:", proj.titulo, error);
+        } else {
+          saved++;
+        }
       }
+      queryClient.invalidateQueries({ queryKey: ["fomento-projects"] });
       toast({ title: `${saved} projeto(s) importado(s) com sucesso.` });
       onBack();
     } catch (err: any) {
