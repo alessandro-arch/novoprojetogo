@@ -79,7 +79,7 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
 
   const exportCSV = () => {
     const headers = ["Bolsista", "Orientador", "Modalidade", "Edital", "Cotas", "Início", "Fim", "Valor/mês", "Total", "Status"];
-    const rows = filtered.map((b) => [
+    const rows = sorted.map((b) => [
       b.nome_bolsista, b.orientador || "", MODALIDADE_LABELS[b.modalidade || ""] || b.modalidade || "",
       b.edital || "", b.cotas_total ?? "", formatDateBR(b.data_inicio), formatDateBR(b.data_fim),
       b.valor_mensal != null ? String(b.valor_mensal) : "", b.valor_total != null ? String(b.valor_total) : "",
