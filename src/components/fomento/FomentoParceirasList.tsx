@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, Handshake, DollarSign, Users } from "lucide-react";
-import { formatBRL, PARCERIA_TIPO_LABELS, PARCERIA_STATUS_LABELS, TIPO_INSTITUICAO_LABELS } from "@/lib/fomento-utils";
+import { formatBRL, PARCERIA_TIPO_LABELS, PARCERIA_STATUS_LABELS, NATUREZA_LABELS } from "@/lib/fomento-utils";
 import { toast } from "sonner";
 
 interface Props {
