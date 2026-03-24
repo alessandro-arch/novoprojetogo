@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ArrowLeft, ChevronDown, Plus, Trash2, Upload, Bot, Loader2, Save } from "lucide-react";
+import { ArrowLeft, ChevronDown, Plus, Trash2, Upload, Bot, Loader2, Save, GraduationCap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatBRL } from "@/lib/fomento-utils";
 import FomentoDocumentsSection from "./FomentoDocumentsSection";
