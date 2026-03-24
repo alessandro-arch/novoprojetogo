@@ -40,7 +40,7 @@ const FomentoAdmin = () => {
     queryFn: async () => {
       // Superadmin sees all users; org admin sees only users of their org
       const orgFilter = isSuperadmin ? undefined : fomentoOrgId;
-      const { data, error } = await supabase.rpc("list_fomento_users", {
+      const { data, error } = await supabase.rpc("list_fomento_users" as any, {
         _org_id: orgFilter ?? null,
       });
       if (error) throw error;
