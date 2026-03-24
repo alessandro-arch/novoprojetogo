@@ -64,6 +64,10 @@ const FomentoPanel = () => {
   const handleBolsistaBatchImport = () => navigate("/fomento/bolsistas/importar-lote");
   const handleBackToBolsistas = () => navigate("/fomento/bolsistas");
 
+  const handleEditParceria = (id: string) => navigate(`/fomento/parcerias/${id}/editar`);
+  const handleNewParceria = () => navigate("/fomento/parcerias/nova");
+  const handleBackToParcerias = () => navigate("/fomento/parcerias");
+
   const renderContent = () => {
     if (section === "dashboard") return <FomentoDashboardView onEditProject={handleEditProject} />;
 
