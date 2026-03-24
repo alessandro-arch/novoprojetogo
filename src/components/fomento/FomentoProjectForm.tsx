@@ -12,7 +12,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ArrowLeft, ChevronDown, Plus, Trash2, Upload, Bot, Loader2, Save, GraduationCap } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { ArrowLeft, ChevronDown, Plus, Trash2, Upload, Bot, Loader2, Save, GraduationCap, Check, ChevronsUpDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatBRL, MODALIDADE_LABELS, BOLSISTA_STATUS_LABELS } from "@/lib/fomento-utils";
 import FomentoDocumentsSection from "./FomentoDocumentsSection";
@@ -28,6 +30,16 @@ interface Rubrica { tipo: string; valor: string; }
 interface TeamMember { nome: string; funcao: string; email: string; }
 
 const RUBRICA_SUGGESTIONS = ["Bolsas", "Custeio", "Capital", "Diárias", "Passagens"];
+
+const PPG_OPTIONS = [
+  "Ciências Farmacêuticas",
+  "Ciência Animal",
+  "Biotecnologia Vegetal",
+  "Assistência Farmacêutica",
+  "Arquitetura e Cidade",
+  "Sociologia Política",
+  "Segurança Pública",
+];
 
 interface SectionCardProps {
   id: string;
@@ -544,7 +556,30 @@ const FomentoProjectForm = ({ projectId, onBack }: Props) => {
             {vinculo_academico === "ppg" && (
               <div className="mt-3">
                 <Label>Nome do PPG</Label>
-                <Input value={ppg_nome} onChange={(e) => setPpgNome(e.target.value)} placeholder="Ex: PPG em Ciências Ambientais" />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal mt-1">
+                      {ppg_nome || "Selecione o PPG..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Buscar PPG..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhum PPG encontrado.</CommandEmpty>
+                        <CommandGroup>
+                          {PPG_OPTIONS.map((ppg) => (
+                            <CommandItem key={ppg} value={ppg} onSelect={(v) => setPpgNome(v === ppg_nome ? "" : ppg)}>
+                              <Check className={`mr-2 h-4 w-4 ${ppg_nome === ppg ? "opacity-100" : "opacity-0"}`} />
+                              {ppg}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
             )}
           </div>
