@@ -471,6 +471,49 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
           ))}
         </div>
 
+        {/* Bolsas Mestrado/Doutorado por PPG */}
+        {(() => {
+          const mdBolsistas = bolsistasAtivos.filter((b) => b.modalidade === "mestrado" || b.modalidade === "doutorado");
+          const ppgMap = new Map<string, { mestrado: number; doutorado: number }>();
+          mdBolsistas.forEach((b) => {
+            const ppg = b.ppg_nome || "Sem PPG";
+            if (!ppgMap.has(ppg)) ppgMap.set(ppg, { mestrado: 0, doutorado: 0 });
+            const entry = ppgMap.get(ppg)!;
+            if (b.modalidade === "mestrado") entry.mestrado++;
+            else entry.doutorado++;
+          });
+          const ppgData = Array.from(ppgMap.entries())
+            .map(([ppg, counts]) => ({ ppg, ...counts, total: counts.mestrado + counts.doutorado }))
+            .sort((a, b) => b.total - a.total);
+
+          return ppgData.length > 0 ? (
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4 text-primary" />
+                  Bolsas Mestrado / Doutorado por PPG
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {ppgData.map((d) => (
+                    <div key={d.ppg} className="rounded-lg border bg-card p-3 space-y-1">
+                      <p className="text-xs font-medium text-foreground truncate" title={d.ppg}>{d.ppg}</p>
+                      <div className="flex items-baseline gap-3">
+                        <span className="text-xl font-bold text-foreground">{d.total}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {d.mestrado > 0 && `${d.mestrado} Mest.`}
+                          {d.mestrado > 0 && d.doutorado > 0 && " · "}
+                          {d.doutorado > 0 && `${d.doutorado} Dout.`}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : null;
+        })()}
         {/* Gráficos de bolsas + Card Investimento em Formação */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Gráfico de barras: Distribuição de Investimento em Bolsas */}
