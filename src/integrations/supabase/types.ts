@@ -2080,6 +2080,7 @@ export type Database = {
         Args: { _email: string }
         Returns: {
           email: string
+          fomento_org_id: string
           fomento_role: string
           full_name: string
           user_id: string
