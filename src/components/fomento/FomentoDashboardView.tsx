@@ -125,7 +125,13 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     return s + mensal * cotas;
   }, 0);
 
-  const totalCaptado = totalCaptadoProjetos + totalComprometidoBolsas;
+  // Parcerias KPIs
+  const parceriasList = parcerias ?? [];
+  const parceriasAtivas = parceriasList.filter((p: any) => p.status === "ativa");
+  const totalParceriasAtivas = parceriasAtivas.length;
+  const totalCaptadoParcerias = parceriasAtivas.reduce((s: number, p: any) => s + (Number(p.valor_total) || 0), 0);
+
+  const totalCaptado = totalCaptadoProjetos + totalComprometidoBolsas + totalCaptadoParcerias;
 
   const modalidades = ["ic", "mestrado", "doutorado", "pos_doc", "apoio_tecnico"] as const;
   const modalidadeStats = modalidades.map((m) => {
