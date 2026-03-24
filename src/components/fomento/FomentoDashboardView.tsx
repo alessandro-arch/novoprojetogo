@@ -6,9 +6,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DollarSign, Briefcase, Users, AlertTriangle, Pencil, FileText } from "lucide-react";
+import { DollarSign, Briefcase, Users, AlertTriangle, Pencil, FileText, GraduationCap } from "lucide-react";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { formatBRL, formatDateBR, daysRemaining, AREA_LABELS } from "@/lib/fomento-utils";
+import { formatBRL, formatDateBR, daysRemaining, AREA_LABELS, MODALIDADE_LABELS } from "@/lib/fomento-utils";
 
 const COLORS = [
   "hsl(215, 65%, 30%)", "hsl(38, 80%, 52%)", "hsl(152, 55%, 42%)",
