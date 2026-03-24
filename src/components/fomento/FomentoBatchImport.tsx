@@ -82,7 +82,6 @@ const FomentoBatchImport = ({ onBack }: Props) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [phase, setPhase] = useState<Phase>("upload");
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem("fomento_anthropic_key") || "");
   const [files, setFiles] = useState<File[]>([]);
   const [projects, setProjects] = useState<ExtractedProject[]>([]);
   const [processingIdx, setProcessingIdx] = useState(-1);
