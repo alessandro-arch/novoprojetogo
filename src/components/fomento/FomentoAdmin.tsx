@@ -136,6 +136,30 @@ const FomentoAdmin = () => {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold font-heading text-foreground">Administração</h1>
 
+      {/* Org Config */}
+      {fomentoOrgId && (
+        <Card className="shadow-sm">
+          <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Building2 className="w-4 h-4" /> Configuração da Organização</CardTitle></CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row gap-3 items-end">
+              <div className="flex-1 space-y-1">
+                <Label>Sigla da Instituição</Label>
+                <Input
+                  placeholder="Ex: UVV, UFES, IFES"
+                  value={orgSigla}
+                  onChange={(e) => setOrgSigla(e.target.value.toUpperCase())}
+                  className="max-w-[200px] uppercase"
+                />
+                <p className="text-xs text-muted-foreground">Usada para gerar automaticamente o código de Processo Interno (ex: UVV-2026-0001)</p>
+              </div>
+              <Button onClick={handleSaveSigla} disabled={siglaLoading || !orgSigla.trim()} size="sm" className="gap-1">
+                <Save className="w-3.5 h-3.5" /> {siglaLoading ? "Salvando…" : "Salvar"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Invite */}
       <Card className="shadow-sm">
         <CardHeader><CardTitle className="text-sm flex items-center gap-2"><UserPlus className="w-4 h-4" /> Convidar Usuário</CardTitle></CardHeader>
