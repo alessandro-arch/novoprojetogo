@@ -684,6 +684,71 @@ export type Database = {
         }
         Relationships: []
       }
+      fomento_parcerias: {
+        Row: {
+          cnpj: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          instituicao_nome: string | null
+          num_beneficiarios: number | null
+          num_parcelas: number | null
+          numero_contrato: string | null
+          organization_id: string | null
+          status: string | null
+          tipo: string | null
+          tipo_instituicao: string | null
+          titulo: string
+          updated_at: string | null
+          valor_mensal_aluno: number | null
+          valor_total: number | null
+        }
+        Insert: {
+          cnpj?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          instituicao_nome?: string | null
+          num_beneficiarios?: number | null
+          num_parcelas?: number | null
+          numero_contrato?: string | null
+          organization_id?: string | null
+          status?: string | null
+          tipo?: string | null
+          tipo_instituicao?: string | null
+          titulo: string
+          updated_at?: string | null
+          valor_mensal_aluno?: number | null
+          valor_total?: number | null
+        }
+        Update: {
+          cnpj?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          instituicao_nome?: string | null
+          num_beneficiarios?: number | null
+          num_parcelas?: number | null
+          numero_contrato?: string | null
+          organization_id?: string | null
+          status?: string | null
+          tipo?: string | null
+          tipo_instituicao?: string | null
+          titulo?: string
+          updated_at?: string | null
+          valor_mensal_aluno?: number | null
+          valor_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fomento_parcerias_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "fomento_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fomento_projects: {
         Row: {
           ano: number | null
