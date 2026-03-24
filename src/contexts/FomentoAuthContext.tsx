@@ -10,6 +10,7 @@ interface FomentoAuthContextType {
   fomentoOrgId: string | null;
   profileName: string | null;
   isSuperadmin: boolean;
+  isAuditor: boolean;
   signOut: () => Promise<void>;
   refreshRole: () => Promise<void>;
 }
@@ -22,6 +23,7 @@ const FomentoAuthContext = createContext<FomentoAuthContextType>({
   fomentoOrgId: null,
   profileName: null,
   isSuperadmin: false,
+  isAuditor: false,
   signOut: async () => {},
   refreshRole: async () => {},
 });
@@ -37,6 +39,7 @@ export const FomentoAuthProvider = ({ children }: { children: ReactNode }) => {
   const [profileName, setProfileName] = useState<string | null>(null);
 
   const isSuperadmin = fomentoRole === "superadmin";
+  const isAuditor = fomentoRole === "auditor";
 
   const fetchFomentoRole = useCallback(async (userId: string) => {
     const { data: profile } = await supabase
@@ -96,7 +99,7 @@ export const FomentoAuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <FomentoAuthContext.Provider value={{ user, session, loading, fomentoRole, fomentoOrgId, profileName, isSuperadmin, signOut, refreshRole }}>
+    <FomentoAuthContext.Provider value={{ user, session, loading, fomentoRole, fomentoOrgId, profileName, isSuperadmin, isAuditor, signOut, refreshRole }}>
       {children}
     </FomentoAuthContext.Provider>
   );

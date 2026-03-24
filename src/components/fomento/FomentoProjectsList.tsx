@@ -31,6 +31,7 @@ const FomentoProjectsList = ({ onNewProject, onEditProject, onBatchImport }: Pro
   const [filterFonte, setFilterFonte] = useState("all");
 
   const canDelete = isSuperadmin || fomentoRole === "admin";
+  const isAuditor = fomentoRole === "auditor";
 
   const { data: projects, isLoading } = useQuery({
     queryKey: ["fomento-projects", fomentoOrgId, isSuperadmin],
@@ -132,14 +133,16 @@ const FomentoProjectsList = ({ onNewProject, onEditProject, onBatchImport }: Pro
           <Button variant="outline" size="sm" onClick={exportCSV} className="gap-1">
             <Download className="w-4 h-4" /> CSV
           </Button>
-          {onBatchImport && (
+          {!isAuditor && onBatchImport && (
             <Button variant="outline" size="sm" onClick={onBatchImport} className="gap-1">
               <Upload className="w-4 h-4" /> Importar em Lote
             </Button>
           )}
-          <Button size="sm" onClick={onNewProject} className="gap-1">
-            <Plus className="w-4 h-4" /> Novo Projeto
-          </Button>
+          {!isAuditor && (
+            <Button size="sm" onClick={onNewProject} className="gap-1">
+              <Plus className="w-4 h-4" /> Novo Projeto
+            </Button>
+          )}
         </div>
       </div>
 
@@ -233,10 +236,12 @@ const FomentoProjectsList = ({ onNewProject, onEditProject, onBatchImport }: Pro
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => onEditProject(p.id)}>
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          {canDelete && (
+                          {!isAuditor && (
+                            <Button variant="ghost" size="icon" onClick={() => onEditProject(p.id)}>
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                          )}
+                          {canDelete && !isAuditor && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="icon" className="text-destructive">

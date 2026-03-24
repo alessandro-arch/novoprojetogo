@@ -16,7 +16,8 @@ interface Props {
 const RANGES = [30, 60, 90, 180] as const;
 
 const FomentoAlerts = ({ onEditProject }: Props) => {
-  const { isSuperadmin, fomentoOrgId } = useFomentoAuth();
+  const { isSuperadmin, fomentoOrgId, fomentoRole } = useFomentoAuth();
+  const isAuditor = fomentoRole === "auditor";
   const [range, setRange] = useState<number>(90);
 
   const { data: projects, isLoading } = useQuery({
@@ -117,9 +118,11 @@ const FomentoAlerts = ({ onEditProject }: Props) => {
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant={urgency as any}>{days}d restantes</Badge>
-                    <Button variant="outline" size="sm" onClick={() => onEditProject(p.id)} className="gap-1">
-                      <Pencil className="w-3.5 h-3.5" /> Editar
-                    </Button>
+                    {!isAuditor && (
+                      <Button variant="outline" size="sm" onClick={() => onEditProject(p.id)} className="gap-1">
+                        <Pencil className="w-3.5 h-3.5" /> Editar
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>

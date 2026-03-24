@@ -32,6 +32,7 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
   const [sortOrder, setSortOrder] = useState<"default" | "asc" | "desc">("default");
 
   const canDelete = isSuperadmin || fomentoRole === "admin";
+  const isAuditor = fomentoRole === "auditor";
 
   const { data: bolsistas, isLoading } = useQuery({
     queryKey: ["fomento-bolsistas", fomentoOrgId, isSuperadmin],
@@ -105,12 +106,14 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
         <h1 className="text-2xl font-bold font-heading text-foreground">Bolsistas</h1>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={exportCSV} className="gap-1"><Download className="w-4 h-4" /> CSV</Button>
-          {onBatchImport && (
+          {!isAuditor && onBatchImport && (
             <Button variant="outline" size="sm" onClick={onBatchImport} className="gap-1">
               <Upload className="w-4 h-4" /> Importar em Lote
             </Button>
           )}
-          <Button size="sm" onClick={onNewBolsista} className="gap-1"><Plus className="w-4 h-4" /> Novo Bolsista</Button>
+          {!isAuditor && (
+            <Button size="sm" onClick={onNewBolsista} className="gap-1"><Plus className="w-4 h-4" /> Novo Bolsista</Button>
+          )}
         </div>
       </div>
 
@@ -236,8 +239,10 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => onEditBolsista(b.id)}><Pencil className="w-4 h-4" /></Button>
-                        {canDelete && (
+                        {!isAuditor && (
+                          <Button variant="ghost" size="icon" onClick={() => onEditBolsista(b.id)}><Pencil className="w-4 h-4" /></Button>
+                        )}
+                        {canDelete && !isAuditor && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button variant="ghost" size="icon" className="text-destructive"><Trash2 className="w-4 h-4" /></Button>

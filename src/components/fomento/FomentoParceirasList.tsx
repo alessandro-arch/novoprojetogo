@@ -24,7 +24,8 @@ const statusBadgeClass: Record<string, string> = {
 };
 
 const FomentoParceirasList = ({ onNewParceria, onEditParceria }: Props) => {
-  const { fomentoOrgId, isSuperadmin } = useFomentoAuth();
+  const { fomentoOrgId, fomentoRole, isSuperadmin } = useFomentoAuth();
+  const isAuditor = fomentoRole === "auditor";
   const queryClient = useQueryClient();
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterTipo, setFilterTipo] = useState<string>("all");
@@ -67,7 +68,9 @@ const FomentoParceirasList = ({ onNewParceria, onEditParceria }: Props) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-foreground">Parcerias</h2>
-        <Button onClick={onNewParceria}><Plus className="w-4 h-4 mr-1" /> Nova Parceria</Button>
+        {!isAuditor && (
+          <Button onClick={onNewParceria}><Plus className="w-4 h-4 mr-1" /> Nova Parceria</Button>
+        )}
       </div>
 
       {/* KPI Cards */}
@@ -141,10 +144,12 @@ const FomentoParceirasList = ({ onNewParceria, onEditParceria }: Props) => {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => onEditParceria(p.id)}><Pencil className="w-4 h-4" /></Button>
-                      <Button size="icon" variant="ghost" className="text-destructive" onClick={() => { if (confirm("Excluir esta parceria?")) deleteMutation.mutate(p.id); }}><Trash2 className="w-4 h-4" /></Button>
-                    </div>
+                    {!isAuditor && (
+                      <div className="flex justify-end gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => onEditParceria(p.id)}><Pencil className="w-4 h-4" /></Button>
+                        <Button size="icon" variant="ghost" className="text-destructive" onClick={() => { if (confirm("Excluir esta parceria?")) deleteMutation.mutate(p.id); }}><Trash2 className="w-4 h-4" /></Button>
+                      </div>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

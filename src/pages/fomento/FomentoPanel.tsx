@@ -1,6 +1,7 @@
 import { useFomentoAuth } from "@/contexts/FomentoAuthContext";
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
-import { Loader2, LayoutDashboard, FolderKanban, GraduationCap, AlertTriangle, ShieldCheck, Building2, Handshake } from "lucide-react";
+import { Loader2, LayoutDashboard, FolderKanban, GraduationCap, AlertTriangle, ShieldCheck, Building2, Handshake, Lock } from "lucide-react";
+import { toast } from "sonner";
 import PanelLayout, { NavItem } from "@/components/layout/PanelLayout";
 import FomentoDashboardView from "@/components/fomento/FomentoDashboardView";
 import FomentoProjectsList from "@/components/fomento/FomentoProjectsList";
@@ -16,7 +17,7 @@ import FomentoParceirasList from "@/components/fomento/FomentoParceirasList";
 import FomentoParceiraForm from "@/components/fomento/FomentoParceiraForm";
 
 const FomentoPanel = () => {
-  const { loading, fomentoRole, isSuperadmin, signOut } = useFomentoAuth();
+  const { loading, fomentoRole, isSuperadmin, isAuditor, signOut } = useFomentoAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -101,6 +102,11 @@ const FomentoPanel = () => {
 
     if (section === "admin" && (isSuperadmin || fomentoRole === "admin")) return <FomentoAdmin />;
 
+    if (section === "admin" && isAuditor) {
+      toast.error("Acesso restrito. Você está em modo somente leitura.");
+      return <Navigate to="/fomento/dashboard" replace />;
+    }
+
     return <Navigate to="/fomento/dashboard" replace />;
   };
 
@@ -113,6 +119,12 @@ const FomentoPanel = () => {
       onNavChange={handleNavChange}
       onSignOut={signOut}
     >
+      {isAuditor && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-[#EF9F27]/30 bg-[#EF9F27]/10 px-4 py-2.5 text-sm text-[#B07A1A]">
+          <Lock className="w-4 h-4 shrink-0" />
+          <span>Você está em modo somente leitura</span>
+        </div>
+      )}
       {renderContent()}
     </PanelLayout>
   );
