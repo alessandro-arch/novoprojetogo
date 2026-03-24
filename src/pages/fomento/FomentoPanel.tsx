@@ -102,6 +102,11 @@ const FomentoPanel = () => {
 
     if (section === "admin" && (isSuperadmin || fomentoRole === "admin")) return <FomentoAdmin />;
 
+    if (section === "admin" && isAuditor) {
+      toast.error("Acesso restrito. Você está em modo somente leitura.");
+      return <Navigate to="/fomento/dashboard" replace />;
+    }
+
     return <Navigate to="/fomento/dashboard" replace />;
   };
 
