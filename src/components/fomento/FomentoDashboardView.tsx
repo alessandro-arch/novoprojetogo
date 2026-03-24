@@ -184,9 +184,36 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
   });
   const yearData = Array.from(yearMap.entries()).sort((a, b) => a[0] - b[0]).map(([year, value]) => ({ year: String(year), value }));
 
+  // Normalize rubrica names to group duplicates/abbreviations
+  const normalizeRubrica = (tipo: string): string => {
+    const t = tipo.trim().toLowerCase();
+    // Bolsas
+    if (/^bolsa/i.test(t)) return "Bolsas";
+    // Equipamentos e Material Permanente
+    if (/equip.*perman|mat.*perman|perman.*equip/i.test(t)) return "Equipamentos e Material Permanente";
+    // Material de Consumo
+    if (/m(aterial|\.)?\s*(de\s+)?consumo/i.test(t)) return "Material de Consumo";
+    // Serviços de Terceiros (all variants grouped together)
+    if (/servi.*(terceiro|3)|s\.\s*de\s+terceiro/i.test(t)) return "Serviços de Terceiros";
+    if (/outro.*servi.*terceiro/i.test(t)) return "Serviços de Terceiros";
+    // Diárias
+    if (/di[áa]ria/i.test(t)) return "Diárias";
+    // Passagens
+    if (/passagen/i.test(t)) return "Passagens";
+    // Hospedagem/Alimentação
+    if (/hospeda|alimenta/i.test(t)) return "Hospedagem/Alimentação";
+    // Pessoal
+    if (/^pessoal$/i.test(t)) return "Pessoal";
+    // Encargos
+    if (/encargo/i.test(t)) return "Encargos";
+    // Fallback: capitalize first letter
+    return tipo.trim().charAt(0).toUpperCase() + tipo.trim().slice(1);
+  };
+
   const rubricaMap = new Map<string, number>();
   r.forEach((x) => {
-    rubricaMap.set(x.tipo, (rubricaMap.get(x.tipo) || 0) + Number(x.valor));
+    const normalized = normalizeRubrica(x.tipo);
+    rubricaMap.set(normalized, (rubricaMap.get(normalized) || 0) + Number(x.valor));
   });
   const rubricaData = Array.from(rubricaMap.entries()).map(([name, value]) => ({ name, value }));
 
