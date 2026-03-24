@@ -315,7 +315,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
           </Card>
 
           <Card className="shadow-sm">
-            <CardHeader className="pb-2"><CardTitle className="text-sm">Por Rubrica</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Por Rubrica (R$)</CardTitle></CardHeader>
             <CardContent>
               <div className="space-y-2">
                 {rubricaData
@@ -334,6 +334,31 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
                       </div>
                     );
                   })}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Por Rubrica (%)</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {(() => {
+                  const sorted = [...rubricaData].sort((a, b) => b.value - a.value);
+                  const total = sorted.reduce((s, d) => s + d.value, 0) || 1;
+                  return sorted.map((item, i) => {
+                    const pctOfTotal = (item.value / total) * 100;
+                    return (
+                      <div key={item.name} className="flex items-center gap-3">
+                        <span className="w-4 h-4 shrink-0 rounded" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                        <span className="text-xs text-muted-foreground w-48 shrink-0 truncate" title={item.name}>{item.name}</span>
+                        <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
+                          <div className="h-full rounded" style={{ width: `${pctOfTotal}%`, backgroundColor: COLORS[i % COLORS.length] }} />
+                        </div>
+                        <span className="text-xs font-medium text-foreground w-16 text-right shrink-0">{pctOfTotal.toFixed(1)}%</span>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </CardContent>
           </Card>
