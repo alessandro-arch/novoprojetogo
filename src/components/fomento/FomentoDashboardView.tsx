@@ -501,7 +501,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
                       return (
                         <div key={item.name} className="flex items-center gap-3">
                           <span className="w-4 h-4 shrink-0 rounded" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                          <span className="text-xs text-muted-foreground w-48 shrink-0 truncate" title={item.name}>{item.name}</span>
+                          <span className="text-xs text-muted-foreground min-w-[200px] max-w-[400px] shrink-0 truncate" title={item.name}>{item.name}</span>
                           <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
                             <div className="h-full rounded" style={{ width: `${pct}%`, backgroundColor: color }} />
                           </div>
