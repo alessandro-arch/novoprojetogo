@@ -10,16 +10,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Search, Download, Pencil, Trash2, Paperclip } from "lucide-react";
+import { Plus, Search, Download, Pencil, Trash2, Paperclip, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatBRL, formatDateBR, STATUS_LABELS, AREA_LABELS, FONTE_LABELS } from "@/lib/fomento-utils";
 
 interface Props {
   onNewProject: () => void;
   onEditProject: (id: string) => void;
+  onBatchImport?: () => void;
 }
 
-const FomentoProjectsList = ({ onNewProject, onEditProject }: Props) => {
+const FomentoProjectsList = ({ onNewProject, onEditProject, onBatchImport }: Props) => {
   const { fomentoRole, isSuperadmin, fomentoOrgId } = useFomentoAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -114,6 +115,11 @@ const FomentoProjectsList = ({ onNewProject, onEditProject }: Props) => {
           <Button variant="outline" size="sm" onClick={exportCSV} className="gap-1">
             <Download className="w-4 h-4" /> CSV
           </Button>
+          {onBatchImport && (
+            <Button variant="outline" size="sm" onClick={onBatchImport} className="gap-1">
+              <Upload className="w-4 h-4" /> Importar em Lote
+            </Button>
+          )}
           <Button size="sm" onClick={onNewProject} className="gap-1">
             <Plus className="w-4 h-4" /> Novo Projeto
           </Button>

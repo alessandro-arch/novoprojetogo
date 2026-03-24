@@ -5,6 +5,7 @@ import PanelLayout, { NavItem } from "@/components/layout/PanelLayout";
 import FomentoDashboardView from "@/components/fomento/FomentoDashboardView";
 import FomentoProjectsList from "@/components/fomento/FomentoProjectsList";
 import FomentoProjectForm from "@/components/fomento/FomentoProjectForm";
+import FomentoBatchImport from "@/components/fomento/FomentoBatchImport";
 import FomentoBolsistasList from "@/components/fomento/FomentoBolsistasList";
 import FomentoBolsistaForm from "@/components/fomento/FomentoBolsistaForm";
 import FomentoAlerts from "@/components/fomento/FomentoAlerts";
@@ -51,6 +52,7 @@ const FomentoPanel = () => {
 
   const handleEditProject = (id: string) => navigate(`/fomento/projetos/${id}/editar`);
   const handleNewProject = () => navigate("/fomento/projetos/novo");
+  const handleBatchImport = () => navigate("/fomento/projetos/importar-lote");
   const handleBackToProjects = () => navigate("/fomento/projetos");
 
   const handleEditBolsista = (id: string) => navigate(`/fomento/bolsistas/${id}/editar`);
@@ -62,8 +64,9 @@ const FomentoPanel = () => {
 
     if (section === "projetos") {
       if (segments[1] === "novo") return <FomentoProjectForm onBack={handleBackToProjects} />;
+      if (segments[1] === "importar-lote") return <FomentoBatchImport onBack={handleBackToProjects} />;
       if (segments[1] && segments[2] === "editar") return <FomentoProjectForm projectId={segments[1]} onBack={handleBackToProjects} />;
-      return <FomentoProjectsList onNewProject={handleNewProject} onEditProject={handleEditProject} />;
+      return <FomentoProjectsList onNewProject={handleNewProject} onEditProject={handleEditProject} onBatchImport={handleBatchImport} />;
     }
 
     if (section === "bolsistas") {
