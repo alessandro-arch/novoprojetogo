@@ -131,7 +131,13 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
   const totalParceriasAtivas = parceriasAtivas.length;
   const totalCaptadoParcerias = parceriasAtivas.reduce((s: number, p: any) => s + (Number(p.valor_total) || 0), 0);
 
-  const totalCaptado = totalCaptadoProjetos + totalComprometidoBolsas + totalCaptadoParcerias;
+  // Bolsas de parcerias ativas com modalidade "bolsa"
+  const totalBolsasParcerias = parceriasAtivas
+    .filter((p: any) => p.modalidade === "bolsa")
+    .reduce((s: number, p: any) => s + (Number(p.valor_total) || 0), 0);
+  const totalBolsasGeral = totalComprometidoBolsas + totalBolsasParcerias;
+
+  const totalCaptado = totalCaptadoProjetos + totalBolsasGeral;
 
   const modalidades = ["ic", "mestrado", "doutorado", "pos_doc", "apoio_tecnico"] as const;
   const modalidadeStats = modalidades.map((m) => {
@@ -212,7 +218,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
       icon: DollarSign,
       color: "text-[hsl(var(--success))]",
       bg: "bg-[hsl(var(--success-light))]",
-      tooltip: `${formatBRL(totalCaptadoProjetos)} em projetos + ${formatBRL(totalComprometidoBolsas)} em bolsas + ${formatBRL(totalCaptadoParcerias)} em parcerias`,
+      tooltip: `${formatBRL(totalCaptadoProjetos)} em projetos + ${formatBRL(totalBolsasGeral)} em bolsas`,
     },
     { label: "Projetos Ativos", value: String(ativos), icon: Briefcase, color: "text-primary", bg: "bg-[hsl(var(--info-light))]" },
     { label: "Bolsas", value: formatBRL(totalComprometidoBolsas), icon: GraduationCap, color: "text-[hsl(270,50%,50%)]", bg: "bg-[hsl(270,50%,90%)]" },
@@ -578,10 +584,10 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
                   <span className="text-muted-foreground">Valor total em projetos</span>
                   <span className="font-semibold text-foreground">{formatBRL(totalCaptadoProjetos)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Valor total em bolsas</span>
-                  <span className="font-semibold text-foreground">{formatBRL(totalComprometidoBolsas)}</span>
-                </div>
+                 <div className="flex justify-between text-sm">
+                   <span className="text-muted-foreground">Valor total em bolsas</span>
+                   <span className="font-semibold text-foreground">{formatBRL(totalBolsasGeral)}</span>
+                 </div>
                 <div className="border-t border-border my-2" />
                 <div className="flex justify-between text-base">
                   <span className="font-bold text-foreground">TOTAL CAPTADO</span>
