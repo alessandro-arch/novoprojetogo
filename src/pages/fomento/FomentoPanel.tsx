@@ -119,6 +119,12 @@ const FomentoPanel = () => {
       onNavChange={handleNavChange}
       onSignOut={signOut}
     >
+      {isAuditor && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-[#EF9F27]/30 bg-[#EF9F27]/10 px-4 py-2.5 text-sm text-[#B07A1A]">
+          <Lock className="w-4 h-4 shrink-0" />
+          <span>Você está em modo somente leitura</span>
+        </div>
+      )}
       {renderContent()}
     </PanelLayout>
   );
