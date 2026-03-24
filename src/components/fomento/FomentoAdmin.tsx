@@ -35,6 +35,31 @@ const FomentoAdmin = () => {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("gestor");
   const [inviteLoading, setInviteLoading] = useState(false);
+  const [orgSigla, setOrgSigla] = useState("");
+  const [siglaLoading, setSiglaLoading] = useState(false);
+
+  // Fetch org sigla
+  useEffect(() => {
+    if (!fomentoOrgId) return;
+    supabase.from("fomento_organizations").select("sigla").eq("id", fomentoOrgId).single()
+      .then(({ data }) => { if (data?.sigla) setOrgSigla(data.sigla); });
+  }, [fomentoOrgId]);
+
+  const handleSaveSigla = async () => {
+    if (!fomentoOrgId) return;
+    setSiglaLoading(true);
+    try {
+      const { error } = await supabase.from("fomento_organizations")
+        .update({ sigla: orgSigla.trim().toUpperCase() })
+        .eq("id", fomentoOrgId);
+      if (error) throw error;
+      toast({ title: "Sigla atualizada com sucesso." });
+    } catch (err: any) {
+      toast({ title: "Erro ao salvar sigla.", description: err.message, variant: "destructive" });
+    } finally {
+      setSiglaLoading(false);
+    }
+  };
 
   const { data: users, isLoading } = useQuery({
     queryKey: ["fomento-users", fomentoOrgId, isSuperadmin],
