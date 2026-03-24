@@ -31,6 +31,7 @@ const FomentoProjectsList = ({ onNewProject, onEditProject, onBatchImport }: Pro
   const [filterFonte, setFilterFonte] = useState("all");
 
   const canDelete = isSuperadmin || fomentoRole === "admin";
+  const isAuditor = fomentoRole === "auditor";
 
   const { data: projects, isLoading } = useQuery({
     queryKey: ["fomento-projects", fomentoOrgId, isSuperadmin],
