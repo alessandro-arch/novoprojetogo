@@ -24,7 +24,8 @@ const statusBadgeClass: Record<string, string> = {
 };
 
 const FomentoParceirasList = ({ onNewParceria, onEditParceria }: Props) => {
-  const { fomentoOrgId, isSuperadmin } = useFomentoAuth();
+  const { fomentoOrgId, fomentoRole, isSuperadmin } = useFomentoAuth();
+  const isAuditor = fomentoRole === "auditor";
   const queryClient = useQueryClient();
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterTipo, setFilterTipo] = useState<string>("all");
