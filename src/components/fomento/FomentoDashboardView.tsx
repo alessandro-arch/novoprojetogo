@@ -212,7 +212,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
       icon: DollarSign,
       color: "text-[hsl(var(--success))]",
       bg: "bg-[hsl(var(--success-light))]",
-      tooltip: `${formatBRL(totalCaptadoProjetos)} em projetos + ${formatBRL(totalComprometidoBolsas)} em bolsas`,
+      tooltip: `${formatBRL(totalCaptadoProjetos)} em projetos + ${formatBRL(totalComprometidoBolsas)} em bolsas + ${formatBRL(totalCaptadoParcerias)} em parcerias`,
     },
     { label: "Projetos Ativos", value: String(ativos), icon: Briefcase, color: "text-primary", bg: "bg-[hsl(var(--info-light))]" },
     { label: "Bolsas", value: formatBRL(totalComprometidoBolsas), icon: GraduationCap, color: "text-[hsl(270,50%,50%)]", bg: "bg-[hsl(270,50%,90%)]" },
