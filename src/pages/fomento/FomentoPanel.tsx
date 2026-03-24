@@ -87,6 +87,12 @@ const FomentoPanel = () => {
 
     if (section === "alertas") return <FomentoAlerts onEditProject={handleEditProject} />;
 
+    if (section === "parcerias") {
+      if (segments[1] === "nova") return <FomentoParceiraForm onBack={handleBackToParcerias} />;
+      if (segments[1] && segments[2] === "editar") return <FomentoParceiraForm parceriaId={segments[1]} onBack={handleBackToParcerias} />;
+      return <FomentoParceirasList onNewParceria={handleNewParceria} onEditParceria={handleEditParceria} />;
+    }
+
     if (section === "master" && isSuperadmin) {
       if (segments[1] === "nova") return <FomentoMasterPanel subRoute="nova" onNavigate={navigate} />;
       if (segments[1] && segments[2] === "editar") return <FomentoMasterPanel subRoute="editar" orgId={segments[1]} onNavigate={navigate} />;
