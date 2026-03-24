@@ -115,7 +115,7 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
 
       <Card className="shadow-sm">
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input placeholder="Buscar bolsista, orientador…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
@@ -139,6 +139,14 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
               <SelectContent>
                 <SelectItem value="all">Todos orientadores</SelectItem>
                 {orientadores.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as "default" | "asc" | "desc")}>
+              <SelectTrigger><SelectValue placeholder="Ordenar" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Mais recentes</SelectItem>
+                <SelectItem value="asc">Nome A → Z</SelectItem>
+                <SelectItem value="desc">Nome Z → A</SelectItem>
               </SelectContent>
             </Select>
           </div>
