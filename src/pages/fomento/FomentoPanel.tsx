@@ -42,6 +42,7 @@ const FomentoPanel = () => {
     { key: "projetos", label: "Projetos", icon: FolderKanban },
     { key: "bolsistas", label: "Bolsistas (Cotas)", icon: GraduationCap },
     { key: "alertas", label: "Alertas de Vigência", icon: AlertTriangle },
+    { key: "parcerias", label: "Parcerias", icon: Handshake },
   ];
 
   if (fomentoRole === "admin" || isSuperadmin) {
