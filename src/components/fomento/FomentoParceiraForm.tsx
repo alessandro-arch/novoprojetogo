@@ -157,6 +157,15 @@ const FomentoParceiraForm = ({ parceriaId, onBack }: Props) => {
             </Select>
           </div>
           <div className="space-y-2">
+            <Label>Modalidade</Label>
+            <Select value={form.modalidade} onValueChange={(v) => set("modalidade", v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                {Object.entries(NATUREZA_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
             <Label>Status</Label>
             <Select value={form.status} onValueChange={(v) => set("status", v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>

@@ -123,9 +123,9 @@ const FomentoParceirasList = ({ onNewParceria, onEditParceria }: Props) => {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
               ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhuma parceria encontrada</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Nenhuma parceria encontrada</TableCell></TableRow>
               ) : filtered.map((p: any) => (
                 <TableRow key={p.id}>
                   <TableCell className="font-mono text-sm">{p.numero_contrato || "—"}</TableCell>
