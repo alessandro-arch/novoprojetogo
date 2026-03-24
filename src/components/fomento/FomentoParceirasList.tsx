@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, Handshake, DollarSign, Users } from "lucide-react";
-import { formatBRL, PARCERIA_TIPO_LABELS, PARCERIA_STATUS_LABELS, TIPO_INSTITUICAO_LABELS } from "@/lib/fomento-utils";
+import { formatBRL, PARCERIA_TIPO_LABELS, PARCERIA_STATUS_LABELS, NATUREZA_LABELS } from "@/lib/fomento-utils";
 import { toast } from "sonner";
 
 interface Props {
@@ -113,6 +113,7 @@ const FomentoParceirasList = ({ onNewParceria, onEditParceria }: Props) => {
                 <TableHead>Nº Contrato</TableHead>
                 <TableHead>Título</TableHead>
                 <TableHead>Tipo</TableHead>
+                <TableHead>Modalidade</TableHead>
                 <TableHead>Instituição</TableHead>
                 <TableHead className="text-right">Beneficiários</TableHead>
                 <TableHead className="text-right">Valor Total</TableHead>
@@ -122,14 +123,15 @@ const FomentoParceirasList = ({ onNewParceria, onEditParceria }: Props) => {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
               ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhuma parceria encontrada</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Nenhuma parceria encontrada</TableCell></TableRow>
               ) : filtered.map((p: any) => (
                 <TableRow key={p.id}>
                   <TableCell className="font-mono text-sm">{p.numero_contrato || "—"}</TableCell>
                   <TableCell className="font-medium max-w-[200px] truncate">{p.titulo}</TableCell>
                   <TableCell>{PARCERIA_TIPO_LABELS[p.tipo] || "—"}</TableCell>
+                  <TableCell>{NATUREZA_LABELS[p.modalidade] || "—"}</TableCell>
                   <TableCell className="max-w-[180px] truncate">{p.instituicao_nome || "—"}</TableCell>
                   <TableCell className="text-right">{p.num_beneficiarios || 0}</TableCell>
                   <TableCell className="text-right">{formatBRL(p.valor_total)}</TableCell>

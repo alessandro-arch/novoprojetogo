@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ArrowLeft, Save } from "lucide-react";
-import { formatBRL, PARCERIA_TIPO_LABELS, PARCERIA_STATUS_LABELS, TIPO_INSTITUICAO_LABELS } from "@/lib/fomento-utils";
+import { formatBRL, PARCERIA_TIPO_LABELS, PARCERIA_STATUS_LABELS, TIPO_INSTITUICAO_LABELS, NATUREZA_LABELS } from "@/lib/fomento-utils";
 import { toast } from "sonner";
 
 interface Props {
@@ -21,6 +21,7 @@ const emptForm = {
   numero_contrato: "",
   titulo: "",
   tipo: "",
+  modalidade: "",
   status: "em_negociacao",
   instituicao_nome: "",
   cnpj: "",
@@ -64,6 +65,7 @@ const FomentoParceiraForm = ({ parceriaId, onBack }: Props) => {
         numero_contrato: existing.numero_contrato || "",
         titulo: existing.titulo || "",
         tipo: existing.tipo || "",
+        modalidade: existing.modalidade || "",
         status: existing.status || "em_negociacao",
         instituicao_nome: existing.instituicao_nome || "",
         cnpj: existing.cnpj || "",
@@ -151,6 +153,15 @@ const FomentoParceiraForm = ({ parceriaId, onBack }: Props) => {
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
                 {Object.entries(PARCERIA_TIPO_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Modalidade</Label>
+            <Select value={form.modalidade} onValueChange={(v) => set("modalidade", v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                {Object.entries(NATUREZA_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
