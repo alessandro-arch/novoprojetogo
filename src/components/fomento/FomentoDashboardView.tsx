@@ -69,6 +69,19 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     },
   });
 
+  const { data: parcerias } = useQuery({
+    queryKey: ["fomento-parcerias-dashboard", fomentoOrgId, isSuperadmin],
+    queryFn: async () => {
+      let query = supabase.from("fomento_parcerias").select("*");
+      if (!isSuperadmin && fomentoOrgId) {
+        query = query.or(`organization_id.eq.${fomentoOrgId},organization_id.is.null`);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const isLoading = loadingProjects || loadingRubricas;
 
   if (isLoading) {
