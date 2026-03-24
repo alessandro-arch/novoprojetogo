@@ -5,6 +5,7 @@ import PanelLayout, { NavItem } from "@/components/layout/PanelLayout";
 import FomentoDashboardView from "@/components/fomento/FomentoDashboardView";
 import FomentoProjectsList from "@/components/fomento/FomentoProjectsList";
 import FomentoProjectForm from "@/components/fomento/FomentoProjectForm";
+import FomentoBatchImport from "@/components/fomento/FomentoBatchImport";
 import FomentoBolsistasList from "@/components/fomento/FomentoBolsistasList";
 import FomentoBolsistaForm from "@/components/fomento/FomentoBolsistaForm";
 import FomentoAlerts from "@/components/fomento/FomentoAlerts";
