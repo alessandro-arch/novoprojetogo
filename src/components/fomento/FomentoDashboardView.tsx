@@ -208,7 +208,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
         <h1 className="text-2xl font-bold font-heading text-foreground">Dashboard</h1>
 
         {/* Project KPIs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
           {kpis.map((k) => (
             <Card key={k.label} className="shadow-sm">
               <CardContent className="p-5 flex items-center gap-4">
