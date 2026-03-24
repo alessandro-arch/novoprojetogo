@@ -26,6 +26,7 @@ const ROLE_LABELS: Record<string, string> = {
   superadmin: "Superadmin",
   admin: "Admin",
   gestor: "Gestor",
+  auditor: "Auditor",
 };
 
 const FomentoAdmin = () => {
