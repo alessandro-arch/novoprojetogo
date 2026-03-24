@@ -517,7 +517,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
           };
 
           return (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6">
               <RankingList title="Bolsas Mestrado por PPG" data={mestData} color="hsl(215, 65%, 30%)" />
               <RankingList title="Bolsas Doutorado por PPG" data={doutData} color="hsl(270, 50%, 50%)" />
             </div>
