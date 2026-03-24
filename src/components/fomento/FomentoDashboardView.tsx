@@ -90,8 +90,9 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
 
   const p = projects ?? [];
   const r = rubricas ?? [];
+  const bList = bolsistas ?? [];
 
-  const totalCaptado = p.reduce((s, x) => s + (Number(x.valor_total) || 0), 0);
+  const totalCaptadoProjetos = p.reduce((s, x) => s + (Number(x.valor_total) || 0), 0);
   const ativos = p.filter((x) => x.status === "em_execucao").length;
   const pesquisadores = new Set(p.map((x) => x.pesquisador_principal)).size;
   const now = new Date();
@@ -101,6 +102,30 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     const fim = new Date(x.vigencia_fim);
     return fim >= now && fim <= in60d;
   }).length;
+
+  // Bolsistas KPIs
+  const bolsistasAtivos = bList.filter((b) => b.status === "ativo");
+  const totalMensalBolsas = bolsistasAtivos.reduce((s, b) => s + (Number(b.valor_mensal) || 0), 0);
+  const totalComprometidoBolsas = bolsistasAtivos.reduce((s, b) => {
+    const mensal = Number(b.valor_mensal) || 0;
+    const cotas = Number(b.cotas_total) || 0;
+    return s + mensal * cotas;
+  }, 0);
+
+  const totalCaptado = totalCaptadoProjetos + totalComprometidoBolsas;
+
+  const modalidades = ["ic", "mestrado", "doutorado", "pos_doc", "apoio_tecnico"] as const;
+  const modalidadeStats = modalidades.map((m) => {
+    const filtered = bolsistasAtivos.filter((b) => b.modalidade === m);
+    const count = filtered.length;
+    const mensalTotal = filtered.reduce((s, b) => s + (Number(b.valor_mensal) || 0), 0);
+    const comprometido = filtered.reduce((s, b) => {
+      const mensal = Number(b.valor_mensal) || 0;
+      const cotas = Number(b.cotas_total) || 0;
+      return s + mensal * cotas;
+    }, 0);
+    return { key: m, label: MODALIDADE_LABELS[m] || m, count, mensalTotal, comprometido };
+  });
 
   const areaData = ["pesquisa", "inovacao", "extensao", "ensino", "servicos", "estagio_tecnico", "participacao_evento", "publicacao"].map((a) => {
     const filtered = p.filter((x) => x.area === a);
@@ -145,8 +170,31 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     .filter((x) => x.status === "em_execucao" && x.vigencia_fim && new Date(x.vigencia_fim) >= now && new Date(x.vigencia_fim) <= in90d)
     .sort((a, b) => new Date(a.vigencia_fim!).getTime() - new Date(b.vigencia_fim!).getTime());
 
+  // Bolsas chart data
+  const bolsasBarData = modalidadeStats.filter((m) => m.comprometido > 0 || m.count > 0);
+
+  // Proportions for highlight card
+  const pctProjetos = totalCaptado > 0 ? (totalCaptadoProjetos / totalCaptado) * 100 : 0;
+
+  // Orientador chart
+  const orientMap = new Map<string, number>();
+  bList.forEach((b) => {
+    const key = b.orientador || "Não informado";
+    orientMap.set(key, (orientMap.get(key) || 0) + 1);
+  });
+  const orientData = Array.from(orientMap.entries())
+    .sort((a, b) => b[1] - a[1]).slice(0, 10)
+    .map(([name, value]) => ({ name: name.length > 20 ? name.slice(0, 20) + "…" : name, value }));
+
   const kpis = [
-    { label: "Total Captado", value: formatBRL(totalCaptado), icon: DollarSign, color: "text-[hsl(var(--success))]", bg: "bg-[hsl(var(--success-light))]" },
+    {
+      label: "Total Captado",
+      value: formatBRL(totalCaptado),
+      icon: DollarSign,
+      color: "text-[hsl(var(--success))]",
+      bg: "bg-[hsl(var(--success-light))]",
+      tooltip: `${formatBRL(totalCaptadoProjetos)} em projetos + ${formatBRL(totalComprometidoBolsas)} em bolsas`,
+    },
     { label: "Projetos Ativos", value: String(ativos), icon: Briefcase, color: "text-primary", bg: "bg-[hsl(var(--info-light))]" },
     { label: "Pesquisadores", value: String(pesquisadores), icon: Users, color: "text-[hsl(var(--warning))]", bg: "bg-[hsl(var(--warning-light))]" },
     { label: "Vencendo em 60d", value: String(vencendo60), icon: AlertTriangle, color: vencendo60 > 0 ? "text-destructive" : "text-muted-foreground", bg: vencendo60 > 0 ? "bg-[hsl(var(--danger-light))]" : "bg-muted" },
@@ -154,237 +202,302 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
   ];
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold font-heading text-foreground">Dashboard</h1>
+    <TooltipProvider>
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold font-heading text-foreground">Dashboard</h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {kpis.map((k) => (
-          <Card key={k.label} className="shadow-sm">
+        {/* Project KPIs */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {kpis.map((k) => (
+            <Card key={k.label} className="shadow-sm">
+              <CardContent className="p-5 flex items-center gap-4">
+                <div className={`w-11 h-11 rounded-xl ${k.bg} flex items-center justify-center`}>
+                  <k.icon className={`w-5 h-5 ${k.color}`} />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1">
+                    <p className="text-xs text-muted-foreground">{k.label}</p>
+                    {"tooltip" in k && k.tooltip && (
+                      <UiTooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-3 h-3 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs text-xs">{k.tooltip}</TooltipContent>
+                      </UiTooltip>
+                    )}
+                  </div>
+                  <p className="text-lg font-bold text-foreground">{k.value}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Area breakdown */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          {areaData.map((a) => (
+            <Card key={a.area} className="shadow-sm">
+              <CardContent className="p-4 text-center">
+                <p className="text-xs text-muted-foreground">{a.area}</p>
+                <p className="text-xl font-bold text-foreground">{a.count}</p>
+                <p className="text-xs text-muted-foreground">{formatBRL(a.value)}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Project charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Top Pesquisadores por Valor Captado</CardTitle></CardHeader>
+            <CardContent className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={topResearchers} layout="vertical" margin={{ left: 10, right: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" tickFormatter={(v) => formatBRL(v)} fontSize={10} />
+                  <YAxis type="category" dataKey="name" width={120} fontSize={11} />
+                  <ReTooltip formatter={(v: number) => formatBRL(v)} />
+                  <Bar dataKey="value" fill="hsl(215, 65%, 30%)" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Por Órgão Financiador</CardTitle></CardHeader>
+            <CardContent className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={agencyData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={({ name }) => name.length > 15 ? name.slice(0, 15) + "…" : name} fontSize={10}>
+                    {agencyData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                  </Pie>
+                  <ReTooltip formatter={(v: number) => formatBRL(v)} />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Evolução por Ano</CardTitle></CardHeader>
+            <CardContent className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={yearData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="year" fontSize={11} />
+                  <YAxis tickFormatter={(v) => `R$ ${(v / 1000).toFixed(0)}k`} fontSize={10} />
+                  <ReTooltip formatter={(v: number) => formatBRL(v)} />
+                  <Bar dataKey="value" fill="hsl(38, 80%, 52%)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Por Rubrica</CardTitle></CardHeader>
+            <CardContent className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={rubricaData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={({ name }) => name} fontSize={10}>
+                    {rubricaData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                  </Pie>
+                  <ReTooltip formatter={(v: number) => formatBRL(v)} />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Expiring table */}
+        {expiring.length > 0 && (
+          <Card className="shadow-sm">
+            <CardHeader><CardTitle className="text-sm">Vigências Vencendo em 90 dias</CardTitle></CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Título</TableHead>
+                      <TableHead>Pesquisador</TableHead>
+                      <TableHead>Financiador</TableHead>
+                      <TableHead>Valor</TableHead>
+                      <TableHead>Vencimento</TableHead>
+                      <TableHead>Dias</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {expiring.map((p) => {
+                      const days = daysRemaining(p.vigencia_fim);
+                      return (
+                        <TableRow key={p.id}>
+                          <TableCell className="font-medium max-w-[200px] truncate">{p.titulo}</TableCell>
+                          <TableCell>{p.pesquisador_principal}</TableCell>
+                          <TableCell>{p.orgao_financiador || "—"}</TableCell>
+                          <TableCell>{formatBRL(Number(p.valor_total))}</TableCell>
+                          <TableCell>{formatDateBR(p.vigencia_fim)}</TableCell>
+                          <TableCell>
+                            <Badge variant={days != null && days <= 30 ? "destructive" : "secondary"}>
+                              {days}d
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="icon" onClick={() => onEditProject(p.id)}>
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ═══════════ SEÇÃO: BOLSAS ═══════════ */}
+        <h2 className="text-lg font-bold font-heading text-foreground mt-4 flex items-center gap-2">
+          <GraduationCap className="w-5 h-5" /> Bolsas
+        </h2>
+
+        {/* Linha 1 — Totais gerais */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Card className="shadow-sm">
             <CardContent className="p-5 flex items-center gap-4">
-              <div className={`w-11 h-11 rounded-xl ${k.bg} flex items-center justify-center`}>
-                <k.icon className={`w-5 h-5 ${k.color}`} />
+              <div className="w-11 h-11 rounded-xl bg-[hsl(var(--info-light))] flex items-center justify-center">
+                <GraduationCap className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">{k.label}</p>
-                <p className="text-lg font-bold text-foreground">{k.value}</p>
+                <p className="text-xs text-muted-foreground">Total de Bolsas Ativas</p>
+                <p className="text-lg font-bold text-foreground">{bolsistasAtivos.length}</p>
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        {areaData.map((a) => (
-          <Card key={a.area} className="shadow-sm">
-            <CardContent className="p-4 text-center">
-              <p className="text-xs text-muted-foreground">{a.area}</p>
-              <p className="text-xl font-bold text-foreground">{a.count}</p>
-              <p className="text-xs text-muted-foreground">{formatBRL(a.value)}</p>
+          <Card className="shadow-sm">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="w-11 h-11 rounded-xl bg-[hsl(var(--success-light))] flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-[hsl(var(--success))]" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Valor Mensal Total em Bolsas</p>
+                <p className="text-lg font-bold text-foreground">{formatBRL(totalMensalBolsas)}</p>
+              </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Top Pesquisadores por Valor Captado</CardTitle></CardHeader>
-          <CardContent className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={topResearchers} layout="vertical" margin={{ left: 10, right: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" tickFormatter={(v) => formatBRL(v)} fontSize={10} />
-                <YAxis type="category" dataKey="name" width={120} fontSize={11} />
-                <Tooltip formatter={(v: number) => formatBRL(v)} />
-                <Bar dataKey="value" fill="hsl(215, 65%, 30%)" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Por Órgão Financiador</CardTitle></CardHeader>
-          <CardContent className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={agencyData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={({ name }) => name.length > 15 ? name.slice(0, 15) + "…" : name} fontSize={10}>
-                  {agencyData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Pie>
-                <Tooltip formatter={(v: number) => formatBRL(v)} />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Evolução por Ano</CardTitle></CardHeader>
-          <CardContent className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={yearData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="year" fontSize={11} />
-                <YAxis tickFormatter={(v) => `R$ ${(v / 1000).toFixed(0)}k`} fontSize={10} />
-                <Tooltip formatter={(v: number) => formatBRL(v)} />
-                <Bar dataKey="value" fill="hsl(38, 80%, 52%)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Por Rubrica</CardTitle></CardHeader>
-          <CardContent className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={rubricaData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={({ name }) => name} fontSize={10}>
-                  {rubricaData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Pie>
-                <Tooltip formatter={(v: number) => formatBRL(v)} />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {expiring.length > 0 && (
-        <Card className="shadow-sm">
-          <CardHeader><CardTitle className="text-sm">Vigências Vencendo em 90 dias</CardTitle></CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Título</TableHead>
-                    <TableHead>Pesquisador</TableHead>
-                    <TableHead>Financiador</TableHead>
-                    <TableHead>Valor</TableHead>
-                    <TableHead>Vencimento</TableHead>
-                    <TableHead>Dias</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {expiring.map((p) => {
-                    const days = daysRemaining(p.vigencia_fim);
-                    return (
-                      <TableRow key={p.id}>
-                        <TableCell className="font-medium max-w-[200px] truncate">{p.titulo}</TableCell>
-                        <TableCell>{p.pesquisador_principal}</TableCell>
-                        <TableCell>{p.orgao_financiador || "—"}</TableCell>
-                        <TableCell>{formatBRL(Number(p.valor_total))}</TableCell>
-                        <TableCell>{formatDateBR(p.vigencia_fim)}</TableCell>
-                        <TableCell>
-                          <Badge variant={days != null && days <= 30 ? "destructive" : "secondary"}>
-                            {days}d
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="icon" onClick={() => onEditProject(p.id)}>
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Bolsistas Section */}
-      {(() => {
-        const bList = bolsistas ?? [];
-        const bolsistasAtivos = bList.filter((b) => b.status === "ativo");
-        const totalMensal = bolsistasAtivos.reduce((s, b) => s + (Number(b.valor_mensal) || 0), 0);
-        
-        const modMap = new Map<string, number>();
-        bolsistasAtivos.forEach((b) => {
-          const key = b.modalidade || "sem_modalidade";
-          modMap.set(key, (modMap.get(key) || 0) + 1);
-        });
-        const modData = Array.from(modMap.entries()).map(([name, value]) => ({
-          name: MODALIDADE_LABELS[name] || name, value,
-        }));
-
-        const orientMap = new Map<string, number>();
-        bList.forEach((b) => {
-          const key = b.orientador || "Não informado";
-          orientMap.set(key, (orientMap.get(key) || 0) + 1);
-        });
-        const orientData = Array.from(orientMap.entries())
-          .sort((a, b) => b[1] - a[1]).slice(0, 10)
-          .map(([name, value]) => ({ name: name.length > 20 ? name.slice(0, 20) + "…" : name, value }));
-
-        return (
-          <>
-            <h2 className="text-lg font-bold font-heading text-foreground mt-4 flex items-center gap-2">
-              <GraduationCap className="w-5 h-5" /> Bolsistas
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Card className="shadow-sm">
-                <CardContent className="p-5 flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-xl bg-[hsl(var(--info-light))] flex items-center justify-center">
-                    <GraduationCap className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Bolsistas Ativos</p>
-                    <p className="text-lg font-bold text-foreground">{bolsistasAtivos.length}</p>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="shadow-sm">
-                <CardContent className="p-5 flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-xl bg-[hsl(var(--success-light))] flex items-center justify-center">
-                    <DollarSign className="w-5 h-5 text-[hsl(var(--success))]" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Valor Mensal em Bolsas</p>
-                    <p className="text-lg font-bold text-foreground">{formatBRL(totalMensal)}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {(modData.length > 0 || orientData.length > 0) && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {modData.length > 0 && (
-                  <Card className="shadow-sm">
-                    <CardHeader className="pb-2"><CardTitle className="text-sm">Distribuição por Modalidade</CardTitle></CardHeader>
-                    <CardContent className="h-72">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie data={modData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={({ name }) => name} fontSize={10}>
-                            {modData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-                )}
-                {orientData.length > 0 && (
-                  <Card className="shadow-sm">
-                    <CardHeader className="pb-2"><CardTitle className="text-sm">Bolsistas por Orientador</CardTitle></CardHeader>
-                    <CardContent className="h-72">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={orientData} layout="vertical" margin={{ left: 10, right: 20 }}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis type="number" fontSize={10} />
-                          <YAxis type="category" dataKey="name" width={120} fontSize={11} />
-                          <Tooltip />
-                          <Bar dataKey="value" fill="hsl(270, 50%, 50%)" radius={[0, 4, 4, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-                )}
+          <Card className="shadow-sm">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="w-11 h-11 rounded-xl bg-[hsl(var(--warning-light))] flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-[hsl(var(--warning))]" />
               </div>
-            )}
-          </>
-        );
-      })()}
-    </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Valor Total Comprometido</p>
+                <p className="text-lg font-bold text-foreground">{formatBRL(totalComprometidoBolsas)}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Linha 2 — Por modalidade */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          {modalidadeStats.map((m) => (
+            <Card key={m.key} className="shadow-sm">
+              <CardContent className="p-4 text-center">
+                <p className="text-xs text-muted-foreground font-medium">{m.label}</p>
+                <p className="text-2xl font-bold text-foreground mt-1">{m.count}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {m.count > 0
+                    ? `${m.count} bolsista${m.count > 1 ? "s" : ""} · ${formatBRL(m.mensalTotal)}/mês`
+                    : "Nenhum bolsista"}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Gráficos de bolsas + Card Investimento em Formação */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Gráfico de barras: Distribuição de Investimento em Bolsas */}
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Distribuição de Investimento em Bolsas</CardTitle></CardHeader>
+            <CardContent className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={bolsasBarData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="label" fontSize={11} />
+                  <YAxis tickFormatter={(v) => `R$ ${(v / 1000).toFixed(0)}k`} fontSize={10} />
+                  <ReTooltip formatter={(v: number) => formatBRL(v)} />
+                  <Bar dataKey="comprometido" name="Total Comprometido" fill="hsl(270, 50%, 50%)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Card Investimento em Formação */}
+          <Card className="shadow-sm border-2 border-primary/20">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Investimento em Formação</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Valor total em projetos</span>
+                  <span className="font-semibold text-foreground">{formatBRL(totalCaptadoProjetos)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Valor total em bolsas</span>
+                  <span className="font-semibold text-foreground">{formatBRL(totalComprometidoBolsas)}</span>
+                </div>
+                <div className="border-t border-border my-2" />
+                <div className="flex justify-between text-base">
+                  <span className="font-bold text-foreground">TOTAL CAPTADO</span>
+                  <span className="font-bold text-foreground">{formatBRL(totalCaptado)}</span>
+                </div>
+              </div>
+
+              {/* Barra de proporção */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Projetos ({pctProjetos.toFixed(1)}%)</span>
+                  <span>Bolsas ({(100 - pctProjetos).toFixed(1)}%)</span>
+                </div>
+                <div className="h-4 rounded-full overflow-hidden flex bg-muted">
+                  <div
+                    className="h-full bg-primary transition-all"
+                    style={{ width: `${pctProjetos}%` }}
+                  />
+                  <div
+                    className="h-full bg-[hsl(270,50%,50%)] transition-all"
+                    style={{ width: `${100 - pctProjetos}%` }}
+                  />
+                </div>
+                <div className="flex gap-4 text-xs text-muted-foreground mt-1">
+                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-primary inline-block" /> Projetos</span>
+                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-[hsl(270,50%,50%)] inline-block" /> Bolsas</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Bolsistas por orientador */}
+        {orientData.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2"><CardTitle className="text-sm">Bolsistas por Orientador</CardTitle></CardHeader>
+              <CardContent className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={orientData} layout="vertical" margin={{ left: 10, right: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" fontSize={10} />
+                    <YAxis type="category" dataKey="name" width={120} fontSize={11} />
+                    <ReTooltip />
+                    <Bar dataKey="value" fill="hsl(270, 50%, 50%)" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
+    </TooltipProvider>
   );
 };
 
