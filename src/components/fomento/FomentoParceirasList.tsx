@@ -131,6 +131,7 @@ const FomentoParceirasList = ({ onNewParceria, onEditParceria }: Props) => {
                   <TableCell className="font-mono text-sm">{p.numero_contrato || "—"}</TableCell>
                   <TableCell className="font-medium max-w-[200px] truncate">{p.titulo}</TableCell>
                   <TableCell>{PARCERIA_TIPO_LABELS[p.tipo] || "—"}</TableCell>
+                  <TableCell>{NATUREZA_LABELS[p.modalidade] || "—"}</TableCell>
                   <TableCell className="max-w-[180px] truncate">{p.instituicao_nome || "—"}</TableCell>
                   <TableCell className="text-right">{p.num_beneficiarios || 0}</TableCell>
                   <TableCell className="text-right">{formatBRL(p.valor_total)}</TableCell>
