@@ -1,6 +1,6 @@
 import { useFomentoAuth } from "@/contexts/FomentoAuthContext";
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
-import { Loader2, LayoutDashboard, FolderKanban, GraduationCap, AlertTriangle, ShieldCheck, Building2 } from "lucide-react";
+import { Loader2, LayoutDashboard, FolderKanban, GraduationCap, AlertTriangle, ShieldCheck, Building2, Handshake } from "lucide-react";
 import PanelLayout, { NavItem } from "@/components/layout/PanelLayout";
 import FomentoDashboardView from "@/components/fomento/FomentoDashboardView";
 import FomentoProjectsList from "@/components/fomento/FomentoProjectsList";
@@ -12,6 +12,8 @@ import FomentoBolsistaBatchImport from "@/components/fomento/FomentoBolsistaBatc
 import FomentoAlerts from "@/components/fomento/FomentoAlerts";
 import FomentoAdmin from "@/components/fomento/FomentoAdmin";
 import FomentoMasterPanel from "@/components/fomento/FomentoMasterPanel";
+import FomentoParceirasList from "@/components/fomento/FomentoParceirasList";
+import FomentoParceiraForm from "@/components/fomento/FomentoParceiraForm";
 
 const FomentoPanel = () => {
   const { loading, fomentoRole, isSuperadmin, signOut } = useFomentoAuth();

@@ -80,6 +80,27 @@ export const MODALIDADE_VALORES_SUGERIDOS: Record<string, number> = {
   extensao: 0,
 };
 
+export const PARCERIA_TIPO_LABELS: Record<string, string> = {
+  contrato: "Contrato",
+  convenio: "Convênio",
+  acordo_cooperacao: "Acordo de Cooperação",
+  termo_fomento: "Termo de Fomento",
+};
+
+export const PARCERIA_STATUS_LABELS: Record<string, string> = {
+  em_negociacao: "Em Negociação",
+  ativa: "Ativa",
+  encerrada: "Encerrada",
+  suspensa: "Suspensa",
+};
+
+export const TIPO_INSTITUICAO_LABELS: Record<string, string> = {
+  publica_federal: "Pública Federal",
+  publica_estadual: "Pública Estadual",
+  privada: "Privada",
+  internacional: "Internacional",
+};
+
 export const TIPO_DOC_LABELS: Record<string, string> = {
   termo_outorga: "Termo de Outorga",
   termo_parceria: "Termo de Parceria",
