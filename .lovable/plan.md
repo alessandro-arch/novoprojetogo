@@ -1,61 +1,50 @@
 
 
-## Bolsistas Module for ProjetoGO Fomento
+## Batch Import for Fomento Projects
 
 ### Overview
 
-Create a full "Bolsistas" (scholarship holders) management module alongside the existing "Projetos" flow, including database table, listing page with filters, form with AI extraction, dashboard KPIs, and project-linked view.
+Add a "Importar em Lote" button to the projects list and a new batch import page at `/fomento/projetos/importar-lote`. The page allows uploading multiple PDFs, extracting data via Anthropic AI sequentially, reviewing/editing results inline, and saving selected projects in bulk.
 
-### 1. Database Migration
-
-**New table `fomento_bolsistas`** with all specified columns. Use validation trigger (not CHECK constraints) for `modalidade` and `status`, following project patterns.
-
-- `valor_total` as `GENERATED ALWAYS AS (cotas_total * valor_mensal) STORED`
-- `updated_at` trigger reusing `update_updated_at_column()`
-- RLS policies mirroring `fomento_projects`: `has_fomento_access` for select/insert/update, `has_fomento_admin` for delete
-- Validation trigger for `modalidade` IN ('ic','mestrado','doutorado','pos_doc','apoio_tecnico','extensao') and `status` IN ('ativo','suspenso','cancelado','concluido')
-
-### 2. New Files
+### Files to Create
 
 | File | Purpose |
 |---|---|
-| `src/components/fomento/FomentoBolsistasList.tsx` | List page with table, filters (modalidade, status, orientador), search, delete |
-| `src/components/fomento/FomentoBolsistaForm.tsx` | Full form with AI extraction, sections A-I as specified, modalidade-based valor suggestion |
+| `src/components/fomento/FomentoBatchImport.tsx` | Full batch import page (~500 lines) |
 
-### 3. Modified Files
+### Files to Modify
 
 | File | Change |
 |---|---|
-| `src/pages/fomento/FomentoPanel.tsx` | Add "Bolsistas" nav item (GraduationCap icon) between Projetos and Alertas. Add routes: `/fomento/bolsistas`, `/fomento/bolsistas/novo`, `/fomento/bolsistas/:id/editar` |
-| `src/components/fomento/FomentoDashboardView.tsx` | Add Bolsistas KPI section: total ativos, valor mensal total, donut by modalidade, bar by orientador |
-| `src/components/fomento/FomentoProjectForm.tsx` | Add "Bolsistas Vinculados" section showing bolsistas linked to the project + button to add new bolsista pre-linked |
-| `src/lib/fomento-utils.ts` | Add `MODALIDADE_LABELS`, `BOLSISTA_STATUS_LABELS`, `MODALIDADE_VALORES_SUGERIDOS` constants |
-| `src/integrations/supabase/types.ts` | Auto-updated after migration |
+| `src/components/fomento/FomentoProjectsList.tsx` | Add "Importar em Lote" button next to "Novo Projeto" |
+| `src/pages/fomento/FomentoPanel.tsx` | Add route for `importar-lote` segment, add navigation handler |
 
-### 4. AI Extraction for Bolsistas
+### FomentoProjectsList Changes
 
-Same pattern as project extraction (Anthropic Claude, PDF base64, retry logic). Different prompt extracting bolsista-specific fields. `valor_mensal` intentionally left blank for manual input.
+Add a second button with `Upload` icon labeled "Importar em Lote" that calls `onBatchImport` prop. Update the Props interface and the panel to pass the handler.
 
-### 5. Form Sections Detail
+### FomentoPanel Changes
 
-- **[A] Upload PDF** — AI extraction with same UX pattern
-- **[B] Dados do Bolsista** — nome, email, CPF
-- **[C] Dados Acadêmicos** — modalidade (select), orientador, coorientador, coordenador, PPG, título do plano, área
-- **[D] Edital** — edital, órgão financiador, nº do termo
-- **[E] Vigência** — cotas (meses), data início, data fim
-- **[F] Valor** — modalidade-based suggestion (IC R$500, Mestrado R$2.100, Doutorado R$3.100, Pós-Doc R$5.200), editable valor_mensal, calculated valor_total
-- **[G] Vínculo a Projeto** — optional select from fomento_projects
-- **[H] Documentos** — reuse FomentoDocumentsSection pattern (store in fomento_documents with bolsista project_id reference)
-- **[I] Status** — ativo/suspenso/cancelado/concluído
+- Add `handleBatchImport` navigating to `/fomento/projetos/importar-lote`
+- Pass `onBatchImport` to `FomentoProjectsList`
+- Add route: `if (segments[1] === "importar-lote") return <FomentoBatchImport onBack={handleBackToProjects} />`
 
-### 6. Dashboard Additions
+### FomentoBatchImport Component
 
-Below existing charts, add a "Bolsistas" section with:
-- 2 KPI cards: Total ativos, Valor mensal total
-- Donut chart: distribution by modalidade
-- Bar chart: bolsistas by orientador (top 10)
+**State machine with 3 phases:**
 
-### 7. Project Form — Linked Bolsistas
+1. **Upload Phase**: API key field (from localStorage), drag-and-drop zone accepting multiple PDFs (max 20), file list with remove buttons, "Iniciar Extração" button.
 
-In the project edit form, add a collapsible section "Bolsistas Vinculados" that queries `fomento_bolsistas` by `project_id` and displays a mini-table. Button "Novo Bolsista" navigates to `/fomento/bolsistas/novo?project_id=XXX`.
+2. **Processing Phase**: Sequential extraction using the same `callAnthropicApi` pattern from `FomentoProjectForm`. 3-second delay between files. Rate limit 429 → wait 20s, retry up to 3 times. Progress table showing file name, status icon (⏳/🔄/✅/⚠️/❌), extracted researcher, value, and retry button for failed items. Summary counters at the bottom.
+
+3. **Review Phase**: Editable table with columns: #, Pesquisador, Título, Edital, Financiador, Valor Total, Área, Status IA. Row coloring: green (complete), yellow (partial), red (missing required). Checkboxes for selection. "Editar completo" button opens a Dialog with the full field set. "Salvar Selecionados (X)" button inserts checked rows into `fomento_projects` with auto-generated `processo_uvv` via RPC. Validation: pesquisador and título required. Toast on success, redirect to `/fomento/projetos`.
+
+**AI extraction prompt**: Reuses the exact same Anthropic API call pattern and prompt from `FomentoProjectForm`, including PDF beta headers, markdown cleanup, and JSON parsing.
+
+**Key technical details:**
+- Uses the same `effectiveOrgId` resolution pattern for organization_id
+- Calls `generate_fomento_processo` RPC for each saved project
+- Sequential processing with `await delay(3000)` between files
+- Rate limit handling: 20s wait, 3 retries, then mark as error
+- Re-process individual failed files via retry button
 
