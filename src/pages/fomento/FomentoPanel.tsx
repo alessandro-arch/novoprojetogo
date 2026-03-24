@@ -1,6 +1,7 @@
 import { useFomentoAuth } from "@/contexts/FomentoAuthContext";
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
-import { Loader2, LayoutDashboard, FolderKanban, GraduationCap, AlertTriangle, ShieldCheck, Building2, Handshake } from "lucide-react";
+import { Loader2, LayoutDashboard, FolderKanban, GraduationCap, AlertTriangle, ShieldCheck, Building2, Handshake, Lock } from "lucide-react";
+import { toast } from "sonner";
 import PanelLayout, { NavItem } from "@/components/layout/PanelLayout";
 import FomentoDashboardView from "@/components/fomento/FomentoDashboardView";
 import FomentoProjectsList from "@/components/fomento/FomentoProjectsList";
