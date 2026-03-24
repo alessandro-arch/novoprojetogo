@@ -345,7 +345,7 @@ const FomentoBatchImport = ({ onBack }: Props) => {
             </CardContent>
           </Card>
 
-          <Button onClick={startExtraction} disabled={!files.length || !apiKey.trim()} className="gap-2">
+          <Button onClick={startExtraction} disabled={!files.length} className="gap-2">
             <Bot className="w-4 h-4" /> Iniciar Extração ({files.length} arquivo{files.length !== 1 ? "s" : ""})
           </Button>
         </div>
