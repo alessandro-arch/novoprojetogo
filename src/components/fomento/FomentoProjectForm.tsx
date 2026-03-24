@@ -31,6 +31,16 @@ interface TeamMember { nome: string; funcao: string; email: string; }
 
 const RUBRICA_SUGGESTIONS = ["Bolsas", "Custeio", "Capital", "Diárias", "Passagens"];
 
+const PPG_OPTIONS = [
+  "Ciências Farmacêuticas",
+  "Ciência Animal",
+  "Biotecnologia Vegetal",
+  "Assistência Farmacêutica",
+  "Arquitetura e Cidade",
+  "Sociologia Política",
+  "Segurança Pública",
+];
+
 interface SectionCardProps {
   id: string;
   title: string;
