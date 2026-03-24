@@ -82,7 +82,6 @@ const FomentoBatchImport = ({ onBack }: Props) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [phase, setPhase] = useState<Phase>("upload");
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem("fomento_anthropic_key") || "");
   const [files, setFiles] = useState<File[]>([]);
   const [projects, setProjects] = useState<ExtractedProject[]>([]);
   const [processingIdx, setProcessingIdx] = useState(-1);
@@ -121,38 +120,14 @@ const FomentoBatchImport = ({ onBack }: Props) => {
   const handleDrop = (e: React.DragEvent) => { e.preventDefault(); addFiles(e.dataTransfer.files); };
   const handleDragOver = (e: React.DragEvent) => e.preventDefault();
 
-  // AI extraction
-  const callAnthropicApi = async (base64: string): Promise<Response> => {
-    return fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "anthropic-beta": "pdfs-2024-09-25",
-        "anthropic-dangerous-direct-browser-access": "true",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
-        messages: [{
-          role: "user",
-          content: [
-            { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } },
-            {
-              type: "text",
-              text: `Extraia do documento e retorne APENAS JSON puro sem markdown:
-{ "pesquisador_principal":"", "titulo":"", "edital":"", "orgao_financiador":"",
-  "ano":null, "data_assinatura":"YYYY-MM-DD", "vigencia_inicio":"YYYY-MM-DD",
-  "vigencia_fim":"YYYY-MM-DD", "valor_total":null,
-  "fonte":"publica ou privada", "natureza":"auxilio_financeiro ou bolsa",
-  "area":"" }
-Campos não encontrados retornar null.`,
-            },
-          ],
-        }],
-      }),
+  // AI extraction via edge function
+  const callExtractApi = async (base64: string): Promise<any> => {
+    const { data: result, error } = await supabase.functions.invoke("extract-fomento-pdf", {
+      body: { pdfBase64: base64, type: "project" },
     });
+    if (error) throw new Error(error.message || "Erro na extração");
+    if (result?.error) throw new Error(result.error);
+    return result.data;
   };
 
   const extractSingle = async (file: File, idx: number): Promise<ExtractedProject> => {
@@ -164,33 +139,7 @@ Campos não encontrados retornar null.`,
       for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
       const base64 = btoa(binary);
 
-      let response: Response | null = null;
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        response = await callAnthropicApi(base64);
-        if (response.status === 429) {
-          if (attempt < 3) {
-            setRetryMsg(`Aguardando 20s antes de continuar... (tentativa ${attempt} de 3)`);
-            await delay(20000);
-            setRetryMsg(null);
-            continue;
-          }
-          throw new Error("Rate limit excedido após 3 tentativas");
-        }
-        if (!response.ok) {
-          const err = await response.json().catch(() => ({}));
-          throw new Error(err?.error?.message || `HTTP ${response.status}`);
-        }
-        break;
-      }
-
-      if (!response || !response.ok) throw new Error("Falha na extração");
-
-      const data = await response.json();
-      const rawText = data.content.map((b: any) => b.text || "").join("");
-      const cleaned = rawText.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
-      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("JSON não encontrado");
-      const parsed = JSON.parse(jsonMatch[0]);
+      const parsed = await callExtractApi(base64);
 
       proj.pesquisador_principal = parsed.pesquisador_principal || "";
       proj.titulo = parsed.titulo || "";
@@ -215,8 +164,6 @@ Campos não encontrados retornar null.`,
   };
 
   const startExtraction = async () => {
-    if (!apiKey.trim()) { toast({ title: "Informe a API Key da Anthropic.", variant: "destructive" }); return; }
-    localStorage.setItem("fomento_anthropic_key", apiKey);
     cancelRef.current = false;
 
     const initial = files.map(f => emptyProject(f.name));
@@ -330,13 +277,6 @@ Campos não encontrados retornar null.`,
       {/* UPLOAD PHASE */}
       {phase === "upload" && (
         <div className="space-y-4">
-          <Card className="shadow-sm">
-            <CardHeader><CardTitle className="text-sm">Chave da API Anthropic</CardTitle></CardHeader>
-            <CardContent>
-              <Input type="password" placeholder="sk-ant-..." value={apiKey} onChange={e => setApiKey(e.target.value)} />
-              <p className="text-xs text-muted-foreground mt-1">Salva localmente no navegador.</p>
-            </CardContent>
-          </Card>
 
           <Card className="shadow-sm">
             <CardContent className="p-6">
@@ -379,7 +319,7 @@ Campos não encontrados retornar null.`,
             </CardContent>
           </Card>
 
-          <Button onClick={startExtraction} disabled={!files.length || !apiKey.trim()} className="gap-2">
+          <Button onClick={startExtraction} disabled={!files.length} className="gap-2">
             <Bot className="w-4 h-4" /> Iniciar Extração ({files.length} arquivo{files.length !== 1 ? "s" : ""})
           </Button>
         </div>
