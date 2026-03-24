@@ -584,10 +584,10 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
                   <span className="text-muted-foreground">Valor total em projetos</span>
                   <span className="font-semibold text-foreground">{formatBRL(totalCaptadoProjetos)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Valor total em bolsas</span>
-                  <span className="font-semibold text-foreground">{formatBRL(totalComprometidoBolsas)}</span>
-                </div>
+                 <div className="flex justify-between text-sm">
+                   <span className="text-muted-foreground">Valor total em bolsas</span>
+                   <span className="font-semibold text-foreground">{formatBRL(totalBolsasGeral)}</span>
+                 </div>
                 <div className="border-t border-border my-2" />
                 <div className="flex justify-between text-base">
                   <span className="font-bold text-foreground">TOTAL CAPTADO</span>
