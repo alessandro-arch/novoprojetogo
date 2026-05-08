@@ -174,7 +174,8 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
 
   const agencyMap = new Map<string, number>();
   p.forEach((x) => {
-    const key = x.orgao_financiador || "Não informado";
+    const raw = (x.orgao_financiador || "").trim();
+    const key = raw ? raw.toUpperCase() : "Não informado";
     agencyMap.set(key, (agencyMap.get(key) || 0) + (Number(x.valor_total) || 0));
   });
   const agencyData = Array.from(agencyMap.entries()).map(([name, value]) => ({ name, value }));
