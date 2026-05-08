@@ -88,7 +88,8 @@ const FomentoProjectsList = ({ onNewProject, onEditProject, onBatchImport }: Pro
 
   const filtered = (projects ?? []).filter((p) => {
     const q = search.toLowerCase();
-    const matchSearch = !q || p.titulo.toLowerCase().includes(q) || p.pesquisador_principal.toLowerCase().includes(q);
+    const matchSearch = !q || p.titulo.toLowerCase().includes(q) || p.pesquisador_principal.toLowerCase().includes(q) ||
+      (p.orgao_financiador || "").toLowerCase().includes(q);
     const matchAno = filterAno === "all" || getProjectYear(p) === Number(filterAno);
     const matchArea = filterArea === "all" || p.area === filterArea;
     const matchStatus = filterStatus === "all" || p.status === filterStatus;
