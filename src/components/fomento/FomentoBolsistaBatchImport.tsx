@@ -157,7 +157,7 @@ const FomentoBolsistaBatchImport = ({ onBack }: Props) => {
       b.data_fim = parsed.data_fim || "";
       b.titulo_plano = parsed.titulo_plano || "";
       b.area_conhecimento = parsed.area_conhecimento || "";
-      b.ppg_nome = parsed.ppg_nome || "";
+      b.ppg_nome = normalizePPG(parsed.ppg_nome) ?? "";
 
       const rs = getRowStatus(b);
       b.status = rs === "missing" ? "partial" : rs === "partial" ? "partial" : "success";
