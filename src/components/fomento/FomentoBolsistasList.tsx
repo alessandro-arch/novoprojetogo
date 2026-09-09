@@ -66,7 +66,9 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
 
   const items = bolsistas ?? [];
   const orientadores = [...new Set(items.map((b) => b.orientador).filter(Boolean))].sort();
-  const ppgs = [...new Set(items.map((b) => b.ppg_nome).filter(Boolean))].sort();
+  // Filtro controlado: os 7 PPGs institucionais + nomes ainda pendentes de revisão
+  const ppgsPendentes = [...new Set(items.map((b) => normalizePPG(b.ppg_nome)).filter((n): n is string => !!n && !isPpgCanonico(n)))].sort();
+  const ppgs = [...PPG_CANONICOS, ...ppgsPendentes];
 
   const getBolsistaYear = (b: any): number | null => {
     if (b.data_inicio) return new Date(b.data_inicio + "T12:00:00").getFullYear();
