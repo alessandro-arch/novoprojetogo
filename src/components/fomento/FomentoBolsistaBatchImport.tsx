@@ -14,6 +14,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowLeft, Upload, Bot, Loader2, Save, X, RotateCcw, FileText, CheckCircle2, AlertTriangle, XCircle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { MODALIDADE_LABELS, BOLSISTA_STATUS_LABELS } from "@/lib/fomento-utils";
+import { PPG_CANONICOS, normalizePPG, isPpgPendente } from "@/lib/fomento-ppg";
+
+const PPG_NENHUM = "__none__";
 
 interface Props { onBack: () => void; }
 
