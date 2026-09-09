@@ -851,7 +851,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
                   { l: "Captação média por projeto", v: formatBRL(captacaoMediaProjeto) },
                   { l: "Captação média por pesquisador", v: formatBRL(captacaoMediaPesquisador) },
                   { l: "Pesquisadores com projeto ativo", v: `${pesquisadoresAtivos} de ${pesquisadores}` },
-                  { l: "PPGs com captação", v: `${ppgsComCaptacao} de ${ppgOptions.length || ppgsComCaptacao}` },
+                  { l: "PPGs com captação", v: `${ppgsComCaptacao} de ${PPG_CANONICOS.length}` },
                   { l: "Concentração — Top 3 pesquisadores", v: `${top3Concentracao.toFixed(1)}%` },
                   { l: "Concentração — maior PPG", v: ppgTable.length ? `${ppgTable[0].share.toFixed(1)}% (${ppgTable[0].name})` : "—" },
                   { l: "Captação sem vínculo com PPG", v: semPpg ? `${formatBRL(semPpg.value)} · ${semPpg.share.toFixed(1)}%` : "R$ 0,00" },
