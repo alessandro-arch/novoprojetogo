@@ -639,6 +639,53 @@ export type Database = {
           },
         ]
       }
+      fomento_metas: {
+        Row: {
+          ano: number
+          created_at: string
+          created_by: string | null
+          id: string
+          meta_bolsas: number
+          meta_captacao: number
+          meta_pesquisadores: number
+          meta_projetos: number
+          organization_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          ano: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          meta_bolsas?: number
+          meta_captacao?: number
+          meta_pesquisadores?: number
+          meta_projetos?: number
+          organization_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ano?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          meta_bolsas?: number
+          meta_captacao?: number
+          meta_pesquisadores?: number
+          meta_projetos?: number
+          organization_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fomento_metas_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "fomento_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fomento_organizations: {
         Row: {
           admin_email: string | null
