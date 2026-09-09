@@ -14,6 +14,7 @@ import { Plus, Search, Download, Pencil, Trash2, Upload, GraduationCap } from "l
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { formatBRL, formatDateBR, MODALIDADE_LABELS, BOLSISTA_STATUS_LABELS } from "@/lib/fomento-utils";
+import { PPG_CANONICOS, normalizePPG, isPpgCanonico, SEM_PPG } from "@/lib/fomento-ppg";
 
 interface Props {
   onNewBolsista: () => void;
