@@ -128,7 +128,7 @@ const FomentoBolsistaForm = ({ bolsistaId, onBack }: Props) => {
       setDataFim(existing.data_fim || "");
       setValorMensal(existing.valor_mensal != null ? String(existing.valor_mensal) : "");
       setStatus(existing.status || "ativo");
-      setPpgNome(existing.ppg_nome || "");
+      setPpgNome(normalizePPG(existing.ppg_nome) ?? "");
       setTituloPlano(existing.titulo_plano || "");
       setAreaConhecimento(existing.area_conhecimento || "");
       setProjectId(existing.project_id || "");
