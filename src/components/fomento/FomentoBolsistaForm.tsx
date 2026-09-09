@@ -184,7 +184,7 @@ const FomentoBolsistaForm = ({ bolsistaId, onBack }: Props) => {
       if (p.data_fim) setDataFim(p.data_fim);
       if (p.titulo_plano) setTituloPlano(p.titulo_plano);
       if (p.area_conhecimento) setAreaConhecimento(p.area_conhecimento);
-      if (p.ppg_nome) setPpgNome(p.ppg_nome);
+      if (p.ppg_nome) setPpgNome(normalizePPG(p.ppg_nome) ?? "");
       setExtractedByAi(true); setExtractionStatus("success");
       toast({ title: "Dados extraídos com sucesso! Revise os campos." });
     } catch (err: any) {
