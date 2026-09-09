@@ -65,6 +65,7 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
 
   const items = bolsistas ?? [];
   const orientadores = [...new Set(items.map((b) => b.orientador).filter(Boolean))].sort();
+  const ppgs = [...new Set(items.map((b) => b.ppg_nome).filter(Boolean))].sort();
 
   const getBolsistaYear = (b: any): number | null => {
     if (b.data_inicio) return new Date(b.data_inicio + "T12:00:00").getFullYear();
@@ -80,7 +81,8 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
     const matchMod = filterModalidade === "all" || b.modalidade === filterModalidade;
     const matchStatus = filterStatus === "all" || b.status === filterStatus;
     const matchOrient = filterOrientador === "all" || b.orientador === filterOrientador;
-    return matchSearch && matchAno && matchMod && matchStatus && matchOrient;
+    const matchPpg = filterPpg === "all" || b.ppg_nome === filterPpg;
+    return matchSearch && matchAno && matchMod && matchStatus && matchOrient && matchPpg;
   });
 
   const sorted = sortOrder === "default" ? filtered : [...filtered].sort((a, b) => {
