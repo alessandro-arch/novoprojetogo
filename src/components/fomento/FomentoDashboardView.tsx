@@ -403,7 +403,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
   const ppgTable = useMemo(() => {
     const map = new Map<string, { value: number; projetos: number; pesquisadores: Set<string>; bolsistas: number }>();
     p.forEach((x) => {
-      const key = (x.ppg_nome || "SEM PPG").toUpperCase();
+      const key = normalizePPG(x.ppg_nome) ?? SEM_PPG;
       const cur = map.get(key) || { value: 0, projetos: 0, pesquisadores: new Set<string>(), bolsistas: 0 };
       cur.value += Number(x.valor_total) || 0;
       cur.projetos += 1;
