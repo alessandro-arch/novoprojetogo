@@ -175,7 +175,7 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
 
       <Card className="shadow-sm">
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
             <Select value={filterAno} onValueChange={setFilterAno}>
               <SelectTrigger className="font-semibold border-primary/30 bg-primary/5">
                 <SelectValue placeholder="Ano" />
@@ -185,7 +185,7 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
                 {availableYears.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
               </SelectContent>
             </Select>
-            <div className="relative">
+            <div className="relative lg:col-span-2">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input placeholder="Buscar bolsista, orientador…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
             </div>
@@ -208,6 +208,13 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
               <SelectContent>
                 <SelectItem value="all">Todos orientadores</SelectItem>
                 {orientadores.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={filterPpg} onValueChange={setFilterPpg}>
+              <SelectTrigger><SelectValue placeholder="PPG" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os PPGs</SelectItem>
+                {ppgs.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as "default" | "asc" | "desc")}>
