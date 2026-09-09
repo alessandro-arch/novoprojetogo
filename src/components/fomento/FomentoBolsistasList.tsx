@@ -14,6 +14,7 @@ import { Plus, Search, Download, Pencil, Trash2, Upload, GraduationCap } from "l
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { formatBRL, formatDateBR, MODALIDADE_LABELS, BOLSISTA_STATUS_LABELS } from "@/lib/fomento-utils";
+import { PPG_CANONICOS, normalizePPG, isPpgCanonico, SEM_PPG } from "@/lib/fomento-ppg";
 
 interface Props {
   onNewBolsista: () => void;
@@ -65,7 +66,9 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
 
   const items = bolsistas ?? [];
   const orientadores = [...new Set(items.map((b) => b.orientador).filter(Boolean))].sort();
-  const ppgs = [...new Set(items.map((b) => b.ppg_nome).filter(Boolean))].sort();
+  // Filtro controlado: os 7 PPGs institucionais + nomes ainda pendentes de revisão
+  const ppgsPendentes = [...new Set(items.map((b) => normalizePPG(b.ppg_nome)).filter((n): n is string => !!n && !isPpgCanonico(n)))].sort();
+  const ppgs = [...PPG_CANONICOS, ...ppgsPendentes];
 
   const getBolsistaYear = (b: any): number | null => {
     if (b.data_inicio) return new Date(b.data_inicio + "T12:00:00").getFullYear();
@@ -81,7 +84,7 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
     const matchMod = filterModalidade === "all" || b.modalidade === filterModalidade;
     const matchStatus = filterStatus === "all" || b.status === filterStatus;
     const matchOrient = filterOrientador === "all" || b.orientador === filterOrientador;
-    const matchPpg = filterPpg === "all" || b.ppg_nome === filterPpg;
+    const matchPpg = filterPpg === "all" || normalizePPG(b.ppg_nome) === filterPpg;
     return matchSearch && matchAno && matchMod && matchStatus && matchOrient && matchPpg;
   });
 
@@ -134,7 +137,7 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
         const mdBolsistas = items.filter((b) => b.status === "ativo" && (b.modalidade === "mestrado" || b.modalidade === "doutorado"));
         const ppgMap = new Map<string, { mestrado: number; doutorado: number }>();
         mdBolsistas.forEach((b) => {
-          const ppg = b.ppg_nome || "Sem PPG";
+          const ppg = normalizePPG(b.ppg_nome) ?? SEM_PPG;
           if (!ppgMap.has(ppg)) ppgMap.set(ppg, { mestrado: 0, doutorado: 0 });
           const entry = ppgMap.get(ppg)!;
           if (b.modalidade === "mestrado") entry.mestrado++;

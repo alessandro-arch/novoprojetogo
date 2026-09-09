@@ -14,7 +14,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ArrowLeft, ChevronDown, Upload, Bot, Loader2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatBRL, MODALIDADE_LABELS, BOLSISTA_STATUS_LABELS, MODALIDADE_VALORES_SUGERIDOS } from "@/lib/fomento-utils";
+import { PPG_CANONICOS, normalizePPG } from "@/lib/fomento-ppg";
 import FomentoDocumentsSection from "./FomentoDocumentsSection";
+
+const PPG_NENHUM = "__none__";
 
 interface Props {
   bolsistaId?: string;
@@ -125,7 +128,7 @@ const FomentoBolsistaForm = ({ bolsistaId, onBack }: Props) => {
       setDataFim(existing.data_fim || "");
       setValorMensal(existing.valor_mensal != null ? String(existing.valor_mensal) : "");
       setStatus(existing.status || "ativo");
-      setPpgNome(existing.ppg_nome || "");
+      setPpgNome(normalizePPG(existing.ppg_nome) ?? "");
       setTituloPlano(existing.titulo_plano || "");
       setAreaConhecimento(existing.area_conhecimento || "");
       setProjectId(existing.project_id || "");
@@ -181,7 +184,7 @@ const FomentoBolsistaForm = ({ bolsistaId, onBack }: Props) => {
       if (p.data_fim) setDataFim(p.data_fim);
       if (p.titulo_plano) setTituloPlano(p.titulo_plano);
       if (p.area_conhecimento) setAreaConhecimento(p.area_conhecimento);
-      if (p.ppg_nome) setPpgNome(p.ppg_nome);
+      if (p.ppg_nome) setPpgNome(normalizePPG(p.ppg_nome) ?? "");
       setExtractedByAi(true); setExtractionStatus("success");
       toast({ title: "Dados extraídos com sucesso! Revise os campos." });
     } catch (err: any) {
@@ -205,7 +208,7 @@ const FomentoBolsistaForm = ({ bolsistaId, onBack }: Props) => {
         numero_termo: numero_termo || null, cotas_total: cotas_total ? parseInt(cotas_total) : null,
         data_inicio: data_inicio || null, data_fim: data_fim || null,
         valor_mensal: valor_mensal ? parseFloat(valor_mensal) : null,
-        status: status || "ativo", ppg_nome: ppg_nome || null, titulo_plano: titulo_plano || null,
+        status: status || "ativo", ppg_nome: normalizePPG(ppg_nome), titulo_plano: titulo_plano || null,
         area_conhecimento: area_conhecimento || null, project_id: project_id || null,
         extracted_by_ai: extractedByAi, created_by: user?.id, organization_id: fomentoOrgId || null,
       };
@@ -294,7 +297,19 @@ const FomentoBolsistaForm = ({ bolsistaId, onBack }: Props) => {
           <div><Label>Orientador</Label><Input value={orientador} onChange={(e) => setOrientador(e.target.value)} /></div>
           <div><Label>Coorientador</Label><Input value={coorientador} onChange={(e) => setCoorientador(e.target.value)} /></div>
           <div><Label>Coordenador</Label><Input value={coordenador} onChange={(e) => setCoordenador(e.target.value)} /></div>
-          <div><Label>PPG</Label><Input value={ppg_nome} onChange={(e) => setPpgNome(e.target.value)} /></div>
+          <div>
+            <Label>PPG</Label>
+            <Select value={ppg_nome || PPG_NENHUM} onValueChange={(v) => setPpgNome(v === PPG_NENHUM ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione o PPG" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value={PPG_NENHUM}>Sem PPG</SelectItem>
+                {PPG_CANONICOS.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                {ppg_nome && !(PPG_CANONICOS as readonly string[]).includes(ppg_nome) && (
+                  <SelectItem value={ppg_nome}>{ppg_nome} (pendente de revisão)</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
           <div><Label>Título do Plano</Label><Input value={titulo_plano} onChange={(e) => setTituloPlano(e.target.value)} /></div>
           <div className="md:col-span-2 lg:col-span-3"><Label>Área do Conhecimento</Label><Input value={area_conhecimento} onChange={(e) => setAreaConhecimento(e.target.value)} /></div>
         </div>

@@ -14,6 +14,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowLeft, Upload, Bot, Loader2, Save, X, RotateCcw, FileText, CheckCircle2, AlertTriangle, XCircle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { MODALIDADE_LABELS, BOLSISTA_STATUS_LABELS } from "@/lib/fomento-utils";
+import { PPG_CANONICOS, normalizePPG, isPpgPendente } from "@/lib/fomento-ppg";
+
+const PPG_NENHUM = "__none__";
 
 interface Props { onBack: () => void; }
 
@@ -157,7 +160,7 @@ const FomentoBolsistaBatchImport = ({ onBack }: Props) => {
       b.data_fim = parsed.data_fim || "";
       b.titulo_plano = parsed.titulo_plano || "";
       b.area_conhecimento = parsed.area_conhecimento || "";
-      b.ppg_nome = parsed.ppg_nome || "";
+      b.ppg_nome = normalizePPG(parsed.ppg_nome) ?? "";
 
       const rs = getRowStatus(b);
       b.status = rs === "missing" ? "partial" : rs === "partial" ? "partial" : "success";
@@ -263,7 +266,7 @@ const FomentoBolsistaBatchImport = ({ onBack }: Props) => {
           data_fim: b.data_fim || null,
           titulo_plano: b.titulo_plano || null,
           area_conhecimento: b.area_conhecimento || null,
-          ppg_nome: b.ppg_nome || null,
+          ppg_nome: normalizePPG(b.ppg_nome),
           status: b.status_bolsista || "ativo",
           extracted_by_ai: true,
           created_by: user?.id || null,
@@ -552,7 +555,24 @@ const FomentoBolsistaBatchImport = ({ onBack }: Props) => {
               </div>
               <div>
                 <Label className="text-xs">PPG</Label>
-                <Input value={editBolsista.ppg_nome} onChange={e => updateField(editIdx, "ppg_nome", e.target.value)} />
+                <Select
+                  value={editBolsista.ppg_nome || PPG_NENHUM}
+                  onValueChange={v => updateField(editIdx, "ppg_nome", v === PPG_NENHUM ? "" : v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione o PPG" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={PPG_NENHUM}>Sem PPG</SelectItem>
+                    {PPG_CANONICOS.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                    {isPpgPendente(editBolsista.ppg_nome) && (
+                      <SelectItem value={editBolsista.ppg_nome}>{editBolsista.ppg_nome} (pendente de revisão)</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+                {isPpgPendente(editBolsista.ppg_nome) && (
+                  <p className="text-[11px] text-[hsl(var(--warning))] mt-1">
+                    Programa não reconhecido — selecione um dos programas oficiais.
+                  </p>
+                )}
               </div>
               <div>
                 <Label className="text-xs">Status</Label>

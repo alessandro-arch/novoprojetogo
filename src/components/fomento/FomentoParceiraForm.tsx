@@ -17,15 +17,9 @@ interface Props {
   onBack: () => void;
 }
 
-const PPG_OPTIONS = [
-  "Ciências Farmacêuticas",
-  "Ciência Animal",
-  "Biotecnologia Vegetal",
-  "Assistência Farmacêutica",
-  "Arquitetura e Cidade",
-  "Sociologia Política",
-  "Segurança Pública",
-];
+import { PPG_CANONICOS, normalizePPG } from "@/lib/fomento-ppg";
+
+const PPG_OPTIONS = PPG_CANONICOS;
 
 const emptForm = {
   numero_contrato: "",
@@ -81,7 +75,7 @@ const FomentoParceiraForm = ({ parceriaId, onBack }: Props) => {
         instituicao_nome: existing.instituicao_nome || "",
         cnpj: existing.cnpj || "",
         tipo_instituicao: existing.tipo_instituicao || "",
-        ppg_nome: existing.ppg_nome || "",
+        ppg_nome: normalizePPG(existing.ppg_nome) ?? "",
         num_beneficiarios: existing.num_beneficiarios || 0,
         num_parcelas: existing.num_parcelas || 0,
         valor_mensal_aluno: existing.valor_mensal_aluno || 0,

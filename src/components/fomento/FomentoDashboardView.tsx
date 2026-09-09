@@ -20,6 +20,7 @@ import {
   Tooltip as ReTooltip, ResponsiveContainer,
 } from "recharts";
 import { formatBRL, formatDateBR, daysRemaining, AREA_LABELS, MODALIDADE_LABELS } from "@/lib/fomento-utils";
+import { PPG_CANONICOS, normalizePPG, isPpgCanonico, SEM_PPG } from "@/lib/fomento-ppg";
 import FomentoMetasDialog from "./FomentoMetasDialog";
 
 const COLORS = [
@@ -226,11 +227,15 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     return full.sort((a, b) => b - a);
   }, [allProjects, allBolsistas, currentYear]);
 
+  // Lista controlada: os 7 PPGs institucionais + eventuais nomes pendentes de revisão
   const ppgOptions = useMemo(() => {
-    const set = new Set<string>();
-    allProjects.forEach((x) => { if (x.ppg_nome) set.add(x.ppg_nome.toUpperCase()); });
-    return Array.from(set).sort();
-  }, [allProjects]);
+    const extras = new Set<string>();
+    [...allProjects, ...allBolsistas].forEach((x: any) => {
+      const n = normalizePPG(x.ppg_nome);
+      if (n && !isPpgCanonico(n)) extras.add(n);
+    });
+    return [...PPG_CANONICOS, ...Array.from(extras).sort()];
+  }, [allProjects, allBolsistas]);
 
   const agencyOptions = useMemo(() => {
     const set = new Set<string>();
@@ -246,7 +251,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
 
   /* Filtragem (sem o ano — usado para séries temporais) */
   const matchesNonYear = (x: any) => {
-    if (ppgFilter !== ALL && (x.ppg_nome || "").toUpperCase() !== ppgFilter) return false;
+    if (ppgFilter !== ALL && normalizePPG(x.ppg_nome) !== ppgFilter) return false;
     if (tipoFilter !== ALL && x.area !== tipoFilter) return false;
     if (agencyFilter !== ALL && (x.orgao_financiador || "").trim().toUpperCase() !== agencyFilter) return false;
     if (statusFilter !== ALL && x.status !== statusFilter) return false;
@@ -266,7 +271,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
   const pPrev = useMemo(() => projectsOfYear(previousYear), [baseProjects, previousYear]);
 
   const bolsistasBase = useMemo(() => allBolsistas.filter((b) => {
-    if (ppgFilter !== ALL && (b.ppg_nome || "").toUpperCase() !== ppgFilter) return false;
+    if (ppgFilter !== ALL && normalizePPG(b.ppg_nome) !== ppgFilter) return false;
     return true;
   }), [allBolsistas, ppgFilter]);
 
@@ -307,8 +312,8 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
   const ativosPrev = pPrev.filter((x) => x.status === "em_execucao").length;
   const pesquisadores = new Set(p.map((x) => x.pesquisador_principal)).size;
   const pesquisadoresPrev = new Set(pPrev.map((x) => x.pesquisador_principal)).size;
-  const ppgsComCaptacao = new Set(p.filter((x) => x.ppg_nome).map((x) => x.ppg_nome!.toUpperCase())).size;
-  const ppgsComCaptacaoPrev = new Set(pPrev.filter((x) => x.ppg_nome).map((x) => x.ppg_nome!.toUpperCase())).size;
+  const ppgsComCaptacao = new Set(p.map((x) => normalizePPG(x.ppg_nome)).filter(Boolean)).size;
+  const ppgsComCaptacaoPrev = new Set(pPrev.map((x) => normalizePPG(x.ppg_nome)).filter(Boolean)).size;
 
   const meta = useMemo(() => (metas ?? []).find((m: any) => m.ano === (selectedYear ?? currentYear)) ?? null,
     [metas, selectedYear, currentYear]);
@@ -398,7 +403,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
   const ppgTable = useMemo(() => {
     const map = new Map<string, { value: number; projetos: number; pesquisadores: Set<string>; bolsistas: number }>();
     p.forEach((x) => {
-      const key = (x.ppg_nome || "SEM PPG").toUpperCase();
+      const key = normalizePPG(x.ppg_nome) ?? SEM_PPG;
       const cur = map.get(key) || { value: 0, projetos: 0, pesquisadores: new Set<string>(), bolsistas: 0 };
       cur.value += Number(x.valor_total) || 0;
       cur.projetos += 1;
@@ -406,7 +411,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
       map.set(key, cur);
     });
     bolsistasAtivos.forEach((b) => {
-      const key = (b.ppg_nome || "SEM PPG").toUpperCase();
+      const key = normalizePPG(b.ppg_nome) ?? SEM_PPG;
       const cur = map.get(key) || { value: 0, projetos: 0, pesquisadores: new Set<string>(), bolsistas: 0 };
       cur.bolsistas += 1;
       map.set(key, cur);
@@ -478,8 +483,8 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
 
   const ppgsSemCaptacao = useMemo(() => {
     if (selectedYear == null) return [];
-    const comCaptacao = new Set(p.filter((x) => x.ppg_nome).map((x) => x.ppg_nome!.toUpperCase()));
-    return ppgOptions.filter((ppg) => !comCaptacao.has(ppg));
+    const comCaptacao = new Set(p.map((x) => normalizePPG(x.ppg_nome)).filter(Boolean));
+    return (PPG_CANONICOS as readonly string[]).filter((ppg) => !comCaptacao.has(ppg));
   }, [p, ppgOptions, selectedYear]);
 
   const bolsasEncerrando90 = bolsistasAtivos.filter((b) => {
@@ -501,7 +506,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     researcherTable.slice(0, 3).reduce((s, r) => s + r.captacao, 0),
     researcherTable.reduce((s, r) => s + r.captacao, 0)
   );
-  const semPpg = ppgTable.find((x) => x.name === "SEM PPG");
+  const semPpg = ppgTable.find((x) => x.name === SEM_PPG);
   const captacaoMediaProjeto = p.length ? captacaoProjetos / p.length : 0;
   const captacaoMediaPesquisador = pesquisadores ? captacaoProjetos / pesquisadores : 0;
   const pesquisadoresAtivos = new Set(p.filter((x) => x.status === "em_execucao").map((x) => x.pesquisador_principal)).size;
@@ -597,7 +602,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     },
     {
       label: "PPGs com captação",
-      value: `${ppgsComCaptacao}${ppgOptions.length ? ` de ${ppgOptions.length}` : ""}`,
+      value: `${ppgsComCaptacao} de ${PPG_CANONICOS.length}`,
       icon: Building2, color: "text-[hsl(152,55%,42%)]", bg: "bg-[hsl(152,55%,90%)]",
       hint: "Programas de pós-graduação com ao menos um projeto captado no período, sobre o total de PPGs já registrados.",
       delta: <Delta current={ppgsComCaptacao} previous={ppgsComCaptacaoPrev} />,
@@ -846,7 +851,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
                   { l: "Captação média por projeto", v: formatBRL(captacaoMediaProjeto) },
                   { l: "Captação média por pesquisador", v: formatBRL(captacaoMediaPesquisador) },
                   { l: "Pesquisadores com projeto ativo", v: `${pesquisadoresAtivos} de ${pesquisadores}` },
-                  { l: "PPGs com captação", v: `${ppgsComCaptacao} de ${ppgOptions.length || ppgsComCaptacao}` },
+                  { l: "PPGs com captação", v: `${ppgsComCaptacao} de ${PPG_CANONICOS.length}` },
                   { l: "Concentração — Top 3 pesquisadores", v: `${top3Concentracao.toFixed(1)}%` },
                   { l: "Concentração — maior PPG", v: ppgTable.length ? `${ppgTable[0].share.toFixed(1)}% (${ppgTable[0].name})` : "—" },
                   { l: "Captação sem vínculo com PPG", v: semPpg ? `${formatBRL(semPpg.value)} · ${semPpg.share.toFixed(1)}%` : "R$ 0,00" },
@@ -1015,7 +1020,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
                 { l: "Bolsas via parceria", v: formatBRL(bolsasViaParceria), hint: DEF_PARCERIA },
                 { l: "Meses médios remanescentes", v: mesesMediosRestantes.toFixed(1) },
                 { l: "Encerrando em 90 dias", v: String(bolsasEncerrando90) },
-                { l: "PPGs atendidos", v: `${new Set(bolsistasAtivos.filter((b) => b.ppg_nome).map((b) => b.ppg_nome.toUpperCase())).size} de ${ppgOptions.length || "—"}` },
+                { l: "PPGs atendidos", v: `${new Set(bolsistasAtivos.map((b) => normalizePPG(b.ppg_nome)).filter(Boolean)).size} de ${PPG_CANONICOS.length}` },
               ].map((k) => (
                 <Card key={k.l} className="shadow-sm">
                   <CardContent className="p-4">
@@ -1064,7 +1069,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
             {(["mestrado", "doutorado"] as const).map((mod, idx) => {
               const map = new Map<string, number>();
               bolsistasAtivos.filter((b) => b.modalidade === mod).forEach((b) => {
-                const key = (b.ppg_nome || "SEM PPG").toUpperCase();
+                const key = normalizePPG(b.ppg_nome) ?? SEM_PPG;
                 map.set(key, (map.get(key) || 0) + 1);
               });
               const data = Array.from(map.entries()).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);

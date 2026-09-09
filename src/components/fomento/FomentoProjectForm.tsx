@@ -31,15 +31,9 @@ interface TeamMember { nome: string; funcao: string; email: string; }
 
 const RUBRICA_SUGGESTIONS = ["Bolsas", "Custeio", "Capital", "Diárias", "Passagens"];
 
-const PPG_OPTIONS = [
-  "Ciências Farmacêuticas",
-  "Ciência Animal",
-  "Biotecnologia Vegetal",
-  "Assistência Farmacêutica",
-  "Arquitetura e Cidade",
-  "Sociologia Política",
-  "Segurança Pública",
-];
+import { PPG_CANONICOS, normalizePPG } from "@/lib/fomento-ppg";
+
+const PPG_OPTIONS = PPG_CANONICOS;
 
 interface SectionCardProps {
   id: string;
@@ -252,7 +246,7 @@ const FomentoProjectForm = ({ projectId, onBack }: Props) => {
       setArea(existingProject.area || "");
       setTipoServico(existingProject.tipo_servico || "");
       setVinculo(existingProject.vinculo_academico || "");
-      setPpgNome(existingProject.ppg_nome || "");
+      setPpgNome(normalizePPG(existingProject.ppg_nome) ?? "");
       setValorTotal(existingProject.valor_total != null ? String(existingProject.valor_total) : "");
       setDataAssinatura(existingProject.data_assinatura || "");
       setVigenciaInicio(existingProject.vigencia_inicio || "");
@@ -361,7 +355,7 @@ const FomentoProjectForm = ({ projectId, onBack }: Props) => {
         area: area || null,
         tipo_servico: area === "servicos" ? tipo_servico || null : null,
         vinculo_academico: vinculo_academico || null,
-        ppg_nome: vinculo_academico === "ppg" ? ppg_nome || null : null,
+        ppg_nome: vinculo_academico === "ppg" ? normalizePPG(ppg_nome) : null,
         valor_total: valor_total ? parseFloat(valor_total) : null,
         data_assinatura: data_assinatura || null,
         vigencia_inicio: vigencia_inicio || null,
