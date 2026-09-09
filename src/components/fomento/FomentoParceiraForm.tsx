@@ -17,15 +17,9 @@ interface Props {
   onBack: () => void;
 }
 
-const PPG_OPTIONS = [
-  "Ciências Farmacêuticas",
-  "Ciência Animal",
-  "Biotecnologia Vegetal",
-  "Assistência Farmacêutica",
-  "Arquitetura e Cidade",
-  "Sociologia Política",
-  "Segurança Pública",
-];
+import { PPG_CANONICOS } from "@/lib/fomento-ppg";
+
+const PPG_OPTIONS = PPG_CANONICOS;
 
 const emptForm = {
   numero_contrato: "",
