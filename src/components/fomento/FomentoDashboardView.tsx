@@ -20,6 +20,7 @@ import {
   Tooltip as ReTooltip, ResponsiveContainer,
 } from "recharts";
 import { formatBRL, formatDateBR, daysRemaining, AREA_LABELS, MODALIDADE_LABELS } from "@/lib/fomento-utils";
+import { PPG_CANONICOS, normalizePPG, isPpgCanonico, SEM_PPG } from "@/lib/fomento-ppg";
 import FomentoMetasDialog from "./FomentoMetasDialog";
 
 const COLORS = [
