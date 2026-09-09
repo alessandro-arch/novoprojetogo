@@ -266,7 +266,7 @@ const FomentoBolsistaBatchImport = ({ onBack }: Props) => {
           data_fim: b.data_fim || null,
           titulo_plano: b.titulo_plano || null,
           area_conhecimento: b.area_conhecimento || null,
-          ppg_nome: b.ppg_nome || null,
+          ppg_nome: normalizePPG(b.ppg_nome),
           status: b.status_bolsista || "ativo",
           extracted_by_ai: true,
           created_by: user?.id || null,
