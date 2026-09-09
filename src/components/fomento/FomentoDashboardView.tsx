@@ -602,7 +602,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     },
     {
       label: "PPGs com captação",
-      value: `${ppgsComCaptacao}${ppgOptions.length ? ` de ${ppgOptions.length}` : ""}`,
+      value: `${ppgsComCaptacao} de ${PPG_CANONICOS.length}`,
       icon: Building2, color: "text-[hsl(152,55%,42%)]", bg: "bg-[hsl(152,55%,90%)]",
       hint: "Programas de pós-graduação com ao menos um projeto captado no período, sobre o total de PPGs já registrados.",
       delta: <Delta current={ppgsComCaptacao} previous={ppgsComCaptacaoPrev} />,
