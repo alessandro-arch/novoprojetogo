@@ -251,7 +251,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
 
   /* Filtragem (sem o ano — usado para séries temporais) */
   const matchesNonYear = (x: any) => {
-    if (ppgFilter !== ALL && (x.ppg_nome || "").toUpperCase() !== ppgFilter) return false;
+    if (ppgFilter !== ALL && normalizePPG(x.ppg_nome) !== ppgFilter) return false;
     if (tipoFilter !== ALL && x.area !== tipoFilter) return false;
     if (agencyFilter !== ALL && (x.orgao_financiador || "").trim().toUpperCase() !== agencyFilter) return false;
     if (statusFilter !== ALL && x.status !== statusFilter) return false;
