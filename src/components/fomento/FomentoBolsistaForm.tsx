@@ -208,7 +208,7 @@ const FomentoBolsistaForm = ({ bolsistaId, onBack }: Props) => {
         numero_termo: numero_termo || null, cotas_total: cotas_total ? parseInt(cotas_total) : null,
         data_inicio: data_inicio || null, data_fim: data_fim || null,
         valor_mensal: valor_mensal ? parseFloat(valor_mensal) : null,
-        status: status || "ativo", ppg_nome: ppg_nome || null, titulo_plano: titulo_plano || null,
+        status: status || "ativo", ppg_nome: normalizePPG(ppg_nome), titulo_plano: titulo_plano || null,
         area_conhecimento: area_conhecimento || null, project_id: project_id || null,
         extracted_by_ai: extractedByAi, created_by: user?.id, organization_id: fomentoOrgId || null,
       };
