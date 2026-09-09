@@ -355,7 +355,7 @@ const FomentoProjectForm = ({ projectId, onBack }: Props) => {
         area: area || null,
         tipo_servico: area === "servicos" ? tipo_servico || null : null,
         vinculo_academico: vinculo_academico || null,
-        ppg_nome: vinculo_academico === "ppg" ? ppg_nome || null : null,
+        ppg_nome: vinculo_academico === "ppg" ? normalizePPG(ppg_nome) : null,
         valor_total: valor_total ? parseFloat(valor_total) : null,
         data_assinatura: data_assinatura || null,
         vigencia_inicio: vigencia_inicio || null,
