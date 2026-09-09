@@ -246,7 +246,7 @@ const FomentoProjectForm = ({ projectId, onBack }: Props) => {
       setArea(existingProject.area || "");
       setTipoServico(existingProject.tipo_servico || "");
       setVinculo(existingProject.vinculo_academico || "");
-      setPpgNome(existingProject.ppg_nome || "");
+      setPpgNome(normalizePPG(existingProject.ppg_nome) ?? "");
       setValorTotal(existingProject.valor_total != null ? String(existingProject.valor_total) : "");
       setDataAssinatura(existingProject.data_assinatura || "");
       setVigenciaInicio(existingProject.vigencia_inicio || "");
