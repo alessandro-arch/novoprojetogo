@@ -411,7 +411,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
       map.set(key, cur);
     });
     bolsistasAtivos.forEach((b) => {
-      const key = (b.ppg_nome || "SEM PPG").toUpperCase();
+      const key = normalizePPG(b.ppg_nome) ?? SEM_PPG;
       const cur = map.get(key) || { value: 0, projetos: 0, pesquisadores: new Set<string>(), bolsistas: 0 };
       cur.bolsistas += 1;
       map.set(key, cur);
