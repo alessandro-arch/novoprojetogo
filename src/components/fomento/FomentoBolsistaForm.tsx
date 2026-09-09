@@ -297,7 +297,19 @@ const FomentoBolsistaForm = ({ bolsistaId, onBack }: Props) => {
           <div><Label>Orientador</Label><Input value={orientador} onChange={(e) => setOrientador(e.target.value)} /></div>
           <div><Label>Coorientador</Label><Input value={coorientador} onChange={(e) => setCoorientador(e.target.value)} /></div>
           <div><Label>Coordenador</Label><Input value={coordenador} onChange={(e) => setCoordenador(e.target.value)} /></div>
-          <div><Label>PPG</Label><Input value={ppg_nome} onChange={(e) => setPpgNome(e.target.value)} /></div>
+          <div>
+            <Label>PPG</Label>
+            <Select value={ppg_nome || PPG_NENHUM} onValueChange={(v) => setPpgNome(v === PPG_NENHUM ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione o PPG" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value={PPG_NENHUM}>Sem PPG</SelectItem>
+                {PPG_CANONICOS.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                {ppg_nome && !(PPG_CANONICOS as readonly string[]).includes(ppg_nome) && (
+                  <SelectItem value={ppg_nome}>{ppg_nome} (pendente de revisão)</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
           <div><Label>Título do Plano</Label><Input value={titulo_plano} onChange={(e) => setTituloPlano(e.target.value)} /></div>
           <div className="md:col-span-2 lg:col-span-3"><Label>Área do Conhecimento</Label><Input value={area_conhecimento} onChange={(e) => setAreaConhecimento(e.target.value)} /></div>
         </div>
