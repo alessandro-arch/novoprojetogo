@@ -506,7 +506,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     researcherTable.slice(0, 3).reduce((s, r) => s + r.captacao, 0),
     researcherTable.reduce((s, r) => s + r.captacao, 0)
   );
-  const semPpg = ppgTable.find((x) => x.name === "SEM PPG");
+  const semPpg = ppgTable.find((x) => x.name === SEM_PPG);
   const captacaoMediaProjeto = p.length ? captacaoProjetos / p.length : 0;
   const captacaoMediaPesquisador = pesquisadores ? captacaoProjetos / pesquisadores : 0;
   const pesquisadoresAtivos = new Set(p.filter((x) => x.status === "em_execucao").map((x) => x.pesquisador_principal)).size;
