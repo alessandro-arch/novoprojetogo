@@ -14,7 +14,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ArrowLeft, ChevronDown, Upload, Bot, Loader2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatBRL, MODALIDADE_LABELS, BOLSISTA_STATUS_LABELS, MODALIDADE_VALORES_SUGERIDOS } from "@/lib/fomento-utils";
+import { PPG_CANONICOS, normalizePPG } from "@/lib/fomento-ppg";
 import FomentoDocumentsSection from "./FomentoDocumentsSection";
+
+const PPG_NENHUM = "__none__";
 
 interface Props {
   bolsistaId?: string;
