@@ -483,8 +483,8 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
 
   const ppgsSemCaptacao = useMemo(() => {
     if (selectedYear == null) return [];
-    const comCaptacao = new Set(p.filter((x) => x.ppg_nome).map((x) => x.ppg_nome!.toUpperCase()));
-    return ppgOptions.filter((ppg) => !comCaptacao.has(ppg));
+    const comCaptacao = new Set(p.map((x) => normalizePPG(x.ppg_nome)).filter(Boolean));
+    return (PPG_CANONICOS as readonly string[]).filter((ppg) => !comCaptacao.has(ppg));
   }, [p, ppgOptions, selectedYear]);
 
   const bolsasEncerrando90 = bolsistasAtivos.filter((b) => {
