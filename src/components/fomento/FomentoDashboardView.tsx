@@ -1020,7 +1020,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
                 { l: "Bolsas via parceria", v: formatBRL(bolsasViaParceria), hint: DEF_PARCERIA },
                 { l: "Meses médios remanescentes", v: mesesMediosRestantes.toFixed(1) },
                 { l: "Encerrando em 90 dias", v: String(bolsasEncerrando90) },
-                { l: "PPGs atendidos", v: `${new Set(bolsistasAtivos.filter((b) => b.ppg_nome).map((b) => b.ppg_nome.toUpperCase())).size} de ${ppgOptions.length || "—"}` },
+                { l: "PPGs atendidos", v: `${new Set(bolsistasAtivos.map((b) => normalizePPG(b.ppg_nome)).filter(Boolean)).size} de ${PPG_CANONICOS.length}` },
               ].map((k) => (
                 <Card key={k.l} className="shadow-sm">
                   <CardContent className="p-4">
