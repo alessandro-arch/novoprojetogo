@@ -17,7 +17,7 @@ interface Props {
   onBack: () => void;
 }
 
-import { PPG_CANONICOS } from "@/lib/fomento-ppg";
+import { PPG_CANONICOS, normalizePPG } from "@/lib/fomento-ppg";
 
 const PPG_OPTIONS = PPG_CANONICOS;
 
