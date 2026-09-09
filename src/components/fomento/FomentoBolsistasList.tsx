@@ -84,7 +84,7 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
     const matchMod = filterModalidade === "all" || b.modalidade === filterModalidade;
     const matchStatus = filterStatus === "all" || b.status === filterStatus;
     const matchOrient = filterOrientador === "all" || b.orientador === filterOrientador;
-    const matchPpg = filterPpg === "all" || b.ppg_nome === filterPpg;
+    const matchPpg = filterPpg === "all" || normalizePPG(b.ppg_nome) === filterPpg;
     return matchSearch && matchAno && matchMod && matchStatus && matchOrient && matchPpg;
   });
 
