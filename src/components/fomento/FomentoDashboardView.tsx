@@ -226,11 +226,15 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
     return full.sort((a, b) => b - a);
   }, [allProjects, allBolsistas, currentYear]);
 
+  // Lista controlada: os 7 PPGs institucionais + eventuais nomes pendentes de revisão
   const ppgOptions = useMemo(() => {
-    const set = new Set<string>();
-    allProjects.forEach((x) => { if (x.ppg_nome) set.add(x.ppg_nome.toUpperCase()); });
-    return Array.from(set).sort();
-  }, [allProjects]);
+    const extras = new Set<string>();
+    [...allProjects, ...allBolsistas].forEach((x: any) => {
+      const n = normalizePPG(x.ppg_nome);
+      if (n && !isPpgCanonico(n)) extras.add(n);
+    });
+    return [...PPG_CANONICOS, ...Array.from(extras).sort()];
+  }, [allProjects, allBolsistas]);
 
   const agencyOptions = useMemo(() => {
     const set = new Set<string>();
