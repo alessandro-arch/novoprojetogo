@@ -312,8 +312,8 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
   const ativosPrev = pPrev.filter((x) => x.status === "em_execucao").length;
   const pesquisadores = new Set(p.map((x) => x.pesquisador_principal)).size;
   const pesquisadoresPrev = new Set(pPrev.map((x) => x.pesquisador_principal)).size;
-  const ppgsComCaptacao = new Set(p.filter((x) => x.ppg_nome).map((x) => x.ppg_nome!.toUpperCase())).size;
-  const ppgsComCaptacaoPrev = new Set(pPrev.filter((x) => x.ppg_nome).map((x) => x.ppg_nome!.toUpperCase())).size;
+  const ppgsComCaptacao = new Set(p.map((x) => normalizePPG(x.ppg_nome)).filter(Boolean)).size;
+  const ppgsComCaptacaoPrev = new Set(pPrev.map((x) => normalizePPG(x.ppg_nome)).filter(Boolean)).size;
 
   const meta = useMemo(() => (metas ?? []).find((m: any) => m.ano === (selectedYear ?? currentYear)) ?? null,
     [metas, selectedYear, currentYear]);
