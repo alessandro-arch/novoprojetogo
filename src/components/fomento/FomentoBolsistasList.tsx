@@ -26,6 +26,7 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [filterAno, setFilterAno] = useState("all");
   const [filterModalidade, setFilterModalidade] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterOrientador, setFilterOrientador] = useState("all");
@@ -64,13 +65,21 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
   const items = bolsistas ?? [];
   const orientadores = [...new Set(items.map((b) => b.orientador).filter(Boolean))].sort();
 
+  const getBolsistaYear = (b: any): number | null => {
+    if (b.data_inicio) return new Date(b.data_inicio + "T12:00:00").getFullYear();
+    return null;
+  };
+
+  const availableYears = [...new Set(items.map(getBolsistaYear).filter(Boolean) as number[])].sort((a, b) => b - a);
+
   const filtered = items.filter((b) => {
     const q = search.toLowerCase();
     const matchSearch = !q || b.nome_bolsista?.toLowerCase().includes(q) || b.orientador?.toLowerCase().includes(q) || b.titulo_plano?.toLowerCase().includes(q);
+    const matchAno = filterAno === "all" || getBolsistaYear(b) === Number(filterAno);
     const matchMod = filterModalidade === "all" || b.modalidade === filterModalidade;
     const matchStatus = filterStatus === "all" || b.status === filterStatus;
     const matchOrient = filterOrientador === "all" || b.orientador === filterOrientador;
-    return matchSearch && matchMod && matchStatus && matchOrient;
+    return matchSearch && matchAno && matchMod && matchStatus && matchOrient;
   });
 
   const sorted = sortOrder === "default" ? filtered : [...filtered].sort((a, b) => {
