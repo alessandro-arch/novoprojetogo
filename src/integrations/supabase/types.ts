@@ -2364,6 +2364,7 @@ export type Database = {
         Args: { p_cpf_hash: string }
         Returns: string
       }
+      normalize_ppg: { Args: { _value: string }; Returns: string }
       set_fomento_role: {
         Args: { _role: string; _target_user_id: string }
         Returns: undefined
