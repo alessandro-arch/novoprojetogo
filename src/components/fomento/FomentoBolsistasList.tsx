@@ -137,7 +137,7 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
         const mdBolsistas = items.filter((b) => b.status === "ativo" && (b.modalidade === "mestrado" || b.modalidade === "doutorado"));
         const ppgMap = new Map<string, { mestrado: number; doutorado: number }>();
         mdBolsistas.forEach((b) => {
-          const ppg = b.ppg_nome || "Sem PPG";
+          const ppg = normalizePPG(b.ppg_nome) ?? SEM_PPG;
           if (!ppgMap.has(ppg)) ppgMap.set(ppg, { mestrado: 0, doutorado: 0 });
           const entry = ppgMap.get(ppg)!;
           if (b.modalidade === "mestrado") entry.mestrado++;
