@@ -271,7 +271,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
   const pPrev = useMemo(() => projectsOfYear(previousYear), [baseProjects, previousYear]);
 
   const bolsistasBase = useMemo(() => allBolsistas.filter((b) => {
-    if (ppgFilter !== ALL && (b.ppg_nome || "").toUpperCase() !== ppgFilter) return false;
+    if (ppgFilter !== ALL && normalizePPG(b.ppg_nome) !== ppgFilter) return false;
     return true;
   }), [allBolsistas, ppgFilter]);
 
