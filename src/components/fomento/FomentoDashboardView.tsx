@@ -1069,7 +1069,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
             {(["mestrado", "doutorado"] as const).map((mod, idx) => {
               const map = new Map<string, number>();
               bolsistasAtivos.filter((b) => b.modalidade === mod).forEach((b) => {
-                const key = (b.ppg_nome || "SEM PPG").toUpperCase();
+                const key = normalizePPG(b.ppg_nome) ?? SEM_PPG;
                 map.set(key, (map.get(key) || 0) + 1);
               });
               const data = Array.from(map.entries()).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
