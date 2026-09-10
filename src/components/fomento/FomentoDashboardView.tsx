@@ -1014,8 +1014,8 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
                 { l: "Bolsas ativas", v: String(bolsistasAtivos.length), hint: DEF_DIRETAS },
-                { l: "Custo mensal", v: formatBRL(totalMensalBolsas) },
-                { l: "Custo anualizado", v: formatBRL(custoAnualizadoBolsas), hint: "Custo mensal × 12." },
+                { l: "Valor mensal em bolsas", v: formatBRL(totalMensalBolsas), hint: "Soma dos valores mensais das bolsas ativas." },
+                { l: "Valor anual em bolsas", v: formatBRL(custoAnualizadoBolsas), hint: "Valor mensal em bolsas × 12." },
                 { l: "Comprometido (diretas)", v: formatBRL(bolsasDiretas), hint: DEF_DIRETAS },
                 { l: "Bolsas via parceria", v: formatBRL(bolsasViaParceria), hint: DEF_PARCERIA },
                 { l: "Meses médios remanescentes", v: mesesMediosRestantes.toFixed(1) },
