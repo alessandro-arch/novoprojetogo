@@ -58,7 +58,7 @@ const ResetPassword = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="bg-card rounded-2xl shadow-card-hover p-6 md:p-8 border border-border w-full max-w-md text-center">
-          <h2 className="text-xl font-semibold text-foreground mb-2">Link inválido</h2>
+          <h1 className="text-xl font-semibold text-foreground mb-2">Link inválido</h1>
           <p className="text-muted-foreground mb-6">
             Este link de redefinição de senha é inválido ou expirou.
           </p>
@@ -75,7 +75,7 @@ const ResetPassword = () => {
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="bg-card rounded-2xl shadow-card-hover p-6 md:p-8 border border-border w-full max-w-md text-center">
           <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-foreground mb-2">Senha redefinida!</h2>
+          <h1 className="text-xl font-semibold text-foreground mb-2">Senha redefinida!</h1>
           <p className="text-muted-foreground mb-6">
             Sua senha foi atualizada com sucesso.
           </p>
@@ -90,7 +90,7 @@ const ResetPassword = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="bg-card rounded-2xl shadow-card-hover p-6 md:p-8 border border-border w-full max-w-md">
-        <h2 className="text-xl font-semibold text-foreground mb-2">Redefinir senha</h2>
+        <h1 className="text-xl font-semibold text-foreground mb-2">Redefinir senha do ProjetoGO</h1>
         <p className="text-muted-foreground mb-6">Digite sua nova senha abaixo.</p>
 
         <form onSubmit={handleReset} className="space-y-4">

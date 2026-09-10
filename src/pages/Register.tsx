@@ -74,7 +74,7 @@ const Register = () => {
               <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
                 <FileText className="w-5 h-5 text-primary-foreground" />
               </div>
-              <h1 className="text-2xl font-bold font-heading text-foreground">ProjetoGO</h1>
+              <h1 className="text-2xl font-bold font-heading text-foreground">ProjetoGO — Cadastro de Proponente</h1>
             </div>
 
             <h2 className="text-xl font-semibold text-foreground mb-2">Cadastro de Proponente</h2>

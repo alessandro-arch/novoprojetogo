@@ -43,7 +43,7 @@ const ForgotPassword = () => {
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="bg-card rounded-2xl shadow-card-hover p-6 md:p-8 border border-border w-full max-w-md text-center">
           <Mail className="w-12 h-12 text-primary mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-foreground mb-2">Email enviado!</h2>
+          <h1 className="text-xl font-semibold text-foreground mb-2">Email enviado!</h1>
           <p className="text-muted-foreground mb-6">
             Se o email <strong>{email}</strong> estiver cadastrado, você receberá um link para redefinir sua senha.
           </p>
@@ -61,7 +61,7 @@ const ForgotPassword = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="bg-card rounded-2xl shadow-card-hover p-6 md:p-8 border border-border w-full max-w-md">
-        <h2 className="text-xl font-semibold text-foreground mb-2">Esqueci minha senha</h2>
+        <h1 className="text-xl font-semibold text-foreground mb-2">Recuperar senha do ProjetoGO</h1>
         <p className="text-muted-foreground mb-6">
           Informe seu email e enviaremos um link para redefinir sua senha.
         </p>

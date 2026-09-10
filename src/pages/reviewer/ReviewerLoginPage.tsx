@@ -59,8 +59,14 @@ const ReviewerLoginPage = () => {
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">
           <div className="w-12 h-12 rounded-lg gradient-primary flex items-center justify-center mx-auto mb-2"><ShieldCheck className="w-6 h-6 text-primary-foreground" /></div>
-          <CardTitle className="text-xl">Portal do Avaliador</CardTitle>
-          <CardDescription>Acesse com seu e-mail ou CPF cadastrado como avaliador.</CardDescription>
+          <CardTitle asChild className="text-xl">
+            <h1>ProjetoGO — Portal do Avaliador</h1>
+          </CardTitle>
+          <CardDescription asChild>
+            <h2 className="text-sm font-normal text-muted-foreground">
+              Acesse com seu e-mail ou CPF cadastrado como avaliador.
+            </h2>
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={handleLogin} className="space-y-4">
