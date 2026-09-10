@@ -132,7 +132,7 @@ const BarRow = ({ label, valueLabel, ratio, color }: { label: string; valueLabel
 
 const FomentoDashboardView = ({ onEditProject }: Props) => {
   const { isSuperadmin, fomentoOrgId, fomentoRole } = useFomentoAuth();
-  const isAuditor = fomentoRole === "auditor";
+  const isAuditor = fomentoRole === "auditor" || fomentoRole === "coordenador";
   const canEditMetas = isSuperadmin || fomentoRole === "admin" || fomentoRole === "gestor";
   const currentYear = new Date().getFullYear();
 
