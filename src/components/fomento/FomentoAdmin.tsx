@@ -27,6 +27,7 @@ const ROLE_LABELS: Record<string, string> = {
   admin: "Admin",
   gestor: "Gestor",
   auditor: "Auditor",
+  coordenador: "Coordenador",
 };
 
 const FomentoAdmin = () => {
@@ -130,8 +131,8 @@ const FomentoAdmin = () => {
 
   // Available roles for invite: superadmin can assign admin; org admin can only assign gestor
   const availableRoles = isSuperadmin
-    ? [{ value: "gestor", label: "Gestor" }, { value: "admin", label: "Admin" }, { value: "auditor", label: "Auditor" }]
-    : [{ value: "gestor", label: "Gestor" }, { value: "auditor", label: "Auditor" }];
+    ? [{ value: "gestor", label: "Gestor" }, { value: "admin", label: "Admin" }, { value: "auditor", label: "Auditor" }, { value: "coordenador", label: "Coordenador" }]
+    : [{ value: "gestor", label: "Gestor" }, { value: "auditor", label: "Auditor" }, { value: "coordenador", label: "Coordenador" }];
 
   return (
     <div className="space-y-6">
@@ -216,7 +217,7 @@ const FomentoAdmin = () => {
                         <TableCell>
                           <Badge
                             variant={isSuperadminUser ? "default" : u.fomento_role === "admin" ? "default" : "secondary"}
-                            className={`capitalize ${u.fomento_role === "auditor" ? "bg-[#EF9F27]/15 text-[#EF9F27] border-[#EF9F27]/30" : ""}`}
+                            className={`capitalize ${u.fomento_role === "auditor" || u.fomento_role === "coordenador" ? "bg-[#EF9F27]/15 text-[#EF9F27] border-[#EF9F27]/30" : ""}`}
                           >
                             {ROLE_LABELS[u.fomento_role] || u.fomento_role}
                           </Badge>

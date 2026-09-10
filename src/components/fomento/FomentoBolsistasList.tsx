@@ -35,7 +35,7 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
   const [sortOrder, setSortOrder] = useState<"default" | "asc" | "desc">("default");
 
   const canDelete = isSuperadmin || fomentoRole === "admin";
-  const isAuditor = fomentoRole === "auditor";
+  const isAuditor = fomentoRole === "auditor" || fomentoRole === "coordenador";
 
   const { data: bolsistas, isLoading } = useQuery({
     queryKey: ["fomento-bolsistas", fomentoOrgId, isSuperadmin],

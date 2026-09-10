@@ -39,7 +39,7 @@ export const FomentoAuthProvider = ({ children }: { children: ReactNode }) => {
   const [profileName, setProfileName] = useState<string | null>(null);
 
   const isSuperadmin = fomentoRole === "superadmin";
-  const isAuditor = fomentoRole === "auditor";
+  const isAuditor = fomentoRole === "auditor" || fomentoRole === "coordenador";
 
   const fetchFomentoRole = useCallback(async (userId: string) => {
     const { data: profile } = await supabase
