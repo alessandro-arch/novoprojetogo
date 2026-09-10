@@ -172,6 +172,8 @@ const FomentoDocumentsSection = ({ projectId }: Props) => {
           onChange={(e) => { if (e.target.files) addFiles(e.target.files); e.target.value = ""; }}
         />
       </div>
+      )}
+
 
       {pendingFiles.map((pf, i) => (
         <div key={i} className="border rounded-lg p-4 space-y-3 bg-muted/30">
