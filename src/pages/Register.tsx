@@ -68,6 +68,11 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex bg-background">
+      <Seo
+        title="Cadastro de Proponente — ProjetoGO"
+        description="Crie sua conta de proponente no ProjetoGO e submeta propostas a editais de PD&I."
+        path="/register"
+      />
       <div className="flex-1 flex items-center justify-center p-4 md:p-8">
         <div className="w-full max-w-md">
           <div className="bg-card rounded-2xl shadow-card-hover p-6 md:p-8 border border-border">
