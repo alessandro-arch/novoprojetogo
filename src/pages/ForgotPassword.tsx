@@ -61,6 +61,12 @@ const ForgotPassword = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Seo
+        title="Recuperar senha — ProjetoGO"
+        description="Receba um link por email para redefinir a senha da sua conta ProjetoGO."
+        path="/forgot-password"
+        noindex
+      />
       <div className="bg-card rounded-2xl shadow-card-hover p-6 md:p-8 border border-border w-full max-w-md">
         <h1 className="text-xl font-semibold text-foreground mb-2">Recuperar senha do ProjetoGO</h1>
         <p className="text-muted-foreground mb-6">
