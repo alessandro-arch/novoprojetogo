@@ -40,6 +40,11 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex bg-background">
+      <Seo
+        title="Entrar no ProjetoGO — Portal de Acesso"
+        description="Acesse sua conta ProjetoGO para gerenciar editais, propostas e projetos de PD&I."
+        path="/login"
+      />
       <div className="flex-1 flex items-center justify-center p-4 md:p-8">
         <div className="w-full max-w-md">
           <div className="bg-card rounded-2xl shadow-card-hover p-6 md:p-8 border border-border">
