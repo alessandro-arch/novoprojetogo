@@ -30,6 +30,7 @@ interface PendingFile {
 
 const FomentoDocumentsSection = ({ projectId }: Props) => {
   const { user, fomentoRole } = useFomentoAuth();
+  const isReadOnly = fomentoRole === "auditor" || fomentoRole === "coordenador";
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -149,6 +150,7 @@ const FomentoDocumentsSection = ({ projectId }: Props) => {
 
   return (
     <div className="space-y-4">
+      {!isReadOnly && (
       <div
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
