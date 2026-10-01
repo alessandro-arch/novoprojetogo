@@ -265,7 +265,7 @@ export const ImportTab = ({ orgId, orgLabel }: { orgId: string; orgLabel: string
           const curProgs = before ? (fp || []).filter((x: any) => x.faculty_id === before.id).map((x: any) => x.program_id) : [];
           const newProgs = progIds.filter((p) => !curProgs.includes(p));
           if (!before) return out.push({ line, enrollment, outcome: "novo", data, extra: { progIds } });
-          const diffs = (["full_name", "contract_type", "bond_start", "status", "can_advise"] as const).filter((k) => (before[k] ?? null) !== (data[k] ?? null));
+          const diffs: string[] = (["full_name", "contract_type", "bond_start", "status", "can_advise"] as const).filter((k) => (before[k] ?? null) !== (data[k] ?? null));
           if (newProgs.length) diffs.push("programas");
           out.push({ line, enrollment, outcome: diffs.length ? "alterado" : "sem_alteracao", data, before, diffs, extra: { progIds: newProgs } });
         });
