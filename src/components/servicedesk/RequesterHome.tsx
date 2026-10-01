@@ -36,12 +36,12 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage }: Props) => {
   const r = data.row;
   const fields: [string, string][] = data.kind === "aluno"
     ? [
-        ["Matrícula", r.enrollment], ["Nome", r.name], ["Programa", r.sd_programs?.name || "—"],
+        ["Matrícula", r.enrollment], ["Nome", r.full_name], ["Programa", r.sd_programs?.name || "—"],
         ["Nível", r.level || "—"], ["Ingresso", fmt(r.entry_date ?? r.ingress_date)], ["Término previsto", fmt(r.expected_end ?? r.current_deadline)],
         ["Situação", r.status || "—"], ["E-mail", r.email || "—"],
       ]
     : [
-        ["Matrícula", r.enrollment], ["Nome", r.name], ["Tipo de vínculo", r.contract_type || "—"],
+        ["Matrícula", r.enrollment], ["Nome", r.full_name], ["Tipo de vínculo", r.contract_type || "—"],
         ["Programas", (r.sd_faculty_programs || []).map((p: any) => `${p.sd_programs?.sigla || p.sd_programs?.name}${p.relationship_type ? " · " + p.relationship_type : ""}`).join(", ") || "—"],
         ["Situação", r.status || "—"],
       ];
@@ -52,7 +52,7 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage }: Props) => {
         <div className="flex items-center justify-between gap-2">
           <div>
             <h1 className="text-xl font-bold font-heading">Service Desk Acadêmico</h1>
-            <p className="text-sm text-muted-foreground">Olá, {r.name?.split(" ")[0]} — área do {data.kind === "aluno" ? "aluno" : "professor"}</p>
+            <p className="text-sm text-muted-foreground">Olá, {r.full_name?.split(" ")[0]} — área do {data.kind === "aluno" ? "aluno" : "professor"}</p>
           </div>
           <Button variant="outline" onClick={onSignOut}><LogOut className="w-4 h-4 mr-2" />Sair</Button>
         </div>
