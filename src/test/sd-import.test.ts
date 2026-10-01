@@ -98,7 +98,7 @@ describe("Homologação Fase 2 — importação", () => {
       ["TIPO de Vínculo", "Matricula", "Nome", "Programa", "Vínculo"],
       ["Pessoa Jurídica", "PJ", "Agda Regina de Carvalho", "PPGAC", "Permanente"],
       ["Pessoa Jurídica", "PJ", "Agda Regina de Carvalho", "PPGAC", "Permanente"],
-      ["CLT", "4326", "Alessandro Coutinho Ramos", "PPGCF", "Colaborador (a)"],
+      ["CLT", "4326", "Alessandro Coutinho Ramos", "Ciências Farmacêuticas", "Colaborador (a)"],
     ]));
     const fixed = { id: "p-arq", name: "Arquitetura e Cidade", sigla: "PPGAC" };
     const r = reconcileFaculty(sheet, { programs: [...programs, fixed], fixedProg: fixed, existing: [], links: [], contracts: ["CLT", "PJ"] });
