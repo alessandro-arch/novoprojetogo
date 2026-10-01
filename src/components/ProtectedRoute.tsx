@@ -24,13 +24,13 @@ const ProtectedRoute = ({ allowedRoles, children, loginPath = "/login" }: Protec
 
   // Check both user existence AND valid session with non-expired token
   if (!user || !session) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={loginPath} replace />;
   }
 
   // Verify token is not expired
   const expiresAt = session.expires_at;
   if (expiresAt && expiresAt * 1000 < Date.now()) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={loginPath} replace />;
   }
 
   if (allowedRoles && allowedRoles.length > 0) {

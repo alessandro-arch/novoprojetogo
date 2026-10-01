@@ -28,6 +28,7 @@ import FomentoLogin from "./pages/fomento/FomentoLogin";
 import FomentoPanel from "./pages/fomento/FomentoPanel";
 import FomentoProtectedRoute from "./components/FomentoProtectedRoute";
 import ServiceDeskPanel from "./pages/servicedesk/ServiceDeskPanel";
+import ServiceDeskLogin from "./pages/servicedesk/ServiceDeskLogin";
 
 const queryClient = new QueryClient();
 
