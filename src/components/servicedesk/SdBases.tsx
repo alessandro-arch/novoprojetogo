@@ -309,7 +309,7 @@ export const ImportTab = ({ orgId, orgLabel }: { orgId: string; orgLabel: string
           </div>
           <p className="text-xs text-muted-foreground">
             Uma planilha por programa: a comparação e as ausências consideram só o programa selecionado.{" "}
-            {base === "alunos" ? "Na base de alunos, somente a aba Ativos será importada. Colunas: QT, Status, Matrícula, Nome do Aluno, CPF, Telefone, E-mail, Turma, Nível, Início no curso, Término previsto / Data de conclusão, Orientador (a), Bolsa." : "Na base de professores, serão importadas somente as colunas: TIPO de Vínculo, Matricula, Nome, Programa e Vínculo. Professores ficam vinculados ao programa selecionado."}
+            {base === "alunos" ? "Na base de alunos, somente a aba Ativos será importada. Colunas: QT, Status, Matrícula, Nome do Aluno, CPF, Telefone, E-mail, Turma, Nível, Início no curso, Término previsto / Data de conclusão, Orientador (a), Bolsa." : "Na base de professores, cada programa tem sua própria aba na planilha — será lida a aba do programa selecionado (ex.: PPGAC, PPGCF). Colunas: TIPO de Vínculo, Matricula, Nome, Programa e Vínculo. Professores ficam vinculados ao programa selecionado."}
             {" "}Quem não estiver no arquivo é apenas sinalizado como ausente — ninguém é inativado automaticamente.
           </p>
           <Button onClick={process} disabled={busy}>{busy && !rows ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />} Validar e comparar</Button>
