@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Building2, Users, UsersRound, Settings, Loader2, Plus, Trash2 } from "lucide-react";
+import { Building2, Users, UsersRound, Settings, Loader2, Plus, Trash2, BookOpen, GraduationCap, Briefcase, FileSpreadsheet } from "lucide-react";
+import { ProgramsTab, StudentsTab, FacultyTab, ImportTab } from "@/components/servicedesk/SdBases";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import PanelLayout from "@/components/layout/PanelLayout";
@@ -19,6 +20,10 @@ const NAV = [
   { key: "institution", label: "Instituição", icon: Building2 },
   { key: "members", label: "Membros", icon: Users },
   { key: "groups", label: "Grupos responsáveis", icon: UsersRound },
+  { key: "programs", label: "Programas", icon: BookOpen },
+  { key: "students", label: "Alunos", icon: GraduationCap },
+  { key: "faculty", label: "Professores", icon: Briefcase },
+  { key: "imports", label: "Importação Excel", icon: FileSpreadsheet },
   { key: "settings", label: "Configurações", icon: Settings },
 ];
 
@@ -78,6 +83,10 @@ const ServiceDeskPanel = () => {
         {nav === "institution" && <InstitutionTab org={org} isSuper={isSuper} />}
         {nav === "members" && <MembersTab orgId={org.id} />}
         {nav === "groups" && <GroupsTab orgId={org.id} />}
+        {nav === "programs" && <ProgramsTab orgId={org.id} />}
+        {nav === "students" && <StudentsTab orgId={org.id} />}
+        {nav === "faculty" && <FacultyTab orgId={org.id} />}
+        {nav === "imports" && <ImportTab orgId={org.id} orgLabel={org.sigla || org.name} />}
         {nav === "settings" && <SettingsTab orgId={org.id} />}
       </div>
     </PanelLayout>

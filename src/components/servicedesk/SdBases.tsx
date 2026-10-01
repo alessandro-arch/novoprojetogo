@@ -1,0 +1,391 @@
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import * as XLSX from "xlsx";
+import { Plus, Upload, Loader2, AlertTriangle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+
+const db = supabase as any;
+const sel = "h-10 rounded-md border border-input bg-background px-3 text-sm";
+
+export const fmtDate = (d?: string | null) => (d ? d.split("-").reverse().join("/") : "—");
+
+const usePrograms = (orgId: string) =>
+  useQuery({
+    queryKey: ["sd-programs", orgId],
+    queryFn: async () => (await db.from("sd_programs").select("*").eq("organization_id", orgId).order("name")).data || [],
+  });
+
+/* ---------------- Programas ---------------- */
+export const ProgramsTab = ({ orgId }: { orgId: string }) => {
+  const { data, refetch } = usePrograms(orgId);
+  const [name, setName] = useState(""); const [sigla, setSigla] = useState("");
+  const add = async () => {
+    if (!name.trim()) return toast.error("Informe o nome");
+    const { error } = await db.from("sd_programs").insert({ organization_id: orgId, name: name.trim(), sigla: sigla.trim() || null });
+    if (error) return toast.error("Erro: " + error.message);
+    toast.success("Programa cadastrado"); setName(""); setSigla(""); refetch();
+  };
+  const upd = async (id: string, patch: any) => {
+    const { error } = await db.from("sd_programs").update(patch).eq("id", id);
+    if (error) return toast.error("Erro: " + error.message);
+    toast.success("Atualizado"); refetch();
+  };
+  return (
+    <div className="space-y-4">
+      <Card className="rounded-xl"><CardContent className="pt-6 flex flex-wrap gap-3 items-end">
+        <div className="flex-1 min-w-[220px]"><Label>Nome</Label><Input className="mt-1" value={name} onChange={(e) => setName(e.target.value)} /></div>
+        <div><Label>Sigla</Label><Input className="mt-1" value={sigla} onChange={(e) => setSigla(e.target.value)} /></div>
+        <Button onClick={add}><Plus className="w-4 h-4 mr-1" /> Cadastrar</Button>
+      </CardContent></Card>
+      <div className="space-y-2">
+        {(data || []).map((p: any) => (
+          <Card key={p.id} className="rounded-xl"><CardContent className="py-3 flex flex-wrap items-center gap-3">
+            <p className="flex-1 font-medium text-sm">{p.name}</p>
+            <Input className="w-32" defaultValue={p.sigla || ""} placeholder="Sigla" onBlur={(e) => e.target.value !== (p.sigla || "") && upd(p.id, { sigla: e.target.value || null })} />
+            <Button size="sm" variant="outline" onClick={() => upd(p.id, { status: p.status === "ativo" ? "inativo" : "ativo" })}>
+              <Badge variant={p.status === "ativo" ? "default" : "secondary"}>{p.status}</Badge>
+            </Button>
+          </CardContent></Card>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* ---------------- Alunos ---------------- */
+export const StudentsTab = ({ orgId }: { orgId: string }) => {
+  const { data: programs } = usePrograms(orgId);
+  const [prog, setProg] = useState("__all__"); const [q, setQ] = useState(""); const [onlyAbsent, setOnlyAbsent] = useState(false);
+  const { data, refetch } = useQuery({
+    queryKey: ["sd-students", orgId],
+    queryFn: async () => (await db.from("sd_students").select("*, program:sd_programs(name), advisor:sd_faculty(full_name)").eq("organization_id", orgId).order("full_name")).data || [],
+  });
+  const rows = (data || []).filter((s: any) =>
+    (prog === "__all__" || s.program_id === prog) && (!onlyAbsent || s.absent_in_last_import) &&
+    (!q || s.full_name.toLowerCase().includes(q.toLowerCase()) || s.enrollment.includes(q)));
+  const resolve = async (s: any, status: string) => {
+    const { error } = await db.from("sd_students").update({ status, absent_in_last_import: false }).eq("id", s.id);
+    if (error) return toast.error("Erro: " + error.message);
+    toast.success("Revisão registrada"); refetch();
+  };
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-3">
+        <Input className="max-w-xs" placeholder="Buscar nome ou matrícula" value={q} onChange={(e) => setQ(e.target.value)} />
+        <select className={sel} value={prog} onChange={(e) => setProg(e.target.value)}>
+          <option value="__all__">Todos os programas</option>
+          {(programs || []).map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={onlyAbsent} onChange={(e) => setOnlyAbsent(e.target.checked)} /> Só ausentes na nova base</label>
+      </div>
+      <p className="text-sm text-muted-foreground">{rows.length} aluno(s)</p>
+      <div className="overflow-x-auto rounded-xl border border-border">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/50 text-left"><tr>{["Matrícula", "Nome", "Programa", "Nível", "Ingresso", "Orientador", "Prazo regular", "Prazo vigente", "Situação", ""].map((h) => <th key={h} className="p-2 font-medium">{h}</th>)}</tr></thead>
+          <tbody>
+            {rows.map((s: any) => (
+              <tr key={s.id} className="border-t border-border">
+                <td className="p-2">{s.enrollment}</td><td className="p-2">{s.full_name}</td><td className="p-2">{s.program?.name || "—"}</td>
+                <td className="p-2 capitalize">{s.level}</td><td className="p-2">{fmtDate(s.entry_date)}</td><td className="p-2">{s.advisor?.full_name || "—"}</td>
+                <td className="p-2">{fmtDate(s.regular_deadline)}</td><td className="p-2">{fmtDate(s.current_deadline)}</td>
+                <td className="p-2"><Badge variant={s.status === "ativo" ? "default" : "secondary"}>{s.status}</Badge>{s.absent_in_last_import && <Badge variant="destructive" className="ml-1">ausente na nova base</Badge>}</td>
+                <td className="p-2 whitespace-nowrap">{s.absent_in_last_import && (<>
+                  <Button size="sm" variant="outline" onClick={() => resolve(s, s.status)}>Manter</Button>
+                  <Button size="sm" variant="ghost" onClick={() => resolve(s, "inativo")}>Inativar</Button></>)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+/* ---------------- Professores ---------------- */
+export const FacultyTab = ({ orgId }: { orgId: string }) => {
+  const [q, setQ] = useState(""); const [onlyAbsent, setOnlyAbsent] = useState(false);
+  const { data, refetch } = useQuery({
+    queryKey: ["sd-faculty", orgId],
+    queryFn: async () => (await db.from("sd_faculty").select("*, programs:sd_faculty_programs(program:sd_programs(name))").eq("organization_id", orgId).order("full_name")).data || [],
+  });
+  const rows = (data || []).filter((f: any) => (!onlyAbsent || f.absent_in_last_import) && (!q || f.full_name.toLowerCase().includes(q.toLowerCase()) || f.enrollment.includes(q)));
+  const upd = async (id: string, patch: any) => {
+    const { error } = await db.from("sd_faculty").update(patch).eq("id", id);
+    if (error) return toast.error("Erro: " + error.message);
+    toast.success("Atualizado"); refetch();
+  };
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-3">
+        <Input className="max-w-xs" placeholder="Buscar nome ou matrícula" value={q} onChange={(e) => setQ(e.target.value)} />
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={onlyAbsent} onChange={(e) => setOnlyAbsent(e.target.checked)} /> Só ausentes na nova base</label>
+      </div>
+      <p className="text-sm text-muted-foreground">{rows.length} professor(es) · {rows.filter((f: any) => f.can_advise).length} orientador(es)</p>
+      <div className="overflow-x-auto rounded-xl border border-border">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/50 text-left"><tr>{["Matrícula", "Nome", "Contrato", "Início", "Prazo do vínculo", "Programas", "Pode orientar", "Situação", ""].map((h) => <th key={h} className="p-2 font-medium">{h}</th>)}</tr></thead>
+          <tbody>
+            {rows.map((f: any) => (
+              <tr key={f.id} className="border-t border-border">
+                <td className="p-2">{f.enrollment}</td><td className="p-2">{f.full_name}</td><td className="p-2">{f.contract_type || "—"}</td>
+                <td className="p-2">{fmtDate(f.bond_start)}</td><td className="p-2">{f.bond_deadline ? fmtDate(f.bond_deadline) : "Indeterminado"}</td>
+                <td className="p-2">{(f.programs || []).map((p: any) => p.program?.name).join(", ") || "—"}</td>
+                <td className="p-2"><input type="checkbox" aria-label="Pode orientar" checked={f.can_advise} onChange={(e) => upd(f.id, { can_advise: e.target.checked })} /></td>
+                <td className="p-2"><Badge variant={f.status === "ativo" ? "default" : "secondary"}>{f.status}</Badge>{f.absent_in_last_import && <Badge variant="destructive" className="ml-1">ausente na nova base</Badge>}</td>
+                <td className="p-2 whitespace-nowrap">{f.absent_in_last_import && (<>
+                  <Button size="sm" variant="outline" onClick={() => upd(f.id, { absent_in_last_import: false })}>Manter</Button>
+                  <Button size="sm" variant="ghost" onClick={() => upd(f.id, { absent_in_last_import: false, status: "inativo" })}>Inativar</Button></>)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+/* ---------------- Importação ---------------- */
+const norm = (s: any) => String(s ?? "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+const ALIASES: Record<string, string[]> = {
+  enrollment: ["matricula", "registro", "id"], full_name: ["nome", "nome_completo"], program: ["programa", "ppg"],
+  level: ["nivel", "curso"], entry_date: ["ingresso", "data_ingresso", "data_de_ingresso"], advisor: ["orientador", "matricula_orientador"],
+  status: ["situacao", "status"], contract_type: ["contrato", "tipo_contrato", "tipo_de_contrato"], bond_start: ["inicio", "inicio_vinculo", "inicio_do_vinculo", "data_inicio"],
+  programs: ["programas", "programa", "ppg"], can_advise: ["pode_orientar", "orientador"],
+};
+const pick = (row: Record<string, any>, field: string) => { for (const a of ALIASES[field]) if (row[a] !== undefined && row[a] !== "") return row[a]; return undefined; };
+const parseDate = (v: any): string | null | "invalid" => {
+  if (v === undefined || v === null || v === "") return null;
+  if (v instanceof Date) return v.toISOString().slice(0, 10);
+  if (typeof v === "number") { const d = XLSX.SSF.parse_date_code(v); return d ? `${d.y}-${String(d.m).padStart(2, "0")}-${String(d.d).padStart(2, "0")}` : "invalid"; }
+  const s = String(v).trim(); let m;
+  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/))) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+  if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return `${m[1]}-${m[2]}-${m[3]}`;
+  return "invalid";
+};
+const yes = (v: any) => ["sim", "s", "x", "true", "1", "yes"].includes(norm(v));
+const mapStatus = (v: any, allowed: string[]) => { const n = norm(v || "ativo"); const m: Record<string, string> = { ativa: "ativo", inativa: "inativo", concluida: "concluido", desligada: "desligado", trancada: "trancado" }; const r = m[n] || n; return allowed.includes(r) ? r : null; };
+
+type Outcome = "novo" | "alterado" | "sem_alteracao" | "ausente" | "erro";
+interface Row { line: number; enrollment: string; outcome: Outcome; data?: any; before?: any; message?: string; diffs?: string[]; extra?: any; }
+
+const LABEL: Record<Outcome, string> = { novo: "Novos", alterado: "Alterados", sem_alteracao: "Sem alterações", ausente: "Ausentes na nova base", erro: "Inconsistências" };
+
+export const ImportTab = ({ orgId, orgLabel }: { orgId: string; orgLabel: string }) => {
+  const { user } = useAuth();
+  const { data: programs } = usePrograms(orgId);
+  const [base, setBase] = useState<"alunos" | "professores">("alunos");
+  const [programId, setProgramId] = useState("__none__");
+  const [period, setPeriod] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [rows, setRows] = useState<Row[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [show, setShow] = useState<Outcome | null>(null);
+
+  const { data: history, refetch: refetchHistory } = useQuery({
+    queryKey: ["sd-imports", orgId],
+    queryFn: async () => (await db.from("sd_imports").select("*, program:sd_programs(name)").eq("organization_id", orgId).order("created_at", { ascending: false })).data || [],
+  });
+
+  const counts = useMemo(() => { const c: Record<string, number> = {}; (rows || []).forEach((r) => (c[r.outcome] = (c[r.outcome] || 0) + 1)); return c; }, [rows]);
+  const processed = (rows || []).filter((r) => r.outcome !== "ausente").length;
+
+  const process = async () => {
+    if (!file) return toast.error("Selecione o arquivo Excel");
+    if (!period.trim()) return toast.error("Informe o período/semestre");
+    setBusy(true); setRows(null);
+    try {
+      const wb = XLSX.read(await file.arrayBuffer(), { cellDates: true });
+      const raw: any[] = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+      if (!raw.length) throw new Error("Planilha vazia");
+      const sheet = raw.map((r) => Object.fromEntries(Object.entries(r).map(([k, v]) => [norm(k), typeof v === "string" ? v.trim() : v])));
+      const progByName = new Map<string, any>(); (programs || []).forEach((p: any) => { progByName.set(norm(p.name), p); if (p.sigla) progByName.set(norm(p.sigla), p); });
+      const fixedProg = programId !== "__none__" ? (programs || []).find((p: any) => p.id === programId) : null;
+      const seen = new Set<string>(); const out: Row[] = [];
+
+      if (base === "alunos") {
+        const [{ data: existing }, { data: faculty }] = await Promise.all([
+          db.from("sd_students").select("*").eq("organization_id", orgId),
+          db.from("sd_faculty").select("id, enrollment, full_name, can_advise").eq("organization_id", orgId),
+        ]);
+        const byEnr = new Map<string, any>((existing || []).map((s: any) => [s.enrollment, s]));
+        const advByEnr = new Map<string, any>((faculty || []).map((f: any) => [String(f.enrollment), f]));
+        const advByName = new Map<string, any>((faculty || []).map((f: any) => [norm(f.full_name), f]));
+        sheet.forEach((r, i) => {
+          const line = i + 2; const enrollment = String(pick(r, "enrollment") ?? "").trim(); const errs: string[] = [];
+          if (!enrollment) errs.push("matrícula vazia"); else if (seen.has(enrollment)) errs.push("matrícula repetida no arquivo"); seen.add(enrollment);
+          const full_name = String(pick(r, "full_name") ?? "").trim(); if (!full_name) errs.push("nome vazio");
+          const progRaw = pick(r, "program"); const prog = progRaw ? progByName.get(norm(progRaw)) : fixedProg;
+          if (!prog) errs.push(progRaw ? `programa não cadastrado: ${progRaw}` : "programa não informado");
+          else if (fixedProg && prog.id !== fixedProg.id) errs.push(`programa diferente do selecionado: ${progRaw}`);
+          const lv = norm(pick(r, "level")); const level = lv.startsWith("mest") || lv === "ms" ? "mestrado" : lv.startsWith("dout") || lv === "dr" ? "doutorado" : null;
+          if (!level) errs.push("nível deve ser Mestrado ou Doutorado");
+          const entry_date = parseDate(pick(r, "entry_date")); if (entry_date === "invalid") errs.push("data de ingresso inválida");
+          const advRaw = pick(r, "advisor"); let advisor_id: string | null = null;
+          if (advRaw) { const a = advByEnr.get(String(advRaw).trim()) || advByName.get(norm(advRaw)); if (!a) errs.push(`orientador não encontrado na base de professores: ${advRaw}`); else advisor_id = a.id; }
+          const status = mapStatus(pick(r, "status"), ["ativo", "inativo", "trancado", "concluido", "desligado"]); if (!status) errs.push("situação inválida");
+          if (errs.length) return out.push({ line, enrollment, outcome: "erro", message: errs.join("; ") });
+          const data = { enrollment, full_name, program_id: prog.id, level, entry_date, advisor_id, status };
+          const before = byEnr.get(enrollment);
+          if (!before) return out.push({ line, enrollment, outcome: "novo", data });
+          const diffs = (["full_name", "program_id", "level", "entry_date", "advisor_id", "status"] as const).filter((k) => (before[k] ?? null) !== (data[k] ?? null));
+          out.push({ line, enrollment, outcome: diffs.length ? "alterado" : "sem_alteracao", data, before, diffs });
+        });
+        (existing || []).filter((s: any) => !seen.has(s.enrollment) && (!fixedProg || s.program_id === fixedProg.id) && s.status === "ativo")
+          .forEach((s: any) => out.push({ line: 0, enrollment: s.enrollment, outcome: "ausente", before: s, message: s.full_name }));
+      } else {
+        const { data: cfg } = await db.from("sd_settings").select("value").eq("organization_id", orgId).eq("key", "contract_types").maybeSingle();
+        const contracts = Object.keys(cfg?.value || {});
+        const [{ data: existing }, { data: fp }] = await Promise.all([
+          db.from("sd_faculty").select("*").eq("organization_id", orgId),
+          db.from("sd_faculty_programs").select("faculty_id, program_id").eq("organization_id", orgId),
+        ]);
+        const byEnr = new Map<string, any>((existing || []).map((s: any) => [s.enrollment, s]));
+        sheet.forEach((r, i) => {
+          const line = i + 2; const enrollment = String(pick(r, "enrollment") ?? "").trim(); const errs: string[] = [];
+          if (!enrollment) errs.push("matrícula vazia"); else if (seen.has(enrollment)) errs.push("matrícula repetida no arquivo"); seen.add(enrollment);
+          const full_name = String(pick(r, "full_name") ?? "").trim(); if (!full_name) errs.push("nome vazio");
+          const ctRaw = String(pick(r, "contract_type") ?? "").trim().toUpperCase(); const contract_type = ctRaw || null;
+          if (contract_type && contracts.length && !contracts.includes(contract_type)) errs.push(`tipo de contrato não configurado: ${ctRaw}`);
+          const bond_start = parseDate(pick(r, "bond_start")); if (bond_start === "invalid") errs.push("data de início inválida");
+          const progRaw = String(pick(r, "programs") ?? ""); const progIds: string[] = [];
+          progRaw.split(/[;,/|]/).map((x) => x.trim()).filter(Boolean).forEach((p) => { const f = progByName.get(norm(p)); if (f) progIds.push(f.id); else errs.push(`programa não cadastrado: ${p}`); });
+          if (fixedProg && !progIds.includes(fixedProg.id)) progIds.push(fixedProg.id);
+          const status = mapStatus(pick(r, "status"), ["ativo", "inativo"]); if (!status) errs.push("situação inválida");
+          const advRaw = pick(r, "can_advise");
+          if (errs.length) return out.push({ line, enrollment, outcome: "erro", message: errs.join("; ") });
+          const before = byEnr.get(enrollment);
+          const data: any = { enrollment, full_name, contract_type, bond_start, status, can_advise: advRaw !== undefined ? yes(advRaw) : before?.can_advise ?? false };
+          const curProgs = before ? (fp || []).filter((x: any) => x.faculty_id === before.id).map((x: any) => x.program_id) : [];
+          const newProgs = progIds.filter((p) => !curProgs.includes(p));
+          if (!before) return out.push({ line, enrollment, outcome: "novo", data, extra: { progIds } });
+          const diffs: string[] = (["full_name", "contract_type", "bond_start", "status", "can_advise"] as const).filter((k) => (before[k] ?? null) !== (data[k] ?? null));
+          if (newProgs.length) diffs.push("programas");
+          out.push({ line, enrollment, outcome: diffs.length ? "alterado" : "sem_alteracao", data, before, diffs, extra: { progIds: newProgs } });
+        });
+        const inScope = (f: any) => !fixedProg || (fp || []).some((x: any) => x.faculty_id === f.id && x.program_id === fixedProg.id);
+        (existing || []).filter((f: any) => !seen.has(f.enrollment) && f.status === "ativo" && inScope(f))
+          .forEach((f: any) => out.push({ line: 0, enrollment: f.enrollment, outcome: "ausente", before: f, message: f.full_name }));
+      }
+      setRows(out); setShow(null);
+    } catch (e: any) { toast.error("Não foi possível ler o arquivo: " + e.message); }
+    finally { setBusy(false); }
+  };
+
+  const confirm = async () => {
+    if (!rows || !file || !user) return;
+    setBusy(true);
+    try {
+      const path = `${orgId}/imports/${base}/${Date.now()}-${file.name.replace(/[^\w.\-]/g, "_")}`;
+      const up = await supabase.storage.from("servicedesk").upload(path, file);
+      if (up.error) throw up.error;
+      const { data: imp, error } = await db.from("sd_imports").insert({
+        organization_id: orgId, base_type: base, program_id: programId !== "__none__" ? programId : null, period: period.trim(),
+        file_name: file.name, storage_path: path, total_count: processed, new_count: counts.novo || 0, changed_count: counts.alterado || 0,
+        unchanged_count: counts.sem_alteracao || 0, absent_count: counts.ausente || 0, error_count: counts.erro || 0, imported_by: user.id,
+      }).select().single();
+      if (error) throw error;
+      const table = base === "alunos" ? "sd_students" : "sd_faculty";
+      const toWrite = rows.filter((r) => r.outcome === "novo" || r.outcome === "alterado" || r.outcome === "sem_alteracao")
+        .map((r) => ({ organization_id: orgId, ...r.data, absent_in_last_import: false, last_import_id: imp.id }));
+      for (let i = 0; i < toWrite.length; i += 200) {
+        const { error: e } = await db.from(table).upsert(toWrite.slice(i, i + 200), { onConflict: "organization_id,enrollment" });
+        if (e) throw e;
+      }
+      const absentIds = rows.filter((r) => r.outcome === "ausente").map((r) => r.before.id);
+      if (absentIds.length) { const { error: e } = await db.from(table).update({ absent_in_last_import: true }).in("id", absentIds); if (e) throw e; }
+      if (base === "professores") {
+        const { data: fac } = await db.from("sd_faculty").select("id, enrollment").eq("organization_id", orgId);
+        const idByEnr = new Map<string, string>((fac || []).map((f: any) => [f.enrollment, f.id]));
+        const links = rows.flatMap((r) => (r.extra?.progIds || []).map((p: string) => ({ organization_id: orgId, faculty_id: idByEnr.get(r.enrollment), program_id: p }))).filter((l) => l.faculty_id);
+        if (links.length) { const { error: e } = await db.from("sd_faculty_programs").upsert(links, { onConflict: "faculty_id,program_id", ignoreDuplicates: true }); if (e) throw e; }
+      }
+      const recs = rows.map((r) => ({ import_id: imp.id, organization_id: orgId, enrollment: r.enrollment, outcome: r.outcome, before_data: r.before || null, after_data: r.data || null, message: r.message || (r.diffs?.length ? "Campos: " + r.diffs.join(", ") : null) }));
+      for (let i = 0; i < recs.length; i += 500) { const { error: e } = await db.from("sd_import_records").insert(recs.slice(i, i + 500)); if (e) throw e; }
+      toast.success("Importação confirmada e registrada");
+      setRows(null); setFile(null); refetchHistory();
+    } catch (e: any) { toast.error("Erro na importação: " + e.message); }
+    finally { setBusy(false); }
+  };
+
+  const progName = programId !== "__none__" ? (programs || []).find((p: any) => p.id === programId)?.name : null;
+
+  return (
+    <div className="space-y-6">
+      <Card className="rounded-xl">
+        <CardHeader><CardTitle className="text-base">Nova importação</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div><Label>Instituição</Label><Input className="mt-1" value={orgLabel} disabled /></div>
+            <div><Label>Base</Label><select className={`${sel} mt-1 w-full`} value={base} onChange={(e) => { setBase(e.target.value as any); setRows(null); }}><option value="alunos">Alunos</option><option value="professores">Professores</option></select></div>
+            <div><Label>Programa (quando aplicável)</Label><select className={`${sel} mt-1 w-full`} value={programId} onChange={(e) => { setProgramId(e.target.value); setRows(null); }}>
+              <option value="__none__">Todos / informado na planilha</option>{(programs || []).map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+            <div><Label>Período/Semestre</Label><Input className="mt-1" value={period} onChange={(e) => setPeriod(e.target.value)} placeholder="Ex.: 2027/1" /></div>
+          </div>
+          <div><Label>Arquivo Excel</Label><Input className="mt-1" type="file" accept=".xlsx,.xls,.csv" onChange={(e) => { setFile(e.target.files?.[0] || null); setRows(null); }} /></div>
+          <p className="text-xs text-muted-foreground">
+            {base === "alunos" ? "Colunas: Matrícula, Nome, Programa, Nível (Mestrado/Doutorado), Ingresso, Orientador (matrícula ou nome), Situação." : "Colunas: Matrícula, Nome, Contrato, Início do vínculo, Programas (separados por ;), Pode orientar (Sim/Não), Situação."}
+            {" "}Quem não estiver no arquivo é apenas sinalizado como ausente — ninguém é inativado automaticamente.
+          </p>
+          <Button onClick={process} disabled={busy}>{busy && !rows ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />} Validar e comparar</Button>
+        </CardContent>
+      </Card>
+
+      {rows && (
+        <Card className="rounded-xl border-primary/40">
+          <CardHeader><CardTitle className="text-base">Prévia · {orgLabel} · {base === "alunos" ? "Alunos" : "Professores"}{progName ? ` · ${progName}` : ""} · {period} · {file?.name}</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <p className="font-medium">{processed} registros processados</p>
+            <div className="flex flex-wrap gap-2">
+              {(Object.keys(LABEL) as Outcome[]).map((k) => (
+                <Button key={k} size="sm" variant={show === k ? "default" : "outline"} onClick={() => setShow(show === k ? null : k)}>
+                  {counts[k] || 0} {LABEL[k].toLowerCase()}
+                </Button>
+              ))}
+            </div>
+            {show && (
+              <div className="max-h-80 overflow-y-auto rounded-lg border border-border text-sm">
+                {rows.filter((r) => r.outcome === show).map((r, i) => (
+                  <div key={i} className="px-3 py-2 border-b border-border/50 last:border-0">
+                    <span className="font-medium">{r.enrollment || "(sem matrícula)"}</span>{r.line > 0 && <span className="text-muted-foreground"> · linha {r.line}</span>}
+                    {r.data?.full_name && <span> · {r.data.full_name}</span>}
+                    {r.message && <span className="text-muted-foreground"> · {r.message}</span>}
+                    {r.diffs?.length ? <div className="text-xs text-muted-foreground">{r.diffs.map((d) => `${d}: ${String(r.before?.[d] ?? "—")} → ${String(r.data?.[d] ?? "—")}`).join(" | ")}</div> : null}
+                  </div>
+                ))}
+                {!rows.some((r) => r.outcome === show) && <p className="p-3 text-muted-foreground">Nenhum registro.</p>}
+              </div>
+            )}
+            {(counts.erro || 0) > 0 && <p className="text-sm flex items-center gap-1 text-destructive"><AlertTriangle className="w-4 h-4" /> Linhas com inconsistência não serão gravadas; o restante pode ser confirmado.</p>}
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShow("alterado")}>Revisar alterações</Button>
+              <Button onClick={confirm} disabled={busy}>{busy && <Loader2 className="w-4 h-4 mr-1 animate-spin" />} Confirmar importação</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card className="rounded-xl">
+        <CardHeader><CardTitle className="text-base">Histórico de importações</CardTitle></CardHeader>
+        <CardContent className="space-y-2">
+          {(history || []).map((h: any) => (
+            <div key={h.id} className="flex flex-wrap items-center gap-2 text-sm border-b border-border/50 pb-2 last:border-0">
+              <span className="font-medium">{new Date(h.created_at).toLocaleString("pt-BR")}</span>
+              <Badge variant="secondary">{h.base_type}</Badge>{h.program?.name && <span>{h.program.name}</span>}<span>{h.period}</span>
+              <span className="text-muted-foreground truncate">{h.file_name}</span>
+              <span className="text-xs text-muted-foreground">{h.total_count} proc. · {h.new_count} novos · {h.changed_count} alt. · {h.unchanged_count} iguais · {h.absent_count} ausentes · {h.error_count} incons.</span>
+              {h.storage_path && <Button size="sm" variant="ghost" onClick={async () => { const { data } = await supabase.storage.from("servicedesk").createSignedUrl(h.storage_path, 60); if (data) window.open(data.signedUrl); }}>Baixar arquivo</Button>}
+            </div>
+          ))}
+          {!history?.length && <p className="text-sm text-muted-foreground">Nenhuma importação registrada.</p>}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
