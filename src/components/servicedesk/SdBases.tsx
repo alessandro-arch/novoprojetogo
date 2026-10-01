@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import * as XLSX from "xlsx";
+import { readSheet, reconcileStudents, reconcileFaculty, type Outcome, type Row } from "@/lib/sd-import";
 import { Plus, Upload, Loader2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -152,29 +152,6 @@ export const FacultyTab = ({ orgId }: { orgId: string }) => {
 };
 
 /* ---------------- Importação ---------------- */
-const norm = (s: any) => String(s ?? "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
-const ALIASES: Record<string, string[]> = {
-  enrollment: ["matricula", "registro", "id"], full_name: ["nome", "nome_completo"], program: ["programa", "ppg"],
-  level: ["nivel", "curso"], entry_date: ["ingresso", "data_ingresso", "data_de_ingresso"], advisor: ["orientador", "matricula_orientador"],
-  status: ["situacao", "status"], contract_type: ["contrato", "tipo_contrato", "tipo_de_contrato"], bond_start: ["inicio", "inicio_vinculo", "inicio_do_vinculo", "data_inicio"],
-  programs: ["programas", "programa", "ppg"], can_advise: ["pode_orientar", "orientador"],
-};
-const pick = (row: Record<string, any>, field: string) => { for (const a of ALIASES[field]) if (row[a] !== undefined && row[a] !== "") return row[a]; return undefined; };
-const parseDate = (v: any): string | null | "invalid" => {
-  if (v === undefined || v === null || v === "") return null;
-  if (v instanceof Date) return v.toISOString().slice(0, 10);
-  if (typeof v === "number") { const d = XLSX.SSF.parse_date_code(v); return d ? `${d.y}-${String(d.m).padStart(2, "0")}-${String(d.d).padStart(2, "0")}` : "invalid"; }
-  const s = String(v).trim(); let m;
-  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/))) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
-  if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return `${m[1]}-${m[2]}-${m[3]}`;
-  return "invalid";
-};
-const yes = (v: any) => ["sim", "s", "x", "true", "1", "yes"].includes(norm(v));
-const mapStatus = (v: any, allowed: string[]) => { const n = norm(v || "ativo"); const m: Record<string, string> = { ativa: "ativo", inativa: "inativo", concluida: "concluido", desligada: "desligado", trancada: "trancado" }; const r = m[n] || n; return allowed.includes(r) ? r : null; };
-
-type Outcome = "novo" | "alterado" | "sem_alteracao" | "ausente" | "erro";
-interface Row { line: number; enrollment: string; outcome: Outcome; data?: any; before?: any; message?: string; diffs?: string[]; extra?: any; }
-
 const LABEL: Record<Outcome, string> = { novo: "Novos", alterado: "Alterados", sem_alteracao: "Sem alterações", ausente: "Ausentes na nova base", erro: "Inconsistências" };
 
 export const ImportTab = ({ orgId, orgLabel }: { orgId: string; orgLabel: string }) => {
