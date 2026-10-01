@@ -2330,18 +2330,21 @@ export type Database = {
           id: string
           organization_id: string
           program_id: string
+          relationship_type: string | null
         }
         Insert: {
           faculty_id: string
           id?: string
           organization_id: string
           program_id: string
+          relationship_type?: string | null
         }
         Update: {
           faculty_id?: string
           id?: string
           organization_id?: string
           program_id?: string
+          relationship_type?: string | null
         }
         Relationships: [
           {
