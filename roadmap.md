@@ -6,3 +6,4 @@
 - [ ] Fase 4 — Notificações Resend, alerta 7 dias, prorrogação, revogação, dashboards por grupo
 - [x] Homologação Fase 2 (testes automáticos + prazos no banco); 7º programa removido
 - Requisito Fase 3: dados institucionais somente leitura + "Informar divergência"
+- Requisito Fase 3: aluno cadastra com e-mail pessoal; professor só com e-mail do domínio da instituição (UVV @uvv.br)
