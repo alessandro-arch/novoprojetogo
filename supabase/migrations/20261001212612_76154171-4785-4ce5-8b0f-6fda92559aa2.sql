@@ -1,0 +1,1 @@
+ALTER TABLE public.sd_faculty ADD COLUMN IF NOT EXISTS source_period text; NOTIFY pgrst, 'reload schema';
