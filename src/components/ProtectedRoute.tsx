@@ -5,9 +5,10 @@ import { Loader2 } from "lucide-react";
 interface ProtectedRouteProps {
   allowedRoles?: string[];
   children?: React.ReactNode;
+  loginPath?: string;
 }
 
-const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ allowedRoles, children, loginPath = "/login" }: ProtectedRouteProps) => {
   const { user, session, loading, globalRole, membership } = useAuth();
 
   if (loading) {
