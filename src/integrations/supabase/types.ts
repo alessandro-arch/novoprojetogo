@@ -2265,6 +2265,108 @@ export type Database = {
         }
         Relationships: []
       }
+      sd_faculty: {
+        Row: {
+          absent_in_last_import: boolean
+          bond_deadline: string | null
+          bond_start: string | null
+          can_advise: boolean
+          contract_type: string | null
+          created_at: string
+          enrollment: string
+          full_name: string
+          id: string
+          last_import_id: string | null
+          organization_id: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          absent_in_last_import?: boolean
+          bond_deadline?: string | null
+          bond_start?: string | null
+          can_advise?: boolean
+          contract_type?: string | null
+          created_at?: string
+          enrollment: string
+          full_name: string
+          id?: string
+          last_import_id?: string | null
+          organization_id: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          absent_in_last_import?: boolean
+          bond_deadline?: string | null
+          bond_start?: string | null
+          can_advise?: boolean
+          contract_type?: string | null
+          created_at?: string
+          enrollment?: string
+          full_name?: string
+          id?: string
+          last_import_id?: string | null
+          organization_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sd_faculty_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sd_faculty_programs: {
+        Row: {
+          faculty_id: string
+          id: string
+          organization_id: string
+          program_id: string
+        }
+        Insert: {
+          faculty_id: string
+          id?: string
+          organization_id: string
+          program_id: string
+        }
+        Update: {
+          faculty_id?: string
+          id?: string
+          organization_id?: string
+          program_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sd_faculty_programs_faculty_id_fkey"
+            columns: ["faculty_id"]
+            isOneToOne: false
+            referencedRelation: "sd_faculty"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sd_faculty_programs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sd_faculty_programs_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "sd_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sd_group_members: {
         Row: {
           created_at: string
@@ -2348,6 +2450,132 @@ export type Database = {
           },
         ]
       }
+      sd_import_records: {
+        Row: {
+          after_data: Json | null
+          before_data: Json | null
+          created_at: string
+          enrollment: string | null
+          id: string
+          import_id: string
+          message: string | null
+          organization_id: string
+          outcome: string
+        }
+        Insert: {
+          after_data?: Json | null
+          before_data?: Json | null
+          created_at?: string
+          enrollment?: string | null
+          id?: string
+          import_id: string
+          message?: string | null
+          organization_id: string
+          outcome: string
+        }
+        Update: {
+          after_data?: Json | null
+          before_data?: Json | null
+          created_at?: string
+          enrollment?: string | null
+          id?: string
+          import_id?: string
+          message?: string | null
+          organization_id?: string
+          outcome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sd_import_records_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "sd_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sd_import_records_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sd_imports: {
+        Row: {
+          absent_count: number
+          base_type: string
+          changed_count: number
+          created_at: string
+          error_count: number
+          file_name: string
+          id: string
+          imported_by: string
+          new_count: number
+          organization_id: string
+          period: string | null
+          program_id: string | null
+          status: string
+          storage_path: string | null
+          summary: Json | null
+          total_count: number
+          unchanged_count: number
+        }
+        Insert: {
+          absent_count?: number
+          base_type: string
+          changed_count?: number
+          created_at?: string
+          error_count?: number
+          file_name: string
+          id?: string
+          imported_by?: string
+          new_count?: number
+          organization_id: string
+          period?: string | null
+          program_id?: string | null
+          status?: string
+          storage_path?: string | null
+          summary?: Json | null
+          total_count?: number
+          unchanged_count?: number
+        }
+        Update: {
+          absent_count?: number
+          base_type?: string
+          changed_count?: number
+          created_at?: string
+          error_count?: number
+          file_name?: string
+          id?: string
+          imported_by?: string
+          new_count?: number
+          organization_id?: string
+          period?: string | null
+          program_id?: string | null
+          status?: string
+          storage_path?: string | null
+          summary?: Json | null
+          total_count?: number
+          unchanged_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sd_imports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sd_imports_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "sd_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sd_members: {
         Row: {
           created_at: string
@@ -2379,6 +2607,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "sd_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sd_programs: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          organization_id: string
+          sigla: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          organization_id: string
+          sigla?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          organization_id?: string
+          sigla?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sd_programs_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -2423,6 +2689,85 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sd_students: {
+        Row: {
+          absent_in_last_import: boolean
+          advisor_id: string | null
+          created_at: string
+          current_deadline: string | null
+          enrollment: string
+          entry_date: string | null
+          full_name: string
+          id: string
+          last_import_id: string | null
+          level: string
+          organization_id: string
+          program_id: string | null
+          regular_deadline: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          absent_in_last_import?: boolean
+          advisor_id?: string | null
+          created_at?: string
+          current_deadline?: string | null
+          enrollment: string
+          entry_date?: string | null
+          full_name: string
+          id?: string
+          last_import_id?: string | null
+          level: string
+          organization_id: string
+          program_id?: string | null
+          regular_deadline?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          absent_in_last_import?: boolean
+          advisor_id?: string | null
+          created_at?: string
+          current_deadline?: string | null
+          enrollment?: string
+          entry_date?: string | null
+          full_name?: string
+          id?: string
+          last_import_id?: string | null
+          level?: string
+          organization_id?: string
+          program_id?: string | null
+          regular_deadline?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sd_students_advisor_id_fkey"
+            columns: ["advisor_id"]
+            isOneToOne: false
+            referencedRelation: "sd_faculty"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sd_students_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sd_students_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "sd_programs"
             referencedColumns: ["id"]
           },
         ]
