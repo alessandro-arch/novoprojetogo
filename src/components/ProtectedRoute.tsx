@@ -5,9 +5,10 @@ import { Loader2 } from "lucide-react";
 interface ProtectedRouteProps {
   allowedRoles?: string[];
   children?: React.ReactNode;
+  loginPath?: string;
 }
 
-const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ allowedRoles, children, loginPath = "/login" }: ProtectedRouteProps) => {
   const { user, session, loading, globalRole, membership } = useAuth();
 
   if (loading) {
@@ -23,13 +24,13 @@ const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) => {
 
   // Check both user existence AND valid session with non-expired token
   if (!user || !session) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={loginPath} replace />;
   }
 
   // Verify token is not expired
   const expiresAt = session.expires_at;
   if (expiresAt && expiresAt * 1000 < Date.now()) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={loginPath} replace />;
   }
 
   if (allowedRoles && allowedRoles.length > 0) {
