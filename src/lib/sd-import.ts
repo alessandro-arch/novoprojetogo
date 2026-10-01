@@ -120,7 +120,7 @@ export function reconcileStudents(sheet: any[], ctx: { programs: any[]; fixedPro
     if (!before) { out.push({ line, enrollment, outcome: "novo", data, message: advisorNote || undefined }); return; }
     const diffs: string[] = (["full_name", "program_id", "level", "entry_date", "advisor_id", "status", "expected_end", "phone", "email", "turma", "scholarship"] as const).filter((k) => (before[k] ?? null) !== (data[k] ?? null));
     if (cpfDigits && before.cpf_last4 && cpfDigits.slice(-4) !== before.cpf_last4) diffs.push("cpf");
-    out.push({ line, enrollment, outcome: diffs.length ? "alterado" : "sem_alteracao", data, before, diffs });
+    out.push({ line, enrollment, outcome: diffs.length ? "alterado" : "sem_alteracao", data, before, diffs, message: advisorNote || undefined });
   });
   ctx.existing.filter((s) => !seen.has(s.enrollment) && (!fixedProg || s.program_id === fixedProg.id) && s.status === "ativo")
     .forEach((s) => out.push({ line: 0, enrollment: s.enrollment, outcome: "ausente", before: s, message: s.full_name }));
