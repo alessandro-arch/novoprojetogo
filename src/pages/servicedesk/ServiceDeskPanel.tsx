@@ -219,11 +219,13 @@ const MemberCard = ({ member, onUpdate, onRemove }: any) => {
           <p className="text-xs text-muted-foreground">{member.profile?.email || "E-mail não disponível"}</p>
           {!editing && <p className="mt-1 text-xs">{ROLE_LABELS[member.role] || member.role} · {member.status}</p>}
         </div>
-        <Button size="sm" variant="outline" onClick={() => setEditing((value) => !value)}><Pencil className="mr-1 h-4 w-4" /> Editar</Button>
-        <AlertDialog>
-          <AlertDialogTrigger asChild><Button size="sm" variant="outline" className="text-destructive"><Trash2 className="mr-1 h-4 w-4" /> Excluir</Button></AlertDialogTrigger>
-          <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Excluir membro?</AlertDialogTitle><AlertDialogDescription>Esta pessoa será removida da equipe da instituição.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => onRemove(member.id)} className="bg-destructive text-destructive-foreground">Excluir</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
-        </AlertDialog>
+        <div className="flex w-full gap-2 sm:w-auto">
+          <Button className="flex-1 sm:flex-none" size="sm" variant="outline" onClick={() => setEditing((value) => !value)}><Pencil className="mr-1 h-4 w-4" /> Editar</Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild><Button className="flex-1 text-destructive sm:flex-none" size="sm" variant="outline"><Trash2 className="mr-1 h-4 w-4" /> Excluir</Button></AlertDialogTrigger>
+            <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Excluir membro?</AlertDialogTitle><AlertDialogDescription>Esta pessoa será removida da equipe da instituição.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => onRemove(member.id)} className="bg-destructive text-destructive-foreground">Excluir</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
       {editing && <div className="flex flex-wrap items-end gap-3 border-t pt-3">
         <div><Label>Papel</Label><select className="mt-1 block h-9 rounded-md border border-input bg-background px-2 text-sm" value={role} onChange={(e) => setRole(e.target.value)}>{Object.entries(ROLE_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></div>
@@ -267,6 +269,12 @@ const GroupsTab = ({ orgId }: { orgId: string }) => {
     if (error) return toast.error("Erro: " + error.message);
     toast.success("Removido"); refetch();
   };
+  const moveMember = async (id: string, groupId: string) => {
+    const { error } = await db.from("sd_group_members").update({ group_id: groupId }).eq("id", id);
+    if (error) return toast.error("Erro: " + error.message);
+    toast.success("Integrante atualizado");
+    await refetch();
+  };
   const updateGroup = async (id: string, patch: any) => {
     const { error } = await db.from("sd_groups").update(patch).eq("id", id);
     if (error) return toast.error("Erro: " + error.message);
@@ -290,14 +298,14 @@ const GroupsTab = ({ orgId }: { orgId: string }) => {
       {isLoading && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Carregando grupos...</div>}
       {queryError && <p className="text-sm text-destructive">Não foi possível carregar a lista de grupos.</p>}
       <div className="grid gap-4 md:grid-cols-2">
-        {(data || []).map((g: any) => <GroupCard key={g.id} g={g} onAdd={addMember} onRemoveMember={removeMember} onUpdate={updateGroup} onRemoveGroup={removeGroup} />)}
+        {(data || []).map((g: any) => <GroupCard key={g.id} g={g} groups={data || []} onAdd={addMember} onMoveMember={moveMember} onRemoveMember={removeMember} onUpdate={updateGroup} onRemoveGroup={removeGroup} />)}
       </div>
       {!isLoading && !queryError && !data?.length && <p className="text-sm text-muted-foreground">Nenhum grupo cadastrado.</p>}
     </div>
   );
 };
 
-const GroupCard = ({ g, onAdd, onRemoveMember, onUpdate, onRemoveGroup }: any) => {
+const GroupCard = ({ g, groups, onAdd, onMoveMember, onRemoveMember, onUpdate, onRemoveGroup }: any) => {
   const [email, setEmail] = useState("");
   const [editing, setEditing] = useState(false);
   const [code, setCode] = useState(g.code);
@@ -309,17 +317,12 @@ const GroupCard = ({ g, onAdd, onRemoveMember, onUpdate, onRemoveGroup }: any) =
   };
   return (
     <Card className="rounded-xl">
-      <CardHeader className="space-y-3"><div className="flex items-start justify-between gap-3"><CardTitle className="text-base">{g.code} <span className="text-muted-foreground font-normal text-sm">· {g.description || g.name}</span></CardTitle><div className="flex gap-1"><Button size="sm" variant="outline" onClick={() => setEditing((value) => !value)}><Pencil className="mr-1 h-4 w-4" /> Editar</Button><AlertDialog><AlertDialogTrigger asChild><Button size="sm" variant="outline" className="text-destructive"><Trash2 className="mr-1 h-4 w-4" /> Excluir</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Excluir grupo?</AlertDialogTitle><AlertDialogDescription>O grupo e sua lista de integrantes serão excluídos.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => onRemoveGroup(g.id)} className="bg-destructive text-destructive-foreground">Excluir</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div></div>
+      <CardHeader className="space-y-3"><div className="flex flex-wrap items-start justify-between gap-3"><CardTitle className="text-base">{g.code} <span className="text-muted-foreground font-normal text-sm">· {g.description || g.name}</span></CardTitle><div className="flex w-full gap-2 sm:w-auto"><Button className="flex-1 sm:flex-none" size="sm" variant="outline" onClick={() => setEditing((value) => !value)}><Pencil className="mr-1 h-4 w-4" /> Editar grupo</Button><AlertDialog><AlertDialogTrigger asChild><Button className="flex-1 text-destructive sm:flex-none" size="sm" variant="outline"><Trash2 className="mr-1 h-4 w-4" /> Excluir grupo</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Excluir grupo?</AlertDialogTitle><AlertDialogDescription>O grupo e sua lista de integrantes serão excluídos.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => onRemoveGroup(g.id)} className="bg-destructive text-destructive-foreground">Excluir</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div></div>
         {editing && <div className="grid gap-2 sm:grid-cols-[140px_1fr_auto_auto]"><Input value={code} onChange={(e) => setCode(e.target.value)} aria-label="Código do grupo" /><Input value={name} onChange={(e) => setName(e.target.value)} aria-label="Nome do grupo" /><Button size="sm" onClick={save}>Salvar</Button><Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancelar</Button></div>}
       </CardHeader>
       <CardContent className="space-y-2">
         <p className="text-xs font-medium text-muted-foreground">Integrantes ({g.members.length})</p>
-        {g.members.map((m: any) => (
-          <div key={m.id} className="flex items-center justify-between text-sm">
-            <span>{m.profile?.full_name || m.profile?.email || "Pessoa sem perfil disponível"}</span>
-            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => onRemoveMember(m.id)} aria-label="Excluir integrante"><Trash2 className="mr-1 h-4 w-4" /> Excluir</Button>
-          </div>
-        ))}
+        {g.members.map((m: any) => <GroupMemberRow key={m.id} member={m} currentGroupId={g.id} groups={groups} onMove={onMoveMember} onRemove={onRemoveMember} />)}
         {!g.members.length && <p className="text-xs text-muted-foreground">Sem integrantes.</p>}
         <div className="flex gap-2 pt-2">
           <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-mail do integrante" />
@@ -327,6 +330,37 @@ const GroupCard = ({ g, onAdd, onRemoveMember, onUpdate, onRemoveGroup }: any) =
         </div>
       </CardContent>
     </Card>
+  );
+};
+
+const GroupMemberRow = ({ member, currentGroupId, groups, onMove, onRemove }: any) => {
+  const [editing, setEditing] = useState(false);
+  const [groupId, setGroupId] = useState(currentGroupId);
+  const save = async () => {
+    if (groupId !== currentGroupId) await onMove(member.id, groupId);
+    setEditing(false);
+  };
+  return (
+    <div className="rounded-md border border-border p-2 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-medium">{member.profile?.full_name || "Nome não informado"}</p>
+          <p className="truncate text-xs text-muted-foreground">{member.profile?.email || "E-mail não disponível"}</p>
+        </div>
+        <div className="flex w-full gap-2 sm:w-auto">
+          <Button className="flex-1 sm:flex-none" size="sm" variant="outline" onClick={() => setEditing((value) => !value)}><Pencil className="mr-1 h-4 w-4" /> Editar</Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild><Button className="flex-1 text-destructive sm:flex-none" size="sm" variant="outline"><Trash2 className="mr-1 h-4 w-4" /> Excluir</Button></AlertDialogTrigger>
+            <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Excluir integrante?</AlertDialogTitle><AlertDialogDescription>Esta pessoa será removida deste grupo responsável.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => onRemove(member.id)} className="bg-destructive text-destructive-foreground">Excluir</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </div>
+      {editing && <div className="mt-3 flex flex-wrap items-end gap-2 border-t pt-3">
+        <div className="min-w-[200px] flex-1"><Label>Grupo responsável</Label><select className="mt-1 block h-9 w-full rounded-md border border-input bg-background px-2 text-sm" value={groupId} onChange={(e) => setGroupId(e.target.value)}>{groups.map((group: any) => <option key={group.id} value={group.id}>{group.code} · {group.name}</option>)}</select></div>
+        <Button size="sm" onClick={save}>Salvar</Button>
+        <Button size="sm" variant="ghost" onClick={() => { setGroupId(currentGroupId); setEditing(false); }}>Cancelar</Button>
+      </div>}
+    </div>
   );
 };
 
