@@ -252,7 +252,18 @@ export const ImportTab = ({ orgId, orgLabel }: { orgId: string; orgLabel: string
               <option value="__none__">Selecione o programa</option>{(programs || []).filter((p: any) => p.status !== "inativo").map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
             <div><Label>Período/Semestre</Label><Input className="mt-1" value={period} onChange={(e) => setPeriod(e.target.value)} placeholder="Ex.: 2027/1" /></div>
           </div>
-          <div><Label>Arquivo Excel</Label><Input className="mt-1" type="file" accept=".xlsx,.xls,.csv" onChange={(e) => { setFile(e.target.files?.[0] || null); setRows(null); }} /></div>
+          <div>
+            <Label>Arquivo Excel</Label>
+            <div className="mt-1 flex items-center gap-3 flex-wrap">
+              <label>
+                <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={(e) => { setFile(e.target.files?.[0] || null); setRows(null); }} />
+                <Button type="button" variant="outline" asChild>
+                  <span className="cursor-pointer"><Upload className="w-4 h-4 mr-2" />{file ? "Escolher outro arquivo" : "Procurar arquivo"}</span>
+                </Button>
+              </label>
+              <span className="text-sm text-muted-foreground truncate max-w-[320px]">{file ? file.name : "Nenhum arquivo selecionado (.xlsx, .xls, .csv)"}</span>
+            </div>
+          </div>
           <p className="text-xs text-muted-foreground">
             Uma planilha por programa: a comparação e as ausências consideram só o programa selecionado.{" "}
             {base === "alunos" ? "Colunas: Matrícula, Nome, Nível (Mestrado/Doutorado), Ingresso, Orientador (matrícula ou nome), Situação. A coluna Programa é opcional." : "Colunas: Matrícula, Nome, Contrato, Início do vínculo, Pode orientar (Sim/Não), Situação. Professores ficam vinculados ao programa selecionado."}
