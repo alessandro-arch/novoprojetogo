@@ -1,98 +1,45 @@
+# Service Desk Acadêmico — ProjetoGO v1.0 (piloto UVV / VPN CAPES)
 
+Novo módulo em `/servicedesk`, multi-institucional, reaproveitando login, Supabase, Resend, design system e auditoria existentes. Nenhuma regra da UVV fica fixa no código: tudo é configuração cadastrada para a instituição.
 
-## Plano: Novo Papel de Acesso — Auditor (Read-Only)
+## Entrega em 4 fases (cada uma utilizável e testável)
 
-### Resumo
-Adicionar o papel **auditor** ao módulo Fomento com acesso somente leitura. Auditores podem ver tudo (dashboard, projetos, bolsistas, parcerias, alertas, documentos) mas não podem criar, editar ou excluir nada. Apenas admin/superadmin podem convidar e remover auditores.
+**Fase 1 — Fundação institucional**
+- Instituições (reaproveita a tabela de organizações existente, com sigla, logo, domínio, fuso, status), membros e papéis institucionais (Administrador Institucional, Operador, Solicitante Aluno/Professor).
+- Grupos responsáveis configuráveis (UVV: PRPPGE, DTI).
+- Configurações por instituição: duração Mestrado/Doutorado, tipos de contrato e prazos, antecedência de alertas.
+- Painel do Superadmin para criar/ativar instituições.
 
----
+**Fase 2 — Bases institucionais e importação Excel**
+- Programas, alunos (matrícula, nível, ingresso, orientador, situação, prazo regular e prazo vigente), professores (contrato, início, situação) e vínculo professor-programa.
+- Importação: Upload → Validação → Preview (novos, alterados, sem alteração, ausentes, inconsistências) → Confirmação. Arquivo preservado em armazenamento privado, com versão e histórico. Ausência em nova base gera ocorrência, nunca revogação automática.
 
-### 1. Migração SQL — Banco de Dados
+**Fase 3 — Catálogo, solicitação e workflow**
+- Primeiro acesso: "Qual é seu vínculo?" + matrícula, validada no servidor com limite de tentativas (anti-enumeração); cadastro complementar (e-mail institucional, pessoal, celular WhatsApp + ciência de comunicações).
+- Catálogo por instituição com elegibilidade, formulário, termo versionado e etapas de workflow ligadas a grupos.
+- Motor genérico: Solicitação → Etapa → Grupo → Ação → Próxima etapa, com status genéricos e histórico.
+- Aceite eletrônico do termo com hash SHA-256, versão, data/hora e dados técnicos.
+- Serviço UVV_VPN_CAPES cadastrado: finalidade (com "Outra" exigindo descrição) → PRPPGE autoriza → DTI configura WireGuard manualmente, informa IP/PublicKey e faz upload do .conf (privado, download por link temporário e registrado).
 
-**a) Atualizar `has_fomento_access`** para incluir `'auditor'` (já funciona — aceita qualquer `fomento_role IS NOT NULL`, então o auditor já tem SELECT via RLS automaticamente).
+**Fase 4 — Prazos, notificações, prorrogação e revogação**
+- Motor de notificações por evento/destinatário/template/antecedência via Resend, com registro de envio e ID Resend.
+- Rotina diária: alerta 7 dias antes (e-mail pessoal, CTA "Solicitar prorrogação" para alunos); no vencimento cria tarefa "Revogar VPN" para o DTI.
+- Prorrogação: aluno solicita (nova previsão, motivo, justificativa, documento) → PRPPGE decide → altera só o prazo vigente, recalcula alertas, avisa DTI.
+- Revogação manual com botão "Confirmar revogação" (operador, data, motivo).
+- Dashboards: institucional, por grupo (PRPPGE: análises, correções, prorrogações, prazos 30/60/90/vencidos; DTI: aguardando configuração, VPNs ativas, vencimentos, revogações pendentes).
+- Auditoria de todos os eventos relevantes, incluindo downloads.
 
-**b) Criar função `has_fomento_write_access`** que exclui auditores:
-```sql
-CREATE OR REPLACE FUNCTION public.has_fomento_write_access(_user_id uuid)
-RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER
-SET search_path = public AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE user_id = _user_id
-      AND fomento_role IN ('superadmin', 'admin', 'gestor')
-  )
-$$;
-```
+Fora do escopo (conforme PRD): geração de .conf/Peer, API WireGuard, revogação automática, WhatsApp, app nativo, integrações diretas.
 
-**c) Atualizar políticas RLS de INSERT/UPDATE/DELETE** em todas as tabelas fomento para usar `has_fomento_write_access` em vez de `has_fomento_access`:
-- `fomento_projects` → INSERT, UPDATE usam `has_fomento_write_access`
-- `fomento_bolsistas` → INSERT, UPDATE usam `has_fomento_write_access`
-- `fomento_parcerias` → INSERT, UPDATE usam `has_fomento_write_access`
-- `fomento_documents` → INSERT usa `has_fomento_write_access`
-- `fomento_rubricas` → DROP policy `fomento_rubricas_all`, criar SELECT com `has_fomento_access` e INSERT/UPDATE/DELETE com `has_fomento_write_access`
-- `fomento_team` → DROP policy `fomento_team_all`, criar SELECT com `has_fomento_access` e INSERT/UPDATE/DELETE com `has_fomento_write_access`
-- Storage `fomento-docs` → INSERT e DELETE usam `has_fomento_write_access`; SELECT mantém `has_fomento_access`
+## Detalhes técnicos
 
-**d) Atualizar `set_fomento_role`** para aceitar `'auditor'` como valor válido.
+- Tenant: `organizations` vira a "instituição" (colunas novas: sigla, logo_url, domain, timezone, status). A tabela `institutions` atual (catálogo eMEC) é mantida intacta para não quebrar cadastros.
+- Novas tabelas `sd_*` com `organization_id` obrigatório: `sd_members`, `sd_groups`, `sd_group_members`, `sd_settings`, `sd_programs`, `sd_students`, `sd_faculty`, `sd_faculty_programs`, `sd_imports`, `sd_import_records`, `sd_services`, `sd_service_eligibility`, `sd_workflow_steps`, `sd_service_terms`, `sd_requests`, `sd_request_history`, `sd_signatures`, `sd_vpn_access`, `sd_files`, `sd_extension_requests`, `sd_tasks`, `sd_notifications`.
+- Funções SECURITY DEFINER `sd_is_member`, `sd_has_role`, `sd_in_group`; RLS em todas as tabelas filtrando por organização; validações por triggers; auditoria via `fn_audit_trigger` existente.
+- Bucket privado `servicedesk` com caminho `{organization_id}/...` e políticas por instituição; downloads por URL assinada via Edge Function que registra o acesso.
+- Edge Functions: `sd-validate-enrollment` (rate limit), `sd-import-commit`, `sd-file-url`, `sd-notify`, `sd-daily-deadlines` (agendada via pg_cron).
+- Parsing de Excel no navegador (SheetJS) para preview; gravação confirmada no servidor.
+- Seed UVV (programas, grupos, prazos 24/48/PJ 24, alerta 7 dias, serviço VPN CAPES e termo v1) via inserção de dados.
+- Decisões estruturais registradas em `AGENTS.md`; tarefas das fases em `roadmap.md`.
 
-**e) `fomento_invite_log`** — manter sem acesso para auditor (já controlado por `has_fomento_admin`).
-
----
-
-### 2. Frontend — FomentoPanel.tsx (Rotas e Navegação)
-
-- Auditor **não vê** o item "Administração" no menu lateral (já controlado: `fomentoRole === "admin" || isSuperadmin`)
-- Se auditor tentar acessar `/fomento/admin` manualmente → redirecionar para `/fomento/dashboard` com toast "Acesso restrito"
-- Adicionar helper `isAuditor = fomentoRole === 'auditor'` no contexto `FomentoAuthContext`
-
----
-
-### 3. Frontend — Componentes de Lista (modo read-only)
-
-Em **FomentoProjectsList**, **FomentoBolsistasList**, **FomentoParceirasList**:
-- Ocultar botões "Novo", "Importar em Lote", "Editar", "Excluir" quando `fomentoRole === 'auditor'`
-- Manter botões de download visíveis
-
-Em **FomentoDashboardView**:
-- Ocultar botão de edição (lápis) nos projetos quando auditor
-
-Em **FomentoAlerts**:
-- Manter visualização; ocultar ações de edição se existirem
-
----
-
-### 4. Frontend — FomentoAdmin.tsx (Convite de Auditor)
-
-- Adicionar `{ value: "auditor", label: "Auditor" }` na lista `availableRoles` para admin e superadmin
-- Badge do auditor: cor âmbar `bg-[#EF9F27]/15 text-[#EF9F27]` com label "Auditor"
-- Atualizar `ROLE_LABELS` com `auditor: "Auditor"`
-
----
-
-### 5. Frontend — Banner Read-Only para Auditor
-
-No **PanelLayout** ou **FomentoPanel**, quando `fomentoRole === 'auditor'`:
-- Exibir banner sutil no topo do conteúdo: "🔒 Você está em modo somente leitura"
-- Estilo: fundo âmbar claro, texto âmbar escuro, ícone de cadeado
-
----
-
-### 6. Frontend — Tooltips nos Botões Desabilitados
-
-Para botões que ficam desabilitados para auditor, adicionar tooltip: "Seu perfil não possui permissão para esta ação"
-
----
-
-### Arquivos Modificados
-
-| Arquivo | Alteração |
-|---|---|
-| Nova migração SQL | Criar `has_fomento_write_access`, atualizar RLS policies |
-| `src/contexts/FomentoAuthContext.tsx` | Adicionar `isAuditor` ao contexto |
-| `src/pages/fomento/FomentoPanel.tsx` | Guard de rota admin, banner read-only |
-| `src/components/fomento/FomentoAdmin.tsx` | Role auditor no convite, badge âmbar |
-| `src/components/fomento/FomentoProjectsList.tsx` | Ocultar ações para auditor |
-| `src/components/fomento/FomentoBolsistasList.tsx` | Ocultar ações para auditor |
-| `src/components/fomento/FomentoParceirasList.tsx` | Ocultar ações para auditor |
-| `src/components/fomento/FomentoDashboardView.tsx` | Ocultar botão editar para auditor |
-
+Ao aprovar, começo pela Fase 1 e sigo fase a fase.
