@@ -174,6 +174,7 @@ export const ImportTab = ({ orgId, orgLabel }: { orgId: string; orgLabel: string
   const processed = (rows || []).filter((r) => r.outcome !== "ausente").length;
 
   const process = async () => {
+    if (programId === "__none__") return toast.error("Selecione o programa da planilha");
     if (!file) return toast.error("Selecione o arquivo Excel");
     if (!period.trim()) return toast.error("Informe o período/semestre");
     setBusy(true); setRows(null);
@@ -247,13 +248,14 @@ export const ImportTab = ({ orgId, orgLabel }: { orgId: string; orgLabel: string
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div><Label>Instituição</Label><Input className="mt-1" value={orgLabel} disabled /></div>
             <div><Label>Base</Label><select className={`${sel} mt-1 w-full`} value={base} onChange={(e) => { setBase(e.target.value as any); setRows(null); }}><option value="alunos">Alunos</option><option value="professores">Professores</option></select></div>
-            <div><Label>Programa (quando aplicável)</Label><select className={`${sel} mt-1 w-full`} value={programId} onChange={(e) => { setProgramId(e.target.value); setRows(null); }}>
-              <option value="__none__">Todos / informado na planilha</option>{(programs || []).map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+            <div><Label>Programa *</Label><select className={`${sel} mt-1 w-full`} value={programId} onChange={(e) => { setProgramId(e.target.value); setRows(null); }}>
+              <option value="__none__">Selecione o programa</option>{(programs || []).filter((p: any) => p.status !== "inativo").map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
             <div><Label>Período/Semestre</Label><Input className="mt-1" value={period} onChange={(e) => setPeriod(e.target.value)} placeholder="Ex.: 2027/1" /></div>
           </div>
           <div><Label>Arquivo Excel</Label><Input className="mt-1" type="file" accept=".xlsx,.xls,.csv" onChange={(e) => { setFile(e.target.files?.[0] || null); setRows(null); }} /></div>
           <p className="text-xs text-muted-foreground">
-            {base === "alunos" ? "Colunas: Matrícula, Nome, Programa, Nível (Mestrado/Doutorado), Ingresso, Orientador (matrícula ou nome), Situação." : "Colunas: Matrícula, Nome, Contrato, Início do vínculo, Programas (separados por ;), Pode orientar (Sim/Não), Situação."}
+            Uma planilha por programa: a comparação e as ausências consideram só o programa selecionado.{" "}
+            {base === "alunos" ? "Colunas: Matrícula, Nome, Nível (Mestrado/Doutorado), Ingresso, Orientador (matrícula ou nome), Situação. A coluna Programa é opcional." : "Colunas: Matrícula, Nome, Contrato, Início do vínculo, Pode orientar (Sim/Não), Situação. Professores ficam vinculados ao programa selecionado."}
             {" "}Quem não estiver no arquivo é apenas sinalizado como ausente — ninguém é inativado automaticamente.
           </p>
           <Button onClick={process} disabled={busy}>{busy && !rows ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />} Validar e comparar</Button>
