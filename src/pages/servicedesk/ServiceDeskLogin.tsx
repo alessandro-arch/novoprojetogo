@@ -73,6 +73,7 @@ const ServiceDeskLogin = () => {
       <Seo
         title="Entrar — Service Desk Acadêmico | ProjetoGO"
         description="Acesse o Service Desk Acadêmico da sua instituição no ProjetoGO."
+        path="/servicedesk/login"
         noindex
       />
       <div className="flex-1 flex items-center justify-center p-4 md:p-8">
