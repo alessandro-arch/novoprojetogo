@@ -27,9 +27,11 @@ export const parseDate = (v: any): string | null | "invalid" => {
 const yes = (v: any) => ["sim", "s", "x", "true", "1", "yes"].includes(norm(v));
 const mapStatus = (v: any, allowed: string[]) => { const n = norm(v || "ativo"); const m: Record<string, string> = { ativa: "ativo", inativa: "inativo", concluida: "concluido", desligada: "desligado", trancada: "trancado", cursando: "ativo", matriculado: "ativo", matriculada: "ativo" }; const r = m[n] || n; return allowed.includes(r) ? r : null; };
 
-export const readSheet = (buf: ArrayBuffer) => {
+export const readSheet = (buf: ArrayBuffer, opts?: { sheet?: string }) => {
   const wb = XLSX.read(buf, { cellDates: true });
-  const name = wb.SheetNames.find((n) => norm(n) === "ativos") ?? wb.SheetNames[0];
+  const wanted = opts?.sheet ? norm(opts.sheet) : null;
+  const name = (wanted && wb.SheetNames.find((n) => norm(n) === wanted || norm(n).startsWith(wanted)))
+    ?? wb.SheetNames.find((n) => norm(n) === "ativos") ?? wb.SheetNames[0];
   const rows: any[][] = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, defval: "" });
   const isEnr = (c: any) => ["matricula", "registro"].includes(norm(c));
   let h = rows.findIndex((r) => r.some(isEnr) && r.some((c) => norm(c).startsWith("nome")));
