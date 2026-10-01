@@ -39,7 +39,7 @@ const ServiceDeskLogin = () => {
     }
 
     // Acesso: administrador geral, membro ativo de instituição ou aluno com acesso ativo
-    const [{ data: roles }, { data: memberships }, { data: studentRows }] = await Promise.all([
+    const [{ data: roles }, { data: memberships }, { data: studentRows }, { data: facultyRows }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", authData.user.id),
       supabase
         .from("sd_members")
@@ -53,10 +53,16 @@ const ServiceDeskLogin = () => {
         .eq("user_id", authData.user.id)
         .eq("service_desk_access_active", true)
         .limit(1),
+      supabase
+        .from("sd_faculty")
+        .select("id")
+        .eq("user_id", authData.user.id)
+        .eq("status", "ativo")
+        .limit(1),
     ]);
 
     const isSuperadmin = (roles ?? []).some((r) => r.role === "icca_admin");
-    const isMember = (memberships ?? []).length > 0 || (studentRows ?? []).length > 0;
+    const isMember = (memberships ?? []).length > 0 || (studentRows ?? []).length > 0 || (facultyRows ?? []).length > 0;
 
     if (!isSuperadmin && !isMember) {
       await supabase.auth.signOut();
@@ -146,7 +152,7 @@ const ServiceDeskLogin = () => {
 
             <div className="mt-6 rounded-xl border border-dashed border-border p-4 text-center">
               <p className="text-sm text-muted-foreground">
-                Aluno e ainda não tem cadastro?
+                Aluno ou professor sem cadastro?
               </p>
               <Button asChild variant="outline" className="mt-2 min-h-[44px]">
                 <Link to="/servicedesk/primeiro-acesso">Primeiro acesso</Link>
