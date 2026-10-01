@@ -149,11 +149,16 @@ export const StudentsTab = ({ orgId }: { orgId: string }) => {
 /* ---------------- Professores ---------------- */
 export const FacultyTab = ({ orgId }: { orgId: string }) => {
   const [q, setQ] = useState(""); const [onlyAbsent, setOnlyAbsent] = useState(false);
+  const [prog, setProg] = useState("__all__"); const [rel, setRel] = useState("__all__");
   const { data, refetch } = useQuery({
     queryKey: ["sd-faculty", orgId],
-    queryFn: async () => (await db.from("sd_faculty").select("*, programs:sd_faculty_programs(relationship_type, program:sd_programs(name))").eq("organization_id", orgId).order("full_name")).data || [],
+    queryFn: async () => (await db.from("sd_faculty").select("*, programs:sd_faculty_programs(program_id, relationship_type, program:sd_programs(name, sigla))").eq("organization_id", orgId).order("full_name")).data || [],
   });
-  const rows = (data || []).filter((f: any) => (!onlyAbsent || f.absent_in_last_import) && (!q || f.full_name.toLowerCase().includes(q.toLowerCase()) || f.enrollment.includes(q)));
+  const relKind = (r?: string | null) => { const t = (r || "").toLowerCase(); return t.startsWith("perman") ? "permanente" : t.startsWith("colab") ? "colaborador" : "outro"; };
+  const programOpts = Array.from(new Map((data || []).flatMap((f: any) => (f.programs || []).map((p: any) => [p.program_id, p.program?.sigla || p.program?.name]))).entries()).sort((a: any, b: any) => String(a[1]).localeCompare(String(b[1])));
+  const linksOf = (f: any) => (f.programs || []).filter((p: any) => (prog === "__all__" || p.program_id === prog) && (rel === "__all__" || relKind(p.relationship_type) === rel));
+  const rows = (data || []).filter((f: any) => linksOf(f).length > 0 && (!onlyAbsent || f.absent_in_last_import) && (!q || f.full_name.toLowerCase().includes(q.toLowerCase()) || f.enrollment.includes(q)));
+  const allLinks = rows.flatMap(linksOf);
   const upd = async (id: string, patch: any) => {
     const { error } = await db.from("sd_faculty").update(patch).eq("id", id);
     if (error) return toast.error("Erro: " + error.message);
@@ -163,18 +168,26 @@ export const FacultyTab = ({ orgId }: { orgId: string }) => {
     <div className="space-y-4">
       <div className="flex flex-wrap gap-3">
         <Input className="max-w-xs" placeholder="Buscar nome ou matrícula" value={q} onChange={(e) => setQ(e.target.value)} />
+        <select aria-label="Programa" className="h-10 rounded-xl border border-input bg-background px-3 text-sm" value={prog} onChange={(e) => setProg(e.target.value)}>
+          <option value="__all__">Todos os programas</option>
+          {programOpts.map(([id, name]: any) => <option key={id} value={id}>{name}</option>)}
+        </select>
+        <select aria-label="Vínculo" className="h-10 rounded-xl border border-input bg-background px-3 text-sm" value={rel} onChange={(e) => setRel(e.target.value)}>
+          <option value="__all__">Permanentes e colaboradores</option>
+          <option value="permanente">Permanentes</option>
+          <option value="colaborador">Colaboradores</option>
+        </select>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={onlyAbsent} onChange={(e) => setOnlyAbsent(e.target.checked)} /> Só ausentes na nova base</label>
       </div>
-      <p className="text-sm text-muted-foreground">{rows.length} professor(es) · {rows.filter((f: any) => f.can_advise).length} orientador(es)</p>
+      <p className="text-sm text-muted-foreground">{rows.length} professor(es) · {allLinks.filter((l: any) => relKind(l.relationship_type) === "permanente").length} vínculo(s) permanente(s) · {allLinks.filter((l: any) => relKind(l.relationship_type) === "colaborador").length} colaborador(es) · {rows.filter((f: any) => f.can_advise).length} orientador(es)</p>
       <div className="overflow-x-auto rounded-xl border border-border">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left"><tr>{["Tipo de vínculo", "Matrícula", "Nome", "Programa", "Vínculo", "Pode orientar", "Situação", ""].map((h) => <th key={h} className="p-2 font-medium">{h}</th>)}</tr></thead>
+          <thead className="bg-muted/50 text-left"><tr>{["Tipo de vínculo", "Matrícula", "Nome", "Programa · Vínculo", "Pode orientar", "Situação", ""].map((h) => <th key={h} className="p-2 font-medium">{h}</th>)}</tr></thead>
           <tbody>
             {rows.map((f: any) => (
               <tr key={f.id} className="border-t border-border">
                 <td className="p-2">{f.contract_type || "—"}</td><td className="p-2">{f.enrollment}</td><td className="p-2">{f.full_name}</td>
-                <td className="p-2">{(f.programs || []).map((p: any) => p.program?.name).join(", ") || "—"}</td>
-                <td className="p-2">{(f.programs || []).map((p: any) => p.relationship_type).filter(Boolean).join(", ") || "—"}</td>
+                <td className="p-2"><div className="flex flex-col gap-1">{linksOf(f).map((p: any) => <span key={p.program_id}><span className="font-medium">{p.program?.sigla || p.program?.name}</span> · {p.relationship_type || "—"}</span>)}</div></td>
                 <td className="p-2"><input type="checkbox" aria-label="Pode orientar" checked={f.can_advise} onChange={(e) => upd(f.id, { can_advise: e.target.checked })} /></td>
                 <td className="p-2"><Badge variant={f.status === "ativo" ? "default" : "secondary"}>{f.status}</Badge>{f.absent_in_last_import && <Badge variant="destructive" className="ml-1">ausente na nova base</Badge>}</td>
                 <td className="p-2 whitespace-nowrap">{f.absent_in_last_import && (<>
