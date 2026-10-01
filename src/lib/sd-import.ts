@@ -99,13 +99,16 @@ export function reconcileFaculty(sheet: any[], ctx: { programs: any[]; fixedProg
     const contract_type = contractNorm === "pessoa_juridica" || contractNorm === "pj" ? "PJ" : contractNorm === "clt" ? "CLT" : contractRaw.toUpperCase() || null;
     if (contract_type && contracts.length && !contracts.includes(contract_type)) errs.push(`tipo de contrato não configurado: ${contractRaw}`);
     const bond_start = parseDate(pick(r, "bond_start")); if (bond_start === "invalid") errs.push("data de início inválida");
-    const progRaw = String(pick(r, "programs") ?? ""); const rowProg = progRaw ? progByName.get(norm(progRaw)) : null;
-    if (progRaw && !rowProg) errs.push(`programa não cadastrado: ${progRaw}`);
-    if (fixedProg && rowProg && rowProg.id !== fixedProg.id) return;
-    const selectedProg = fixedProg || rowProg;
-    if (!selectedProg) errs.push("programa não informado");
+    const progRaw = String(pick(r, "programs") ?? ""); const rowProgs: any[] = [];
+    progRaw.split(/[;,/|]/).map((x) => x.trim()).filter(Boolean).forEach((value) => {
+      const program = progByName.get(norm(value));
+      if (program) rowProgs.push(program); else errs.push(`programa não cadastrado: ${value}`);
+    });
+    if (fixedProg && rowProgs.length && !rowProgs.some((program) => program.id === fixedProg.id)) return;
+    const selectedProgs = fixedProg ? [fixedProg] : rowProgs;
+    if (!selectedProgs.length) errs.push("programa não informado");
     const relationship_type = String(pick(r, "relationship_type") ?? "").trim() || null;
-    const rowKey = `${enrollment}|${norm(full_name)}|${selectedProg?.id || norm(progRaw)}|${norm(relationship_type)}`;
+    const rowKey = `${enrollment}|${norm(full_name)}|${selectedProgs.map((program) => program.id).sort().join(",")}|${norm(relationship_type)}|${contract_type}`;
     if (seenRows.has(rowKey)) return;
     seenRows.add(rowKey);
     const isPjPlaceholder = contract_type === "PJ" && (!enrollment || norm(enrollment) === "pj");
@@ -113,10 +116,14 @@ export function reconcileFaculty(sheet: any[], ctx: { programs: any[]; fixedProg
     if (!identity) errs.push("matrícula vazia");
     if (seen.has(identity)) {
       const previous = out.find((item) => item.enrollment === identity && item.outcome !== "erro");
-      if (previous && selectedProg) {
-        const link = { programId: selectedProg.id, relationshipType: relationship_type };
-        previous.extra.links = [...(previous.extra.links || []), link];
-        previous.extra.progIds = [...new Set([...(previous.extra.progIds || []), selectedProg.id])];
+      const previousProgramIds = previous?.extra?.progIds || [];
+      const hasNewProgram = selectedProgs.some((program) => !previousProgramIds.includes(program.id));
+      if (previous && hasNewProgram) {
+        const newLinks = selectedProgs.filter((program) => !previousProgramIds.includes(program.id)).map((program) => ({ programId: program.id, relationshipType: relationship_type }));
+        previous.extra.links = [...(previous.extra.links || []), ...newLinks];
+        previous.extra.progIds = [...new Set([...previousProgramIds, ...selectedProgs.map((program) => program.id)])];
+      } else {
+        out.push({ line, enrollment: identity, outcome: "erro", message: "matrícula repetida no arquivo" });
       }
       return;
     }
@@ -127,13 +134,16 @@ export function reconcileFaculty(sheet: any[], ctx: { programs: any[]; fixedProg
     const before = byEnr.get(identity);
     const data: any = { enrollment: identity, full_name, contract_type, bond_start, status, can_advise: advRaw !== undefined ? yes(advRaw) : before?.can_advise ?? true };
     const curProgs = before ? ctx.links.filter((x) => x.faculty_id === before.id).map((x) => x.program_id) : [];
-    const progIds = selectedProg ? [selectedProg.id] : [];
+    const progIds = selectedProgs.map((program) => program.id);
     const newProgs = progIds.filter((p) => !curProgs.includes(p));
-    const links = selectedProg ? [{ programId: selectedProg.id, relationshipType: relationship_type }] : [];
+    const links = selectedProgs.map((program) => ({ programId: program.id, relationshipType: relationship_type }));
     if (!before) { out.push({ line, enrollment: identity, outcome: "novo", data, extra: { progIds, links } }); return; }
     const diffs: string[] = (["full_name", "contract_type", "bond_start", "status", "can_advise"] as const).filter((k) => (before[k] ?? null) !== (data[k] ?? null));
-    const currentLink = selectedProg ? ctx.links.find((x) => x.faculty_id === before.id && x.program_id === selectedProg.id) : null;
-    if (newProgs.length || (currentLink && (currentLink.relationship_type ?? null) !== relationship_type)) diffs.push("programas");
+    const relationshipChanged = links.some((link) => {
+      const current = ctx.links.find((x) => x.faculty_id === before.id && x.program_id === link.programId);
+      return current && (current.relationship_type ?? null) !== link.relationshipType;
+    });
+    if (newProgs.length || relationshipChanged) diffs.push("programas");
     out.push({ line, enrollment: identity, outcome: diffs.length ? "alterado" : "sem_alteracao", data, before, diffs, extra: { progIds: newProgs, links } });
   });
   const inScope = (f: any) => !fixedProg || ctx.links.some((x) => x.faculty_id === f.id && x.program_id === fixedProg.id);
