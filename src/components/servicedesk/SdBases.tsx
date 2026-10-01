@@ -157,7 +157,7 @@ export const FacultyTab = ({ orgId }: { orgId: string }) => {
   const relKind = (r?: string | null) => { const t = (r || "").toLowerCase(); return t.startsWith("perman") ? "permanente" : t.startsWith("colab") ? "colaborador" : "outro"; };
   const programOpts = Array.from(new Map((data || []).flatMap((f: any) => (f.programs || []).map((p: any) => [p.program_id, p.program?.sigla || p.program?.name]))).entries()).sort((a: any, b: any) => String(a[1]).localeCompare(String(b[1])));
   const linksOf = (f: any) => (f.programs || []).filter((p: any) => (prog === "__all__" || p.program_id === prog) && (rel === "__all__" || relKind(p.relationship_type) === rel));
-  const rows = (data || []).filter((f: any) => linksOf(f).length > 0 && (!onlyAbsent || f.absent_in_last_import) && (!q || f.full_name.toLowerCase().includes(q.toLowerCase()) || f.enrollment.includes(q)));
+  const rows = (data || []).filter((f: any) => (prog === "__all__" && rel === "__all__" || linksOf(f).length > 0) && (!onlyAbsent || f.absent_in_last_import) && (!q || f.full_name.toLowerCase().includes(q.toLowerCase()) || f.enrollment.includes(q)));
   const allLinks = rows.flatMap(linksOf);
   const upd = async (id: string, patch: any) => {
     const { error } = await db.from("sd_faculty").update(patch).eq("id", id);
