@@ -29,6 +29,7 @@ import FomentoPanel from "./pages/fomento/FomentoPanel";
 import FomentoProtectedRoute from "./components/FomentoProtectedRoute";
 import ServiceDeskPanel from "./pages/servicedesk/ServiceDeskPanel";
 import ServiceDeskLogin from "./pages/servicedesk/ServiceDeskLogin";
+import ServiceDeskFirstAccess from "./pages/servicedesk/ServiceDeskFirstAccess";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const App = () => (
               <Route path="/fomento/login" element={<FomentoLogin />} />
               <Route path="/fomento/*" element={<FomentoProtectedRoute><FomentoPanel /></FomentoProtectedRoute>} />
               <Route path="/servicedesk/login" element={<ServiceDeskLogin />} />
+              <Route path="/servicedesk/primeiro-acesso" element={<ServiceDeskFirstAccess />} />
               <Route path="/servicedesk/*" element={<ProtectedRoute loginPath="/servicedesk/login"><ServiceDeskPanel /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
