@@ -216,8 +216,13 @@ export const ImportTab = ({ orgId, orgLabel }: { orgId: string; orgLabel: string
       }).select().single();
       if (error) throw error;
       const table = base === "alunos" ? "sd_students" : "sd_faculty";
-      const toWrite = rows.filter((r) => r.outcome === "novo" || r.outcome === "alterado" || r.outcome === "sem_alteracao")
-        .map((r) => ({ organization_id: orgId, ...r.data, absent_in_last_import: false, last_import_id: imp.id }));
+      const sha256 = async (s: string) => Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)))).map((b) => b.toString(16).padStart(2, "0")).join("");
+      const writable = rows.filter((r) => r.outcome === "novo" || r.outcome === "alterado" || r.outcome === "sem_alteracao");
+      const toWrite = await Promise.all(writable.map(async (r) => {
+        const { cpf_digits, ...rest } = r.data || {};
+        const cpf = cpf_digits ? { cpf_hash: await sha256(cpf_digits), cpf_last4: cpf_digits.slice(-4) } : {};
+        return { organization_id: orgId, ...rest, ...cpf, absent_in_last_import: false, last_import_id: imp.id };
+      }));
       for (let i = 0; i < toWrite.length; i += 200) {
         const { error: e } = await db.from(table).upsert(toWrite.slice(i, i + 200), { onConflict: "organization_id,enrollment" });
         if (e) throw e;
