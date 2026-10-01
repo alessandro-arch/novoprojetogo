@@ -2706,6 +2706,54 @@ export type Database = {
           },
         ]
       }
+      sd_notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          organization_id: string
+          read_at: string | null
+          request_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          organization_id: string
+          read_at?: string | null
+          request_id?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          organization_id?: string
+          read_at?: string | null
+          request_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sd_notifications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sd_notifications_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "sd_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sd_programs: {
         Row: {
           created_at: string
@@ -2750,30 +2798,36 @@ export type Database = {
           actor_name: string | null
           actor_user_id: string | null
           created_at: string
+          from_group_id: string | null
           id: string
           note: string | null
           organization_id: string
           request_id: string
+          to_group_id: string | null
         }
         Insert: {
           action: string
           actor_name?: string | null
           actor_user_id?: string | null
           created_at?: string
+          from_group_id?: string | null
           id?: string
           note?: string | null
           organization_id: string
           request_id: string
+          to_group_id?: string | null
         }
         Update: {
           action?: string
           actor_name?: string | null
           actor_user_id?: string | null
           created_at?: string
+          from_group_id?: string | null
           id?: string
           note?: string | null
           organization_id?: string
           request_id?: string
+          to_group_id?: string | null
         }
         Relationships: [
           {
@@ -2791,6 +2845,7 @@ export type Database = {
           current_group_id: string | null
           id: string
           organization_id: string
+          protocol: string | null
           requester_email: string | null
           requester_enrollment: string
           requester_kind: string
@@ -2798,6 +2853,7 @@ export type Database = {
           requester_program: string | null
           requester_user_id: string
           service_id: string
+          stage_entered_at: string
           status: string
           step_index: number
           terms_accepted_at: string | null
@@ -2809,6 +2865,7 @@ export type Database = {
           current_group_id?: string | null
           id?: string
           organization_id: string
+          protocol?: string | null
           requester_email?: string | null
           requester_enrollment: string
           requester_kind: string
@@ -2816,6 +2873,7 @@ export type Database = {
           requester_program?: string | null
           requester_user_id: string
           service_id: string
+          stage_entered_at?: string
           status?: string
           step_index?: number
           terms_accepted_at?: string | null
@@ -2827,6 +2885,7 @@ export type Database = {
           current_group_id?: string | null
           id?: string
           organization_id?: string
+          protocol?: string | null
           requester_email?: string | null
           requester_enrollment?: string
           requester_kind?: string
@@ -2834,6 +2893,7 @@ export type Database = {
           requester_program?: string | null
           requester_user_id?: string
           service_id?: string
+          stage_entered_at?: string
           status?: string
           step_index?: number
           terms_accepted_at?: string | null
