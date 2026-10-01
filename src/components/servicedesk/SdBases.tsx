@@ -217,9 +217,9 @@ export const ImportTab = ({ orgId, orgLabel }: { orgId: string; orgLabel: string
     if (!period.trim()) return toast.error("Informe o período/semestre");
     setBusy(true); setRows(null);
     try {
-      const sheet = readSheet(await file.arrayBuffer());
-      if (!sheet.length) throw new Error("Planilha vazia");
       const fixedProg = programId !== "__none__" ? (programs || []).find((p: any) => p.id === programId) : null;
+      const sheet = readSheet(await file.arrayBuffer(), base === "professores" && fixedProg ? { sheet: fixedProg.sigla || fixedProg.name } : undefined);
+      if (!sheet.length) throw new Error("Planilha vazia");
       let out: Row[];
       if (base === "alunos") {
         const [{ data: existing }, { data: faculty }] = await Promise.all([
