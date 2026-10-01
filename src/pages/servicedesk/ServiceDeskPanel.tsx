@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2, Users, UsersRound, Settings, Loader2, Plus, Trash2, Pencil, BookOpen, GraduationCap, Briefcase, FileSpreadsheet } from "lucide-react";
 import { ProgramsTab, StudentsTab, FacultyTab, ImportTab } from "@/components/servicedesk/SdBases";
+import RequesterHome from "@/components/servicedesk/RequesterHome";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import PanelLayout from "@/components/layout/PanelLayout";
@@ -63,9 +64,7 @@ const ServiceDeskPanel = () => {
   if (loading || isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!user) return <Navigate to="/login" replace />;
   if (!orgs?.length) return (
-    <div className="min-h-screen flex items-center justify-center p-6 text-center">
-      <div><h1 className="text-xl font-bold font-heading">Service Desk Acadêmico</h1><p className="text-muted-foreground mt-2">Você não é administrador de nenhuma instituição.</p></div>
-    </div>
+    <RequesterHome userId={user.id} onSignOut={() => signOut()} noAccessMessage="Seu acesso ao Service Desk não está ativo. Fale com a secretaria do programa." />
   );
 
   const org = orgs.find((o: any) => o.id === orgId) || orgs[0];
