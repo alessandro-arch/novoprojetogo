@@ -2278,6 +2278,7 @@ export type Database = {
           id: string
           last_import_id: string | null
           organization_id: string
+          source_period: string | null
           status: string
           updated_at: string
           user_id: string | null
@@ -2294,6 +2295,7 @@ export type Database = {
           id?: string
           last_import_id?: string | null
           organization_id: string
+          source_period?: string | null
           status?: string
           updated_at?: string
           user_id?: string | null
@@ -2310,6 +2312,7 @@ export type Database = {
           id?: string
           last_import_id?: string | null
           organization_id?: string
+          source_period?: string | null
           status?: string
           updated_at?: string
           user_id?: string | null
