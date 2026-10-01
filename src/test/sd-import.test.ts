@@ -118,7 +118,7 @@ describe("Homologação Fase 2 — importação", () => {
       ["Matrícula", "Nome", "Programa", "Nível", "Ingresso", "Orientador", "Situação"],
       ["B1", "Aluno Um", "Ciência Animal", "Mestrado", "01/03/2026", "Augusto Cesar Mozine", "Ativo"],
       ["B2", "Aluno Dois", "Ciência Animal", "Mestrado", "01/03/2026", "Giovanilton Andre Carreta", "Ativo"],
-      ["B3", "Aluno Três", "Ciência Animal", "Mestrado", "01/03/2026", "Rafael Claudio Simoes", "Ativo"],
+      ["B3", "Aluno Três", "Ciência Animal", "Mestrado", "01/03/2026", "Rafael Simoes", "Ativo"],
     ]));
     const r = reconcileStudents(sheet, { programs, existing: [], faculty: fac });
     const b1 = r.find((x) => x.enrollment === "B1")!;
