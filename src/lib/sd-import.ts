@@ -95,12 +95,17 @@ export function reconcileStudents(sheet: any[], ctx: { programs: any[]; fixedPro
     const lv = norm(pick(r, "level")); const level = lv.startsWith("mest") || lv === "ms" ? "mestrado" : lv.startsWith("dout") || lv === "dr" ? "doutorado" : null;
     if (!level) errs.push("nível deve ser Mestrado ou Doutorado");
     const entry_date = parseDate(pick(r, "entry_date")); if (entry_date === "invalid") errs.push("data de ingresso inválida");
-    const advRaw = pick(r, "advisor"); let advisor_id: string | null = null;
+    const advRaw = pick(r, "advisor"); let advisor_id: string | null = null; let advisorNote: string | null = null;
     if (advRaw) {
-      const a = advByEnr.get(String(advRaw).trim()) || advByName.get(norm(advRaw));
-      if (!a) errs.push(`orientador não encontrado na base de professores: ${advRaw}`);
-      else if (!a.can_advise) errs.push(`professor não habilitado como orientador: ${advRaw}`);
-      else advisor_id = a.id;
+      let a = advByEnr.get(String(advRaw).trim()) || advByName.get(norm(advRaw));
+      if (!a) {
+        const sim = matchAdvisorByName(ctx.faculty, String(advRaw));
+        if (sim.ambiguous) errs.push(`nome de orientador ambíguo na base de professores: ${advRaw}`);
+        else if (sim.match) { a = sim.match; advisorNote = `orientador vinculado pelo nome oficial do cadastro: ${a.full_name}`; }
+      }
+      if (!a && !errs.some((e) => e.startsWith("nome de orientador ambíguo"))) errs.push(`orientador não encontrado na base de professores: ${advRaw}`);
+      else if (a && !a.can_advise) errs.push(`professor não habilitado como orientador: ${advRaw}`);
+      else if (a) advisor_id = a.id;
     }
     const status = mapStatus(pick(r, "status"), ["ativo", "inativo", "trancado", "concluido", "desligado"]); if (!status) errs.push("situação inválida");
     const expected_end = parseDate(pick(r, "expected_end")); if (expected_end === "invalid") errs.push("término previsto inválido");
