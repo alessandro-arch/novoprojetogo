@@ -235,7 +235,7 @@ export const ImportTab = ({ orgId, orgLabel }: { orgId: string; orgLabel: string
         const links = rows.flatMap((r) => (r.extra?.progIds || []).map((p: string) => ({ organization_id: orgId, faculty_id: idByEnr.get(r.enrollment), program_id: p }))).filter((l) => l.faculty_id);
         if (links.length) { const { error: e } = await db.from("sd_faculty_programs").upsert(links, { onConflict: "faculty_id,program_id", ignoreDuplicates: true }); if (e) throw e; }
       }
-      const recs = rows.map((r) => ({ import_id: imp.id, organization_id: orgId, enrollment: r.enrollment, outcome: r.outcome, before_data: r.before || null, after_data: r.data || null, message: r.message || (r.diffs?.length ? "Campos: " + r.diffs.join(", ") : null) }));
+      const recs = rows.map((r) => { const { cpf_digits, ...after } = r.data || {}; return { import_id: imp.id, organization_id: orgId, enrollment: r.enrollment, outcome: r.outcome, before_data: r.before || null, after_data: r.data ? after : null, message: r.message || (r.diffs?.length ? "Campos: " + r.diffs.join(", ") : null) }; });
       for (let i = 0; i < recs.length; i += 500) { const { error: e } = await db.from("sd_import_records").insert(recs.slice(i, i + 500)); if (e) throw e; }
       toast.success("Importação confirmada e registrada");
       setRows(null); setFile(null); refetchHistory();
