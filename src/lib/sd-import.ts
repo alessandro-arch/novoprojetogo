@@ -46,6 +46,39 @@ export const readSheet = (buf: ArrayBuffer, opts?: { sheet?: string }) => {
 
 const progIndex = (programs: any[]) => { const m = new Map<string, any>(); programs.forEach((p) => { m.set(norm(p.name), p); if (p.sigla) m.set(norm(p.sigla), p); }); return m; };
 
+// Levenshtein limitado: retorna distância ou Infinity se > max
+const editDistance = (a: string, b: string, max: number): number => {
+  if (Math.abs(a.length - b.length) > max) return Infinity;
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    let rowMin = i;
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      rowMin = Math.min(rowMin, cur[j]);
+    }
+    if (rowMin > max) return Infinity;
+    prev = cur;
+  }
+  return prev[b.length];
+};
+
+// Correspondência determinística de orientador por nome similar:
+// 1) todos os tokens de um nome contidos no outro ("augusto cesar mozine" ⊆ "augusto cesar salomao mozine")
+// 2) distância de edição ≤ 2 no nome normalizado ("carreta" ≈ "carretta")
+// Só aceita se houver exatamente UM candidato; ambíguo vira erro. Retorna { match, ambiguous }.
+export const matchAdvisorByName = (faculty: any[], rawName: string): { match: any | null; ambiguous: boolean } => {
+  const n = norm(rawName); if (!n) return { match: null, ambiguous: false };
+  const tokens = n.split("_").filter(Boolean);
+  const candidates = faculty.filter((f) => {
+    const fn = norm(f.full_name); if (!fn) return false;
+    const fTokens = fn.split("_").filter(Boolean);
+    const subset = tokens.every((t) => fTokens.includes(t)) || fTokens.every((t) => tokens.includes(t));
+    return subset || editDistance(n, fn, 2) <= 2;
+  });
+  return { match: candidates.length === 1 ? candidates[0] : null, ambiguous: candidates.length > 1 };
+};
+
 export function reconcileStudents(sheet: any[], ctx: { programs: any[]; fixedProg?: any; existing: any[]; faculty: any[] }): Row[] {
   const { fixedProg } = ctx; const progByName = progIndex(ctx.programs);
   const byEnr = new Map<string, any>(ctx.existing.map((s) => [s.enrollment, s]));
