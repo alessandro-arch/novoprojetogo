@@ -2373,6 +2373,30 @@ export type Database = {
           },
         ]
       }
+      sd_first_access_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          ip: string | null
+          matricula: string
+          success: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip?: string | null
+          matricula: string
+          success?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip?: string | null
+          matricula?: string
+          success?: boolean
+        }
+        Relationships: []
+      }
       sd_group_members: {
         Row: {
           created_at: string
