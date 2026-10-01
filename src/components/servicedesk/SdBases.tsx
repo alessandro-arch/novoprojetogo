@@ -88,12 +88,12 @@ export const StudentsTab = ({ orgId }: { orgId: string }) => {
       <p className="text-sm text-muted-foreground">{rows.length} aluno(s)</p>
       <div className="overflow-x-auto rounded-xl border border-border">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left"><tr>{["Matrícula", "Nome", "Programa", "Nível", "Ingresso", "Orientador", "Prazo regular", "Prazo vigente", "Situação", ""].map((h) => <th key={h} className="p-2 font-medium">{h}</th>)}</tr></thead>
+          <thead className="bg-muted/50 text-left"><tr>{["Matrícula", "Nome", "Programa", "Nível", "Turma", "Ingresso", "Término previsto", "Orientador", "Bolsa", "Prazo regular", "Prazo vigente", "Situação", ""].map((h) => <th key={h} className="p-2 font-medium">{h}</th>)}</tr></thead>
           <tbody>
             {rows.map((s: any) => (
               <tr key={s.id} className="border-t border-border">
                 <td className="p-2">{s.enrollment}</td><td className="p-2">{s.full_name}</td><td className="p-2">{s.program?.name || "—"}</td>
-                <td className="p-2 capitalize">{s.level}</td><td className="p-2">{fmtDate(s.entry_date)}</td><td className="p-2">{s.advisor?.full_name || "—"}</td>
+                <td className="p-2 capitalize">{s.level}</td><td className="p-2">{s.turma || "—"}</td><td className="p-2">{fmtDate(s.entry_date)}</td><td className="p-2">{fmtDate(s.expected_end)}</td><td className="p-2">{s.advisor?.full_name || "—"}</td><td className="p-2">{s.scholarship || "—"}</td>
                 <td className="p-2">{fmtDate(s.regular_deadline)}</td><td className="p-2">{fmtDate(s.current_deadline)}</td>
                 <td className="p-2"><Badge variant={s.status === "ativo" ? "default" : "secondary"}>{s.status}</Badge>{s.absent_in_last_import && <Badge variant="destructive" className="ml-1">ausente na nova base</Badge>}</td>
                 <td className="p-2 whitespace-nowrap">{s.absent_in_last_import && (<>
@@ -216,8 +216,13 @@ export const ImportTab = ({ orgId, orgLabel }: { orgId: string; orgLabel: string
       }).select().single();
       if (error) throw error;
       const table = base === "alunos" ? "sd_students" : "sd_faculty";
-      const toWrite = rows.filter((r) => r.outcome === "novo" || r.outcome === "alterado" || r.outcome === "sem_alteracao")
-        .map((r) => ({ organization_id: orgId, ...r.data, absent_in_last_import: false, last_import_id: imp.id }));
+      const sha256 = async (s: string) => Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)))).map((b) => b.toString(16).padStart(2, "0")).join("");
+      const writable = rows.filter((r) => r.outcome === "novo" || r.outcome === "alterado" || r.outcome === "sem_alteracao");
+      const toWrite = await Promise.all(writable.map(async (r) => {
+        const { cpf_digits, ...rest } = r.data || {};
+        const cpf = cpf_digits ? { cpf_hash: await sha256(cpf_digits), cpf_last4: cpf_digits.slice(-4) } : {};
+        return { organization_id: orgId, ...rest, ...cpf, absent_in_last_import: false, last_import_id: imp.id };
+      }));
       for (let i = 0; i < toWrite.length; i += 200) {
         const { error: e } = await db.from(table).upsert(toWrite.slice(i, i + 200), { onConflict: "organization_id,enrollment" });
         if (e) throw e;
@@ -230,7 +235,7 @@ export const ImportTab = ({ orgId, orgLabel }: { orgId: string; orgLabel: string
         const links = rows.flatMap((r) => (r.extra?.progIds || []).map((p: string) => ({ organization_id: orgId, faculty_id: idByEnr.get(r.enrollment), program_id: p }))).filter((l) => l.faculty_id);
         if (links.length) { const { error: e } = await db.from("sd_faculty_programs").upsert(links, { onConflict: "faculty_id,program_id", ignoreDuplicates: true }); if (e) throw e; }
       }
-      const recs = rows.map((r) => ({ import_id: imp.id, organization_id: orgId, enrollment: r.enrollment, outcome: r.outcome, before_data: r.before || null, after_data: r.data || null, message: r.message || (r.diffs?.length ? "Campos: " + r.diffs.join(", ") : null) }));
+      const recs = rows.map((r) => { const { cpf_digits, ...after } = r.data || {}; return { import_id: imp.id, organization_id: orgId, enrollment: r.enrollment, outcome: r.outcome, before_data: r.before || null, after_data: r.data ? after : null, message: r.message || (r.diffs?.length ? "Campos: " + r.diffs.join(", ") : null) }; });
       for (let i = 0; i < recs.length; i += 500) { const { error: e } = await db.from("sd_import_records").insert(recs.slice(i, i + 500)); if (e) throw e; }
       toast.success("Importação confirmada e registrada");
       setRows(null); setFile(null); refetchHistory();

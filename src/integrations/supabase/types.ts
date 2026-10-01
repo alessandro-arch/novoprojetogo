@@ -2697,54 +2697,75 @@ export type Database = {
         Row: {
           absent_in_last_import: boolean
           advisor_id: string | null
+          cpf_hash: string | null
+          cpf_last4: string | null
           created_at: string
           current_deadline: string | null
+          email: string | null
           enrollment: string
           entry_date: string | null
+          expected_end: string | null
           full_name: string
           id: string
           last_import_id: string | null
           level: string
           organization_id: string
+          phone: string | null
           program_id: string | null
           regular_deadline: string | null
+          scholarship: string | null
           status: string
+          turma: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
           absent_in_last_import?: boolean
           advisor_id?: string | null
+          cpf_hash?: string | null
+          cpf_last4?: string | null
           created_at?: string
           current_deadline?: string | null
+          email?: string | null
           enrollment: string
           entry_date?: string | null
+          expected_end?: string | null
           full_name: string
           id?: string
           last_import_id?: string | null
           level: string
           organization_id: string
+          phone?: string | null
           program_id?: string | null
           regular_deadline?: string | null
+          scholarship?: string | null
           status?: string
+          turma?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
           absent_in_last_import?: boolean
           advisor_id?: string | null
+          cpf_hash?: string | null
+          cpf_last4?: string | null
           created_at?: string
           current_deadline?: string | null
+          email?: string | null
           enrollment?: string
           entry_date?: string | null
+          expected_end?: string | null
           full_name?: string
           id?: string
           last_import_id?: string | null
           level?: string
           organization_id?: string
+          phone?: string | null
           program_id?: string | null
           regular_deadline?: string | null
+          scholarship?: string | null
           status?: string
+          turma?: string | null
           updated_at?: string
           user_id?: string | null
         }

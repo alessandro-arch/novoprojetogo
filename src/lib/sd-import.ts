@@ -9,6 +9,9 @@ const ALIASES: Record<string, string[]> = {
   level: ["nivel", "curso"], entry_date: ["ingresso", "data_ingresso", "data_de_ingresso", "inicio_no_curso"], advisor: ["orientador", "orientador_a", "orientadora", "matricula_orientador"],
   status: ["situacao", "status"], contract_type: ["contrato", "tipo_contrato", "tipo_de_contrato"], bond_start: ["inicio", "inicio_vinculo", "inicio_do_vinculo", "data_inicio"],
   programs: ["programas", "programa", "ppg"], can_advise: ["pode_orientar"],
+  cpf: ["cpf"], phone: ["telefone", "celular", "fone"], email: ["email", "e_mail"], turma: ["turma"],
+  expected_end: ["termino_previsto_data_de_conclusao", "termino_previsto", "termino", "data_de_conclusao", "previsao_de_termino"],
+  scholarship: ["bolsa", "bolsista"],
 };
 const pick = (row: Record<string, any>, field: string) => { for (const a of ALIASES[field]) if (row[a] !== undefined && row[a] !== "") return row[a]; return undefined; };
 export const parseDate = (v: any): string | null | "invalid" => {
@@ -64,11 +67,18 @@ export function reconcileStudents(sheet: any[], ctx: { programs: any[]; fixedPro
       else advisor_id = a.id;
     }
     const status = mapStatus(pick(r, "status"), ["ativo", "inativo", "trancado", "concluido", "desligado"]); if (!status) errs.push("situação inválida");
+    const expected_end = parseDate(pick(r, "expected_end")); if (expected_end === "invalid") errs.push("término previsto inválido");
+    const cpfDigits = String(pick(r, "cpf") ?? "").replace(/\D/g, ""); if (cpfDigits && cpfDigits.length !== 11) errs.push("CPF inválido");
     if (errs.length) { out.push({ line, enrollment, outcome: "erro", message: errs.join("; ") }); return; }
-    const data = { enrollment, full_name, program_id: prog.id, level, entry_date, advisor_id, status };
+    const phone = String(pick(r, "phone") ?? "").replace(/[^\d+()\- ]/g, "").trim() || null;
+    const email = String(pick(r, "email") ?? "").trim().toLowerCase() || null;
+    const turma = String(pick(r, "turma") ?? "").trim() || null;
+    const scholarship = String(pick(r, "scholarship") ?? "").trim() || null;
+    const data = { enrollment, full_name, program_id: prog.id, level, entry_date, advisor_id, status, expected_end, cpf_digits: cpfDigits || null, phone, email, turma, scholarship };
     const before = byEnr.get(enrollment);
     if (!before) { out.push({ line, enrollment, outcome: "novo", data }); return; }
-    const diffs = (["full_name", "program_id", "level", "entry_date", "advisor_id", "status"] as const).filter((k) => (before[k] ?? null) !== (data[k] ?? null));
+    const diffs: string[] = (["full_name", "program_id", "level", "entry_date", "advisor_id", "status", "expected_end", "phone", "email", "turma", "scholarship"] as const).filter((k) => (before[k] ?? null) !== (data[k] ?? null));
+    if (cpfDigits && before.cpf_last4 && cpfDigits.slice(-4) !== before.cpf_last4) diffs.push("cpf");
     out.push({ line, enrollment, outcome: diffs.length ? "alterado" : "sem_alteracao", data, before, diffs });
   });
   ctx.existing.filter((s) => !seen.has(s.enrollment) && (!fixedProg || s.program_id === fixedProg.id) && s.status === "ativo")
