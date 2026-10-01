@@ -30,8 +30,11 @@ const mapStatus = (v: any, allowed: string[]) => { const n = norm(v || "ativo");
 export const readSheet = (buf: ArrayBuffer, opts?: { sheet?: string }) => {
   const wb = XLSX.read(buf, { cellDates: true });
   const wanted = opts?.sheet ? norm(opts.sheet) : null;
-  const name = (wanted && wb.SheetNames.find((n) => norm(n) === wanted || norm(n).startsWith(wanted)))
-    ?? wb.SheetNames.find((n) => norm(n) === "ativos") ?? wb.SheetNames[0];
+  const matched = wanted ? wb.SheetNames.find((n) => norm(n) === wanted || norm(n).startsWith(wanted)) : undefined;
+  if (wanted && !matched) {
+    throw new Error(`Aba do programa "${opts?.sheet}" não encontrada na planilha. Abas disponíveis: ${wb.SheetNames.join(", ")}. Verifique a sigla do programa ou o nome da aba antes de importar.`);
+  }
+  const name = matched ?? wb.SheetNames.find((n) => norm(n) === "ativos") ?? wb.SheetNames[0];
   const rows: any[][] = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, defval: "" });
   const isEnr = (c: any) => ["matricula", "registro"].includes(norm(c));
   let h = rows.findIndex((r) => r.some(isEnr) && r.some((c) => norm(c).startsWith("nome")));
