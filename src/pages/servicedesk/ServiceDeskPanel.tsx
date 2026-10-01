@@ -66,7 +66,7 @@ const ServiceDeskPanel = () => {
     enabled: !!user,
     queryFn: async () => {
       const { data: gm } = await db.from("sd_group_members").select("group_id, organization_id, sd_groups(id, code, name, is_active)").eq("user_id", user!.id);
-      return (gm || []).map((x: any) => x.sd_groups).filter((g: any) => g && g.is_active !== false).map((g: any, i: number) => ({ ...g, organization_id: gm[i]?.organization_id }));
+      return (gm || []).filter((x: any) => x.sd_groups && x.sd_groups.is_active !== false).map((x: any) => ({ ...x.sd_groups, organization_id: x.organization_id }));
     },
   });
 
