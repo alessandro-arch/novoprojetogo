@@ -2715,6 +2715,7 @@ export type Database = {
           regular_deadline: string | null
           scholarship: string | null
           service_desk_access_active: boolean
+          source_period: string | null
           status: string
           turma: string | null
           updated_at: string
@@ -2741,6 +2742,7 @@ export type Database = {
           regular_deadline?: string | null
           scholarship?: string | null
           service_desk_access_active?: boolean
+          source_period?: string | null
           status?: string
           turma?: string | null
           updated_at?: string
@@ -2767,6 +2769,7 @@ export type Database = {
           regular_deadline?: string | null
           scholarship?: string | null
           service_desk_access_active?: boolean
+          source_period?: string | null
           status?: string
           turma?: string | null
           updated_at?: string
