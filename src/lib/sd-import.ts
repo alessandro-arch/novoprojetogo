@@ -25,7 +25,7 @@ export const parseDate = (v: any): string | null | "invalid" => {
   return "invalid";
 };
 const yes = (v: any) => ["sim", "s", "x", "true", "1", "yes"].includes(norm(v));
-const mapStatus = (v: any, allowed: string[]) => { const n = norm(v || "ativo"); const m: Record<string, string> = { ativa: "ativo", inativa: "inativo", concluida: "concluido", desligada: "desligado", trancada: "trancado", cursando: "ativo", matriculado: "ativo", matriculada: "ativo" }; const r = m[n] || n; return allowed.includes(r) ? r : null; };
+const mapStatus = (v: any, allowed: string[]) => { const n = norm(v || "ativo"); const m: Record<string, string> = { ativa: "ativo", inativa: "inativo", concluida: "concluido", desligada: "desligado", trancada: "trancado", em_trancamento: "trancado", trancamento: "trancado", cursando: "ativo", matriculado: "ativo", matriculada: "ativo" }; const r = m[n] || n; return allowed.includes(r) ? r : null; };
 
 export const readSheet = (buf: ArrayBuffer, opts?: { sheet?: string }) => {
   const wb = XLSX.read(buf, { cellDates: true });
