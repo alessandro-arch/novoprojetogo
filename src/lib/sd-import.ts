@@ -131,6 +131,10 @@ export function reconcileFaculty(sheet: any[], ctx: { programs: any[]; fixedProg
   const { fixedProg, contracts } = ctx; const progByName = progIndex(ctx.programs);
   const byEnr = new Map<string, any>(ctx.existing.map((s) => [s.enrollment, s]));
   const seen = new Set<string>(); const seenRows = new Set<string>(); const out: Row[] = [];
+  // Matrícula automática de PJ: sequencial amigável PJ-0001, PJ-0002... por instituição.
+  // Continua a partir do maior número já existente na base.
+  const pjNum = (enr: unknown) => { const m = /^PJ-(\d+)$/.exec(String(enr ?? "")); return m ? parseInt(m[1], 10) : 0; };
+  let pjNext = Math.max(0, ...ctx.existing.map((f) => pjNum(f.enrollment))) + 1;
   sheet.forEach((r, i) => {
     const line = r.__line ?? i + 2; const enrollment = String(pick(r, "enrollment") ?? "").trim(); const errs: string[] = [];
     const full_name = String(pick(r, "full_name") ?? "").trim(); if (!full_name) errs.push("nome vazio");
@@ -152,7 +156,14 @@ export function reconcileFaculty(sheet: any[], ctx: { programs: any[]; fixedProg
     if (seenRows.has(rowKey)) return;
     seenRows.add(rowKey);
     const isPjPlaceholder = contract_type === "PJ" && (!enrollment || norm(enrollment) === "pj");
-    const identity = isPjPlaceholder ? `PJ-${norm(full_name).toUpperCase().replace(/_/g, "-")}` : enrollment;
+    // PJ sem matrícula: reaproveita a matrícula já gerada para essa pessoa (legado PJ-NOME
+    // ou sequencial PJ-0001 com mesmo nome); senão gera a próxima sequencial.
+    let identity = enrollment;
+    if (isPjPlaceholder) {
+      const legacy = `PJ-${norm(full_name).toUpperCase().replace(/_/g, "-")}`;
+      const byName = ctx.existing.find((f) => /^PJ-\d+$/.test(String(f.enrollment ?? "")) && norm(f.full_name) === norm(full_name));
+      identity = byEnr.has(legacy) ? legacy : byName ? byName.enrollment : `PJ-${String(pjNext++).padStart(4, "0")}`;
+    }
     if (!identity) errs.push("matrícula vazia");
     if (seen.has(identity)) {
       const previous = out.find((item) => item.enrollment === identity && item.outcome !== "erro");
