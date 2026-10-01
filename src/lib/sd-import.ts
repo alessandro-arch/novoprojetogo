@@ -9,6 +9,9 @@ const ALIASES: Record<string, string[]> = {
   level: ["nivel", "curso"], entry_date: ["ingresso", "data_ingresso", "data_de_ingresso", "inicio_no_curso"], advisor: ["orientador", "orientador_a", "orientadora", "matricula_orientador"],
   status: ["situacao", "status"], contract_type: ["contrato", "tipo_contrato", "tipo_de_contrato"], bond_start: ["inicio", "inicio_vinculo", "inicio_do_vinculo", "data_inicio"],
   programs: ["programas", "programa", "ppg"], can_advise: ["pode_orientar"],
+  cpf: ["cpf"], phone: ["telefone", "celular", "fone"], email: ["email", "e_mail"], turma: ["turma"],
+  expected_end: ["termino_previsto_data_de_conclusao", "termino_previsto", "termino", "data_de_conclusao", "previsao_de_termino"],
+  scholarship: ["bolsa", "bolsista"],
 };
 const pick = (row: Record<string, any>, field: string) => { for (const a of ALIASES[field]) if (row[a] !== undefined && row[a] !== "") return row[a]; return undefined; };
 export const parseDate = (v: any): string | null | "invalid" => {
