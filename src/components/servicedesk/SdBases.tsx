@@ -88,12 +88,12 @@ export const StudentsTab = ({ orgId }: { orgId: string }) => {
       <p className="text-sm text-muted-foreground">{rows.length} aluno(s)</p>
       <div className="overflow-x-auto rounded-xl border border-border">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left"><tr>{["Matrícula", "Nome", "Programa", "Nível", "Ingresso", "Orientador", "Prazo regular", "Prazo vigente", "Situação", ""].map((h) => <th key={h} className="p-2 font-medium">{h}</th>)}</tr></thead>
+          <thead className="bg-muted/50 text-left"><tr>{["Matrícula", "Nome", "Programa", "Nível", "Turma", "Ingresso", "Término previsto", "Orientador", "Bolsa", "Prazo regular", "Prazo vigente", "Situação", ""].map((h) => <th key={h} className="p-2 font-medium">{h}</th>)}</tr></thead>
           <tbody>
             {rows.map((s: any) => (
               <tr key={s.id} className="border-t border-border">
                 <td className="p-2">{s.enrollment}</td><td className="p-2">{s.full_name}</td><td className="p-2">{s.program?.name || "—"}</td>
-                <td className="p-2 capitalize">{s.level}</td><td className="p-2">{fmtDate(s.entry_date)}</td><td className="p-2">{s.advisor?.full_name || "—"}</td>
+                <td className="p-2 capitalize">{s.level}</td><td className="p-2">{s.turma || "—"}</td><td className="p-2">{fmtDate(s.entry_date)}</td><td className="p-2">{fmtDate(s.expected_end)}</td><td className="p-2">{s.advisor?.full_name || "—"}</td><td className="p-2">{s.scholarship || "—"}</td>
                 <td className="p-2">{fmtDate(s.regular_deadline)}</td><td className="p-2">{fmtDate(s.current_deadline)}</td>
                 <td className="p-2"><Badge variant={s.status === "ativo" ? "default" : "secondary"}>{s.status}</Badge>{s.absent_in_last_import && <Badge variant="destructive" className="ml-1">ausente na nova base</Badge>}</td>
                 <td className="p-2 whitespace-nowrap">{s.absent_in_last_import && (<>
