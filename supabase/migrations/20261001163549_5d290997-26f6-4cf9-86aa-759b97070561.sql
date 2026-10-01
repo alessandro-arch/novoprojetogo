@@ -1,0 +1,2 @@
+REVOKE EXECUTE ON FUNCTION public.sd_is_superadmin(uuid), public.sd_is_member(uuid,uuid), public.sd_has_role(uuid,uuid,text), public.sd_is_admin(uuid,uuid), public.sd_in_group(uuid,uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.sd_is_superadmin(uuid), public.sd_is_member(uuid,uuid), public.sd_has_role(uuid,uuid,text), public.sd_is_admin(uuid,uuid), public.sd_in_group(uuid,uuid) TO authenticated, service_role;

@@ -1402,24 +1402,36 @@ export type Database = {
       organizations: {
         Row: {
           created_at: string
+          domain: string | null
           id: string
           is_active: boolean
+          logo_url: string | null
           name: string
+          sigla: string | null
           slug: string
+          timezone: string
         }
         Insert: {
           created_at?: string
+          domain?: string | null
           id?: string
           is_active?: boolean
+          logo_url?: string | null
           name: string
+          sigla?: string | null
           slug: string
+          timezone?: string
         }
         Update: {
           created_at?: string
+          domain?: string | null
           id?: string
           is_active?: boolean
+          logo_url?: string | null
           name?: string
+          sigla?: string | null
           slug?: string
+          timezone?: string
         }
         Relationships: []
       }
@@ -2253,6 +2265,168 @@ export type Database = {
         }
         Relationships: []
       }
+      sd_group_members: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          organization_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          organization_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          organization_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sd_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "sd_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sd_group_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sd_groups: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sd_groups_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sd_members: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          role: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sd_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sd_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          organization_id: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          organization_id: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          organization_id?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sd_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -2365,6 +2539,23 @@ export type Database = {
         Returns: string
       }
       normalize_ppg: { Args: { _value: string }; Returns: string }
+      sd_has_role: {
+        Args: { _org_id: string; _role: string; _user_id: string }
+        Returns: boolean
+      }
+      sd_in_group: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
+      sd_is_admin: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      sd_is_member: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      sd_is_superadmin: { Args: { _user_id: string }; Returns: boolean }
       set_fomento_role: {
         Args: { _role: string; _target_user_id: string }
         Returns: undefined
