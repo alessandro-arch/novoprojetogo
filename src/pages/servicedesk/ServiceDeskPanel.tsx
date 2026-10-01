@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Building2, Users, UsersRound, Settings, Loader2, Plus, Trash2, BookOpen, GraduationCap, Briefcase, FileSpreadsheet } from "lucide-react";
+import { Building2, Users, UsersRound, Settings, Loader2, Plus, Trash2, Pencil, BookOpen, GraduationCap, Briefcase, FileSpreadsheet } from "lucide-react";
 import { ProgramsTab, StudentsTab, FacultyTab, ImportTab } from "@/components/servicedesk/SdBases";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
 const db = supabase as any;
@@ -147,12 +148,14 @@ const InstitutionTab = ({ org, isSuper }: { org: any; isSuper: boolean }) => {
 const MembersTab = ({ orgId }: { orgId: string }) => {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("operador");
-  const { data, refetch } = useQuery({
+  const { data, isLoading, error: queryError, refetch } = useQuery({
     queryKey: ["sd-members", orgId],
     queryFn: async () => {
-      const { data } = await db.from("sd_members").select("*").eq("organization_id", orgId).order("created_at");
+      const { data, error } = await db.from("sd_members").select("*").eq("organization_id", orgId).order("created_at");
+      if (error) throw error;
       const ids = (data || []).map((m: any) => m.user_id);
-      const { data: profs } = ids.length ? await db.from("profiles").select("user_id, full_name, email").in("user_id", ids) : { data: [] };
+      const { data: profs, error: profilesError } = ids.length ? await db.from("profiles").select("user_id, full_name, email").in("user_id", ids) : { data: [], error: null };
+      if (profilesError) throw profilesError;
       return (data || []).map((m: any) => ({ ...m, profile: (profs || []).find((p: any) => p.user_id === m.user_id) }));
     },
   });
@@ -168,6 +171,12 @@ const MembersTab = ({ orgId }: { orgId: string }) => {
     if (error) return toast.error("Erro: " + error.message);
     toast.success("Atualizado"); refetch();
   };
+  const remove = async (id: string) => {
+    const { error } = await db.from("sd_members").delete().eq("id", id);
+    if (error) return toast.error("Erro: " + error.message);
+    toast.success("Membro excluído");
+    await refetch();
+  };
   return (
     <div className="space-y-4">
       <Card className="rounded-xl"><CardContent className="pt-6 flex flex-wrap gap-3 items-end">
@@ -179,32 +188,64 @@ const MembersTab = ({ orgId }: { orgId: string }) => {
         <Button onClick={add}><Plus className="w-4 h-4 mr-1" /> Adicionar</Button>
       </CardContent></Card>
       <div className="space-y-2">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-semibold">Membros cadastrados</h2>
+          <Badge variant="secondary">{data?.length || 0}</Badge>
+        </div>
+        {isLoading && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Carregando membros...</div>}
+        {queryError && <p className="text-sm text-destructive">Não foi possível carregar a lista de membros.</p>}
         {(data || []).map((m: any) => (
-          <Card key={m.id} className="rounded-xl"><CardContent className="py-3 flex flex-wrap items-center gap-3">
-            <div className="flex-1 min-w-[200px]"><p className="font-medium text-sm">{m.profile?.full_name || "—"}</p><p className="text-xs text-muted-foreground">{m.profile?.email}</p></div>
-            <select className="h-9 rounded-md border border-input bg-background px-2 text-sm" value={m.role} onChange={(e) => update(m.id, { role: e.target.value })}>
-              {Object.entries(ROLE_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
-            </select>
-            <Button size="sm" variant="outline" onClick={() => update(m.id, { status: m.status === "ativo" ? "inativo" : "ativo" })}>
-              <Badge variant={m.status === "ativo" ? "default" : "secondary"}>{m.status}</Badge>
-            </Button>
-          </CardContent></Card>
+          <MemberCard key={m.id} member={m} onUpdate={update} onRemove={remove} />
         ))}
-        {!data?.length && <p className="text-sm text-muted-foreground">Nenhum membro cadastrado.</p>}
+        {!isLoading && !queryError && !data?.length && <p className="text-sm text-muted-foreground">Nenhum membro cadastrado.</p>}
       </div>
     </div>
   );
 };
 
+const MemberCard = ({ member, onUpdate, onRemove }: any) => {
+  const [editing, setEditing] = useState(false);
+  const [role, setRole] = useState(member.role);
+  const [status, setStatus] = useState(member.status);
+  const save = async () => {
+    await onUpdate(member.id, { role, status });
+    setEditing(false);
+  };
+  return (
+    <Card className="rounded-xl"><CardContent className="py-3 space-y-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex-1 min-w-[200px]">
+          <p className="font-medium text-sm">{member.profile?.full_name || "Nome não informado"}</p>
+          <p className="text-xs text-muted-foreground">{member.profile?.email || "E-mail não disponível"}</p>
+          {!editing && <p className="mt-1 text-xs">{ROLE_LABELS[member.role] || member.role} · {member.status}</p>}
+        </div>
+        <Button size="sm" variant="outline" onClick={() => setEditing((value) => !value)}><Pencil className="mr-1 h-4 w-4" /> Editar</Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild><Button size="sm" variant="outline" className="text-destructive"><Trash2 className="mr-1 h-4 w-4" /> Excluir</Button></AlertDialogTrigger>
+          <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Excluir membro?</AlertDialogTitle><AlertDialogDescription>Esta pessoa será removida da equipe da instituição.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => onRemove(member.id)} className="bg-destructive text-destructive-foreground">Excluir</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+        </AlertDialog>
+      </div>
+      {editing && <div className="flex flex-wrap items-end gap-3 border-t pt-3">
+        <div><Label>Papel</Label><select className="mt-1 block h-9 rounded-md border border-input bg-background px-2 text-sm" value={role} onChange={(e) => setRole(e.target.value)}>{Object.entries(ROLE_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></div>
+        <div><Label>Situação</Label><select className="mt-1 block h-9 rounded-md border border-input bg-background px-2 text-sm" value={status} onChange={(e) => setStatus(e.target.value)}><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select></div>
+        <Button size="sm" onClick={save}>Salvar</Button><Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancelar</Button>
+      </div>}
+    </CardContent></Card>
+  );
+};
+
 const GroupsTab = ({ orgId }: { orgId: string }) => {
   const [code, setCode] = useState(""); const [name, setName] = useState("");
-  const { data, refetch } = useQuery({
+  const { data, isLoading, error: queryError, refetch } = useQuery({
     queryKey: ["sd-groups", orgId],
     queryFn: async () => {
-      const { data: groups } = await db.from("sd_groups").select("*").eq("organization_id", orgId).order("code");
-      const { data: gm } = await db.from("sd_group_members").select("*").eq("organization_id", orgId);
+      const { data: groups, error: groupsError } = await db.from("sd_groups").select("*").eq("organization_id", orgId).order("code");
+      if (groupsError) throw groupsError;
+      const { data: gm, error: membersError } = await db.from("sd_group_members").select("*").eq("organization_id", orgId);
+      if (membersError) throw membersError;
       const ids = [...new Set((gm || []).map((x: any) => x.user_id))];
-      const { data: profs } = ids.length ? await db.from("profiles").select("user_id, full_name, email").in("user_id", ids) : { data: [] };
+      const { data: profs, error: profilesError } = ids.length ? await db.from("profiles").select("user_id, full_name, email").in("user_id", ids) : { data: [], error: null };
+      if (profilesError) throw profilesError;
       return (groups || []).map((g: any) => ({ ...g, members: (gm || []).filter((x: any) => x.group_id === g.id).map((x: any) => ({ ...x, profile: (profs || []).find((p: any) => p.user_id === x.user_id) })) }));
     },
   });
@@ -226,6 +267,18 @@ const GroupsTab = ({ orgId }: { orgId: string }) => {
     if (error) return toast.error("Erro: " + error.message);
     toast.success("Removido"); refetch();
   };
+  const updateGroup = async (id: string, patch: any) => {
+    const { error } = await db.from("sd_groups").update(patch).eq("id", id);
+    if (error) return toast.error("Erro: " + error.message);
+    toast.success("Grupo atualizado");
+    await refetch();
+  };
+  const removeGroup = async (id: string) => {
+    const { error } = await db.from("sd_groups").delete().eq("id", id);
+    if (error) return toast.error("Erro: " + error.message);
+    toast.success("Grupo excluído");
+    await refetch();
+  };
   return (
     <div className="space-y-4">
       <Card className="rounded-xl"><CardContent className="pt-6 flex flex-wrap gap-3 items-end">
@@ -233,23 +286,38 @@ const GroupsTab = ({ orgId }: { orgId: string }) => {
         <div className="flex-1 min-w-[200px]"><Label>Nome</Label><Input className="mt-1" value={name} onChange={(e) => setName(e.target.value)} /></div>
         <Button onClick={addGroup}><Plus className="w-4 h-4 mr-1" /> Criar grupo</Button>
       </CardContent></Card>
+      <div className="flex items-center justify-between gap-3"><h2 className="font-semibold">Grupos cadastrados</h2><Badge variant="secondary">{data?.length || 0}</Badge></div>
+      {isLoading && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Carregando grupos...</div>}
+      {queryError && <p className="text-sm text-destructive">Não foi possível carregar a lista de grupos.</p>}
       <div className="grid gap-4 md:grid-cols-2">
-        {(data || []).map((g: any) => <GroupCard key={g.id} g={g} onAdd={addMember} onRemove={removeMember} />)}
+        {(data || []).map((g: any) => <GroupCard key={g.id} g={g} onAdd={addMember} onRemoveMember={removeMember} onUpdate={updateGroup} onRemoveGroup={removeGroup} />)}
       </div>
+      {!isLoading && !queryError && !data?.length && <p className="text-sm text-muted-foreground">Nenhum grupo cadastrado.</p>}
     </div>
   );
 };
 
-const GroupCard = ({ g, onAdd, onRemove }: any) => {
+const GroupCard = ({ g, onAdd, onRemoveMember, onUpdate, onRemoveGroup }: any) => {
   const [email, setEmail] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [code, setCode] = useState(g.code);
+  const [name, setName] = useState(g.name);
+  const save = async () => {
+    if (!code.trim() || !name.trim()) return toast.error("Informe código e nome");
+    await onUpdate(g.id, { code: code.trim().toUpperCase(), name: name.trim() });
+    setEditing(false);
+  };
   return (
     <Card className="rounded-xl">
-      <CardHeader><CardTitle className="text-base">{g.code} <span className="text-muted-foreground font-normal text-sm">· {g.description || g.name}</span></CardTitle></CardHeader>
+      <CardHeader className="space-y-3"><div className="flex items-start justify-between gap-3"><CardTitle className="text-base">{g.code} <span className="text-muted-foreground font-normal text-sm">· {g.description || g.name}</span></CardTitle><div className="flex gap-1"><Button size="sm" variant="outline" onClick={() => setEditing((value) => !value)}><Pencil className="mr-1 h-4 w-4" /> Editar</Button><AlertDialog><AlertDialogTrigger asChild><Button size="sm" variant="outline" className="text-destructive"><Trash2 className="mr-1 h-4 w-4" /> Excluir</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Excluir grupo?</AlertDialogTitle><AlertDialogDescription>O grupo e sua lista de integrantes serão excluídos.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => onRemoveGroup(g.id)} className="bg-destructive text-destructive-foreground">Excluir</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div></div>
+        {editing && <div className="grid gap-2 sm:grid-cols-[140px_1fr_auto_auto]"><Input value={code} onChange={(e) => setCode(e.target.value)} aria-label="Código do grupo" /><Input value={name} onChange={(e) => setName(e.target.value)} aria-label="Nome do grupo" /><Button size="sm" onClick={save}>Salvar</Button><Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancelar</Button></div>}
+      </CardHeader>
       <CardContent className="space-y-2">
+        <p className="text-xs font-medium text-muted-foreground">Integrantes ({g.members.length})</p>
         {g.members.map((m: any) => (
           <div key={m.id} className="flex items-center justify-between text-sm">
-            <span>{m.profile?.full_name || m.profile?.email}</span>
-            <Button size="icon" variant="ghost" onClick={() => onRemove(m.id)} aria-label="Remover"><Trash2 className="w-4 h-4" /></Button>
+            <span>{m.profile?.full_name || m.profile?.email || "Pessoa sem perfil disponível"}</span>
+            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => onRemoveMember(m.id)} aria-label="Excluir integrante"><Trash2 className="mr-1 h-4 w-4" /> Excluir</Button>
           </div>
         ))}
         {!g.members.length && <p className="text-xs text-muted-foreground">Sem integrantes.</p>}
