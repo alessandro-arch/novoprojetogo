@@ -97,7 +97,7 @@ export function reconcileFaculty(sheet: any[], ctx: { programs: any[]; fixedProg
     const contractRaw = String(pick(r, "contract_type") ?? "").trim();
     const contractNorm = norm(contractRaw);
     const contract_type = contractNorm === "pessoa_juridica" || contractNorm === "pj" ? "PJ" : contractNorm === "clt" ? "CLT" : contractRaw.toUpperCase() || null;
-    if (contract_type && contracts.length && !contracts.includes(contract_type)) errs.push(`tipo de contrato não configurado: ${ctRaw}`);
+    if (contract_type && contracts.length && !contracts.includes(contract_type)) errs.push(`tipo de contrato não configurado: ${contractRaw}`);
     const bond_start = parseDate(pick(r, "bond_start")); if (bond_start === "invalid") errs.push("data de início inválida");
     const progRaw = String(pick(r, "programs") ?? ""); const rowProg = progRaw ? progByName.get(norm(progRaw)) : null;
     if (progRaw && !rowProg) errs.push(`programa não cadastrado: ${progRaw}`);
