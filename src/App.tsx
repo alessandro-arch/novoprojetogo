@@ -59,7 +59,8 @@ const App = () => (
               <Route path="/reviewer/activate" element={<ReviewerActivatePage />} />
               <Route path="/fomento/login" element={<FomentoLogin />} />
               <Route path="/fomento/*" element={<FomentoProtectedRoute><FomentoPanel /></FomentoProtectedRoute>} />
-              <Route path="/servicedesk/*" element={<ProtectedRoute><ServiceDeskPanel /></ProtectedRoute>} />
+              <Route path="/servicedesk/login" element={<ServiceDeskLogin />} />
+              <Route path="/servicedesk/*" element={<ProtectedRoute loginPath="/servicedesk/login"><ServiceDeskPanel /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </FomentoAuthProvider>
