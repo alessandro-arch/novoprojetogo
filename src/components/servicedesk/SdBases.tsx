@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { readSheet, reconcileStudents, reconcileFaculty, type Outcome, type Row } from "@/lib/sd-import";
-import { Plus, Upload, Loader2, AlertTriangle } from "lucide-react";
+import { Plus, Upload, Loader2, AlertTriangle, Pencil, UserCheck, UserX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { StudentEditDialog } from "@/components/servicedesk/StudentEditDialog";
 
 const db = supabase as any;
 const sel = "h-10 rounded-md border border-input bg-background px-3 text-sm";
@@ -62,18 +63,49 @@ export const ProgramsTab = ({ orgId }: { orgId: string }) => {
 /* ---------------- Alunos ---------------- */
 export const StudentsTab = ({ orgId }: { orgId: string }) => {
   const { data: programs } = usePrograms(orgId);
-  const [prog, setProg] = useState("__all__"); const [q, setQ] = useState(""); const [onlyAbsent, setOnlyAbsent] = useState(false);
+  const [prog, setProg] = useState("__all__"); const [period, setPeriod] = useState("__all__"); const [q, setQ] = useState(""); const [onlyAbsent, setOnlyAbsent] = useState(false); const [editing, setEditing] = useState<any>(null);
   const { data, refetch } = useQuery({
     queryKey: ["sd-students", orgId],
     queryFn: async () => (await db.from("sd_students").select("*, program:sd_programs(name), advisor:sd_faculty(full_name)").eq("organization_id", orgId).order("full_name")).data || [],
   });
+  const { data: advisors } = useQuery({
+    queryKey: ["sd-student-advisors", orgId],
+    queryFn: async () => (await db.from("sd_faculty").select("id, full_name").eq("organization_id", orgId).eq("can_advise", true).eq("status", "ativo").order("full_name")).data || [],
+  });
+  const periods = Array.from(new Set((data || []).map((s: any) => s.source_period).filter(Boolean))).sort((a: any, b: any) => String(b).localeCompare(String(a), "pt-BR", { numeric: true }));
   const rows = (data || []).filter((s: any) =>
-    (prog === "__all__" || s.program_id === prog) && (!onlyAbsent || s.absent_in_last_import) &&
+    (prog === "__all__" || s.program_id === prog) && (period === "__all__" || s.source_period === period) && (!onlyAbsent || s.absent_in_last_import) &&
     (!q || s.full_name.toLowerCase().includes(q.toLowerCase()) || s.enrollment.includes(q)));
   const resolve = async (s: any, status: string) => {
     const { error } = await db.from("sd_students").update({ status, absent_in_last_import: false }).eq("id", s.id);
     if (error) return toast.error("Erro: " + error.message);
     toast.success("Revisão registrada"); refetch();
+  };
+  const sha256 = async (s: string) => Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)))).map((b) => b.toString(16).padStart(2, "0")).join("");
+  const save = async (values: any, cpf: string) => {
+    if (!editing) return;
+    const digits = cpf.replace(/\D/g, "");
+    if (!values.enrollment.trim() || !values.full_name.trim()) { toast.error("Matrícula e nome são obrigatórios"); return; }
+    if (digits && digits.length !== 11) { toast.error("Informe um CPF válido com 11 dígitos"); return; }
+    const patch: any = {
+      ...values,
+      enrollment: values.enrollment.trim(), full_name: values.full_name.trim(),
+      email: values.email.trim().toLowerCase() || null, phone: values.phone.trim() || null, turma: values.turma.trim() || null,
+      program_id: values.program_id === "__none__" ? null : values.program_id,
+      advisor_id: values.advisor_id === "__none__" ? null : values.advisor_id,
+      scholarship: values.scholarship.trim() || null, entry_date: values.entry_date || null,
+      expected_end: values.expected_end || null, current_deadline: values.current_deadline || null,
+    };
+    if (digits) { patch.cpf_hash = await sha256(digits); patch.cpf_last4 = digits.slice(-4); }
+    const { error } = await db.from("sd_students").update(patch).eq("id", editing.id);
+    if (error) { toast.error("Não foi possível salvar: " + error.message); return; }
+    toast.success("Dados do aluno atualizados"); setEditing(null); refetch();
+  };
+  const toggleAccess = async (s: any) => {
+    const active = s.service_desk_access_active !== false;
+    const { error } = await db.from("sd_students").update({ service_desk_access_active: !active }).eq("id", s.id);
+    if (error) return toast.error("Não foi possível alterar o acesso: " + error.message);
+    toast.success(!active ? "Acesso ao Service Desk ativado" : "Acesso ao Service Desk desativado"); refetch();
   };
   return (
     <div className="space-y-4">
@@ -83,20 +115,25 @@ export const StudentsTab = ({ orgId }: { orgId: string }) => {
           <option value="__all__">Todos os programas</option>
           {(programs || []).map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
+        <select className={sel} value={period} onChange={(e) => setPeriod(e.target.value)}>
+          <option value="__all__">Todos os semestres</option>
+          {periods.map((p: any) => <option key={p} value={p}>{p}</option>)}
+        </select>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={onlyAbsent} onChange={(e) => setOnlyAbsent(e.target.checked)} /> Só ausentes na nova base</label>
       </div>
       <p className="text-sm text-muted-foreground">{rows.length} aluno(s)</p>
       <div className="overflow-x-auto rounded-xl border border-border">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left"><tr>{["Matrícula", "Nome", "Programa", "Nível", "Turma", "Ingresso", "Término previsto", "Orientador", "Bolsa", "Prazo regular", "Prazo vigente", "Situação", ""].map((h) => <th key={h} className="p-2 font-medium">{h}</th>)}</tr></thead>
+          <thead className="bg-muted/50 text-left"><tr>{["Matrícula", "Nome", "Programa", "Semestre", "Nível", "Turma", "Ingresso", "Término previsto", "Orientador", "Bolsa", "Prazo regular", "Prazo vigente", "Situação", "Acesso", "Ações"].map((h) => <th key={h} className="p-2 font-medium">{h}</th>)}</tr></thead>
           <tbody>
             {rows.map((s: any) => (
               <tr key={s.id} className="border-t border-border">
-                <td className="p-2">{s.enrollment}</td><td className="p-2">{s.full_name}</td><td className="p-2">{s.program?.name || "—"}</td>
+                <td className="p-2">{s.enrollment}</td><td className="p-2">{s.full_name}</td><td className="p-2">{s.program?.name || "—"}</td><td className="p-2">{s.source_period || "—"}</td>
                 <td className="p-2 capitalize">{s.level}</td><td className="p-2">{s.turma || "—"}</td><td className="p-2">{fmtDate(s.entry_date)}</td><td className="p-2">{fmtDate(s.expected_end)}</td><td className="p-2">{s.advisor?.full_name || "—"}</td><td className="p-2">{s.scholarship || "—"}</td>
                 <td className="p-2">{fmtDate(s.regular_deadline)}</td><td className="p-2">{fmtDate(s.current_deadline)}</td>
                 <td className="p-2"><Badge variant={s.status === "ativo" ? "default" : "secondary"}>{s.status}</Badge>{s.absent_in_last_import && <Badge variant="destructive" className="ml-1">ausente na nova base</Badge>}</td>
-                <td className="p-2 whitespace-nowrap">{s.absent_in_last_import && (<>
+                <td className="p-2"><Badge variant={s.service_desk_access_active !== false ? "default" : "secondary"}>{s.service_desk_access_active !== false ? "Ativo" : "Desativado"}</Badge></td>
+                <td className="p-2 whitespace-nowrap"><Button size="icon" variant="ghost" title="Editar aluno" aria-label="Editar aluno" onClick={() => setEditing(s)}><Pencil className="h-4 w-4" /></Button><Button size="icon" variant="ghost" title={s.service_desk_access_active !== false ? "Desativar acesso ao Service Desk" : "Ativar acesso ao Service Desk"} aria-label={s.service_desk_access_active !== false ? "Desativar acesso ao Service Desk" : "Ativar acesso ao Service Desk"} onClick={() => toggleAccess(s)}>{s.service_desk_access_active !== false ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}</Button>{s.absent_in_last_import && (<>
                   <Button size="sm" variant="outline" onClick={() => resolve(s, s.status)}>Manter</Button>
                   <Button size="sm" variant="ghost" onClick={() => resolve(s, "inativo")}>Inativar</Button></>)}</td>
               </tr>
@@ -104,6 +141,7 @@ export const StudentsTab = ({ orgId }: { orgId: string }) => {
           </tbody>
         </table>
       </div>
+      <StudentEditDialog student={editing} programs={programs || []} advisors={advisors || []} onOpenChange={(open) => !open && setEditing(null)} onSave={save} />
     </div>
   );
 };
@@ -221,7 +259,7 @@ export const ImportTab = ({ orgId, orgLabel }: { orgId: string; orgLabel: string
       const toWrite = await Promise.all(writable.map(async (r) => {
         const { cpf_digits, ...rest } = r.data || {};
         const cpf = cpf_digits ? { cpf_hash: await sha256(cpf_digits), cpf_last4: cpf_digits.slice(-4) } : {};
-        return { organization_id: orgId, ...rest, ...cpf, absent_in_last_import: false, last_import_id: imp.id };
+        return { organization_id: orgId, ...rest, ...cpf, source_period: period.trim(), absent_in_last_import: false, last_import_id: imp.id };
       }));
       for (let i = 0; i < toWrite.length; i += 200) {
         const { error: e } = await db.from(table).upsert(toWrite.slice(i, i + 200), { onConflict: "organization_id,enrollment" });
