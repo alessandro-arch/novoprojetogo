@@ -46,6 +46,39 @@ export const readSheet = (buf: ArrayBuffer, opts?: { sheet?: string }) => {
 
 const progIndex = (programs: any[]) => { const m = new Map<string, any>(); programs.forEach((p) => { m.set(norm(p.name), p); if (p.sigla) m.set(norm(p.sigla), p); }); return m; };
 
+// Levenshtein limitado: retorna distância ou Infinity se > max
+const editDistance = (a: string, b: string, max: number): number => {
+  if (Math.abs(a.length - b.length) > max) return Infinity;
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    let rowMin = i;
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      rowMin = Math.min(rowMin, cur[j]);
+    }
+    if (rowMin > max) return Infinity;
+    prev = cur;
+  }
+  return prev[b.length];
+};
+
+// Correspondência determinística de orientador por nome similar:
+// 1) todos os tokens de um nome contidos no outro ("augusto cesar mozine" ⊆ "augusto cesar salomao mozine")
+// 2) distância de edição ≤ 2 no nome normalizado ("carreta" ≈ "carretta")
+// Só aceita se houver exatamente UM candidato; ambíguo vira erro. Retorna { match, ambiguous }.
+export const matchAdvisorByName = (faculty: any[], rawName: string): { match: any | null; ambiguous: boolean } => {
+  const n = norm(rawName); if (!n) return { match: null, ambiguous: false };
+  const tokens = n.split("_").filter(Boolean);
+  const candidates = faculty.filter((f) => {
+    const fn = norm(f.full_name); if (!fn) return false;
+    const fTokens = fn.split("_").filter(Boolean);
+    const subset = tokens.every((t) => fTokens.includes(t)) || fTokens.every((t) => tokens.includes(t));
+    return subset || editDistance(n, fn, 2) <= 2;
+  });
+  return { match: candidates.length === 1 ? candidates[0] : null, ambiguous: candidates.length > 1 };
+};
+
 export function reconcileStudents(sheet: any[], ctx: { programs: any[]; fixedProg?: any; existing: any[]; faculty: any[] }): Row[] {
   const { fixedProg } = ctx; const progByName = progIndex(ctx.programs);
   const byEnr = new Map<string, any>(ctx.existing.map((s) => [s.enrollment, s]));
@@ -62,12 +95,17 @@ export function reconcileStudents(sheet: any[], ctx: { programs: any[]; fixedPro
     const lv = norm(pick(r, "level")); const level = lv.startsWith("mest") || lv === "ms" ? "mestrado" : lv.startsWith("dout") || lv === "dr" ? "doutorado" : null;
     if (!level) errs.push("nível deve ser Mestrado ou Doutorado");
     const entry_date = parseDate(pick(r, "entry_date")); if (entry_date === "invalid") errs.push("data de ingresso inválida");
-    const advRaw = pick(r, "advisor"); let advisor_id: string | null = null;
+    const advRaw = pick(r, "advisor"); let advisor_id: string | null = null; let advisorNote: string | null = null;
     if (advRaw) {
-      const a = advByEnr.get(String(advRaw).trim()) || advByName.get(norm(advRaw));
-      if (!a) errs.push(`orientador não encontrado na base de professores: ${advRaw}`);
-      else if (!a.can_advise) errs.push(`professor não habilitado como orientador: ${advRaw}`);
-      else advisor_id = a.id;
+      let a = advByEnr.get(String(advRaw).trim()) || advByName.get(norm(advRaw));
+      if (!a) {
+        const sim = matchAdvisorByName(ctx.faculty, String(advRaw));
+        if (sim.ambiguous) errs.push(`nome de orientador ambíguo na base de professores: ${advRaw}`);
+        else if (sim.match) { a = sim.match; advisorNote = `orientador vinculado pelo nome oficial do cadastro: ${a.full_name}`; }
+      }
+      if (!a && !errs.some((e) => e.startsWith("nome de orientador ambíguo"))) errs.push(`orientador não encontrado na base de professores: ${advRaw}`);
+      else if (a && !a.can_advise) errs.push(`professor não habilitado como orientador: ${advRaw}`);
+      else if (a) advisor_id = a.id;
     }
     const status = mapStatus(pick(r, "status"), ["ativo", "inativo", "trancado", "concluido", "desligado"]); if (!status) errs.push("situação inválida");
     const expected_end = parseDate(pick(r, "expected_end")); if (expected_end === "invalid") errs.push("término previsto inválido");
@@ -79,10 +117,10 @@ export function reconcileStudents(sheet: any[], ctx: { programs: any[]; fixedPro
     const scholarship = String(pick(r, "scholarship") ?? "").trim() || null;
     const data = { enrollment, full_name, program_id: prog.id, level, entry_date, advisor_id, status, expected_end, cpf_digits: cpfDigits || null, phone, email, turma, scholarship };
     const before = byEnr.get(enrollment);
-    if (!before) { out.push({ line, enrollment, outcome: "novo", data }); return; }
+    if (!before) { out.push({ line, enrollment, outcome: "novo", data, message: advisorNote || undefined }); return; }
     const diffs: string[] = (["full_name", "program_id", "level", "entry_date", "advisor_id", "status", "expected_end", "phone", "email", "turma", "scholarship"] as const).filter((k) => (before[k] ?? null) !== (data[k] ?? null));
     if (cpfDigits && before.cpf_last4 && cpfDigits.slice(-4) !== before.cpf_last4) diffs.push("cpf");
-    out.push({ line, enrollment, outcome: diffs.length ? "alterado" : "sem_alteracao", data, before, diffs });
+    out.push({ line, enrollment, outcome: diffs.length ? "alterado" : "sem_alteracao", data, before, diffs, message: advisorNote || undefined });
   });
   ctx.existing.filter((s) => !seen.has(s.enrollment) && (!fixedProg || s.program_id === fixedProg.id) && s.status === "ativo")
     .forEach((s) => out.push({ line: 0, enrollment: s.enrollment, outcome: "ausente", before: s, message: s.full_name }));
