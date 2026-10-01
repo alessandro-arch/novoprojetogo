@@ -202,7 +202,9 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
   const { data: metas } = useQuery({
     queryKey: ["fomento-metas", fomentoOrgId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("fomento_metas" as any).select("*");
+      let query = supabase.from("fomento_metas" as any).select("*");
+      if (fomentoOrgId) query = query.or(`organization_id.eq.${fomentoOrgId},organization_id.is.null`);
+      const { data, error } = await query;
       if (error) throw error;
       return data as any[];
     },
