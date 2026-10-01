@@ -2714,6 +2714,7 @@ export type Database = {
           program_id: string | null
           regular_deadline: string | null
           scholarship: string | null
+          service_desk_access_active: boolean
           status: string
           turma: string | null
           updated_at: string
@@ -2739,6 +2740,7 @@ export type Database = {
           program_id?: string | null
           regular_deadline?: string | null
           scholarship?: string | null
+          service_desk_access_active?: boolean
           status?: string
           turma?: string | null
           updated_at?: string
@@ -2764,6 +2766,7 @@ export type Database = {
           program_id?: string | null
           regular_deadline?: string | null
           scholarship?: string | null
+          service_desk_access_active?: boolean
           status?: string
           turma?: string | null
           updated_at?: string
