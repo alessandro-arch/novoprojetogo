@@ -151,7 +151,7 @@ export const FacultyTab = ({ orgId }: { orgId: string }) => {
   const [q, setQ] = useState(""); const [onlyAbsent, setOnlyAbsent] = useState(false);
   const { data, refetch } = useQuery({
     queryKey: ["sd-faculty", orgId],
-    queryFn: async () => (await db.from("sd_faculty").select("*, programs:sd_faculty_programs(program:sd_programs(name))").eq("organization_id", orgId).order("full_name")).data || [],
+    queryFn: async () => (await db.from("sd_faculty").select("*, programs:sd_faculty_programs(relationship_type, program:sd_programs(name))").eq("organization_id", orgId).order("full_name")).data || [],
   });
   const rows = (data || []).filter((f: any) => (!onlyAbsent || f.absent_in_last_import) && (!q || f.full_name.toLowerCase().includes(q.toLowerCase()) || f.enrollment.includes(q)));
   const upd = async (id: string, patch: any) => {
@@ -168,13 +168,13 @@ export const FacultyTab = ({ orgId }: { orgId: string }) => {
       <p className="text-sm text-muted-foreground">{rows.length} professor(es) · {rows.filter((f: any) => f.can_advise).length} orientador(es)</p>
       <div className="overflow-x-auto rounded-xl border border-border">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left"><tr>{["Matrícula", "Nome", "Contrato", "Início", "Prazo do vínculo", "Programas", "Pode orientar", "Situação", ""].map((h) => <th key={h} className="p-2 font-medium">{h}</th>)}</tr></thead>
+          <thead className="bg-muted/50 text-left"><tr>{["Tipo de vínculo", "Matrícula", "Nome", "Programa", "Vínculo", "Pode orientar", "Situação", ""].map((h) => <th key={h} className="p-2 font-medium">{h}</th>)}</tr></thead>
           <tbody>
             {rows.map((f: any) => (
               <tr key={f.id} className="border-t border-border">
-                <td className="p-2">{f.enrollment}</td><td className="p-2">{f.full_name}</td><td className="p-2">{f.contract_type || "—"}</td>
-                <td className="p-2">{fmtDate(f.bond_start)}</td><td className="p-2">{f.bond_deadline ? fmtDate(f.bond_deadline) : "Indeterminado"}</td>
+                <td className="p-2">{f.contract_type || "—"}</td><td className="p-2">{f.enrollment}</td><td className="p-2">{f.full_name}</td>
                 <td className="p-2">{(f.programs || []).map((p: any) => p.program?.name).join(", ") || "—"}</td>
+                <td className="p-2">{(f.programs || []).map((p: any) => p.relationship_type).filter(Boolean).join(", ") || "—"}</td>
                 <td className="p-2"><input type="checkbox" aria-label="Pode orientar" checked={f.can_advise} onChange={(e) => upd(f.id, { can_advise: e.target.checked })} /></td>
                 <td className="p-2"><Badge variant={f.status === "ativo" ? "default" : "secondary"}>{f.status}</Badge>{f.absent_in_last_import && <Badge variant="destructive" className="ml-1">ausente na nova base</Badge>}</td>
                 <td className="p-2 whitespace-nowrap">{f.absent_in_last_import && (<>
@@ -231,7 +231,7 @@ export const ImportTab = ({ orgId, orgLabel }: { orgId: string; orgLabel: string
         const [{ data: cfg }, { data: existing }, { data: links }] = await Promise.all([
           db.from("sd_settings").select("value").eq("organization_id", orgId).eq("key", "contract_types").maybeSingle(),
           db.from("sd_faculty").select("*").eq("organization_id", orgId),
-          db.from("sd_faculty_programs").select("faculty_id, program_id").eq("organization_id", orgId),
+          db.from("sd_faculty_programs").select("faculty_id, program_id, relationship_type").eq("organization_id", orgId),
         ]);
         out = reconcileFaculty(sheet, { programs: programs || [], fixedProg, existing: existing || [], links: links || [], contracts: Object.keys(cfg?.value || {}) });
       }
@@ -270,8 +270,8 @@ export const ImportTab = ({ orgId, orgLabel }: { orgId: string; orgLabel: string
       if (base === "professores") {
         const { data: fac } = await db.from("sd_faculty").select("id, enrollment").eq("organization_id", orgId);
         const idByEnr = new Map<string, string>((fac || []).map((f: any) => [f.enrollment, f.id]));
-        const links = rows.flatMap((r) => (r.extra?.progIds || []).map((p: string) => ({ organization_id: orgId, faculty_id: idByEnr.get(r.enrollment), program_id: p }))).filter((l) => l.faculty_id);
-        if (links.length) { const { error: e } = await db.from("sd_faculty_programs").upsert(links, { onConflict: "faculty_id,program_id", ignoreDuplicates: true }); if (e) throw e; }
+        const links = rows.flatMap((r) => (r.extra?.links || []).map((link: { programId: string; relationshipType: string | null }) => ({ organization_id: orgId, faculty_id: idByEnr.get(r.enrollment), program_id: link.programId, relationship_type: link.relationshipType }))).filter((l) => l.faculty_id);
+        if (links.length) { const { error: e } = await db.from("sd_faculty_programs").upsert(links, { onConflict: "faculty_id,program_id" }); if (e) throw e; }
       }
       const recs = rows.map((r) => { const { cpf_digits, ...after } = r.data || {}; return { import_id: imp.id, organization_id: orgId, enrollment: r.enrollment, outcome: r.outcome, before_data: r.before || null, after_data: r.data ? after : null, message: r.message || (r.diffs?.length ? "Campos: " + r.diffs.join(", ") : null) }; });
       for (let i = 0; i < recs.length; i += 500) { const { error: e } = await db.from("sd_import_records").insert(recs.slice(i, i + 500)); if (e) throw e; }
@@ -309,7 +309,7 @@ export const ImportTab = ({ orgId, orgLabel }: { orgId: string; orgLabel: string
           </div>
           <p className="text-xs text-muted-foreground">
             Uma planilha por programa: a comparação e as ausências consideram só o programa selecionado.{" "}
-            {base === "alunos" ? "Na base de alunos, somente a aba Ativos será importada. Colunas: QT, Status, Matrícula, Nome do Aluno, CPF, Telefone, E-mail, Turma, Nível, Início no curso, Término previsto / Data de conclusão, Orientador (a), Bolsa." : "Colunas: Matrícula, Nome, Contrato, Início do vínculo, Pode orientar (Sim/Não), Situação. Professores ficam vinculados ao programa selecionado."}
+            {base === "alunos" ? "Na base de alunos, somente a aba Ativos será importada. Colunas: QT, Status, Matrícula, Nome do Aluno, CPF, Telefone, E-mail, Turma, Nível, Início no curso, Término previsto / Data de conclusão, Orientador (a), Bolsa." : "Na base de professores, serão importadas somente as colunas: TIPO de Vínculo, Matricula, Nome, Programa e Vínculo. Professores ficam vinculados ao programa selecionado."}
             {" "}Quem não estiver no arquivo é apenas sinalizado como ausente — ninguém é inativado automaticamente.
           </p>
           <Button onClick={process} disabled={busy}>{busy && !rows ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />} Validar e comparar</Button>

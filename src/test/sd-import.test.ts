@@ -91,4 +91,19 @@ describe("Homologação Fase 2 — importação", () => {
     expect(r.find((x) => x.enrollment === "P2")!.diffs).toEqual(["bond_start", "can_advise"]);
     expect(by(r, "ausente").map((x) => x.enrollment)).toEqual(["P3"]);
   });
+
+  it("professores: layout institucional de cinco colunas, PJ automático e linhas repetidas", () => {
+    const sheet = readSheet(xlsx([
+      [],
+      ["TIPO de Vínculo", "Matricula", "Nome", "Programa", "Vínculo"],
+      ["Pessoa Jurídica", "PJ", "Agda Regina de Carvalho", "PPGAC", "Permanente"],
+      ["Pessoa Jurídica", "PJ", "Agda Regina de Carvalho", "PPGAC", "Permanente"],
+      ["CLT", "4326", "Alessandro Coutinho Ramos", "Ciências Farmacêuticas", "Colaborador (a)"],
+    ]));
+    const fixed = { id: "p-arq", name: "Arquitetura e Cidade", sigla: "PPGAC" };
+    const r = reconcileFaculty(sheet, { programs: [...programs, fixed], fixedProg: fixed, existing: [], links: [], contracts: ["CLT", "PJ"] });
+    expect(r).toHaveLength(1);
+    expect(r[0]).toMatchObject({ enrollment: "PJ-AGDA-REGINA-DE-CARVALHO", outcome: "novo", data: { contract_type: "PJ", can_advise: true } });
+    expect(r[0].extra.links).toEqual([{ programId: "p-arq", relationshipType: "Permanente" }]);
+  });
 });
