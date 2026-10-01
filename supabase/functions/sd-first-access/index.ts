@@ -18,6 +18,11 @@ Deno.serve(async (req) => {
     const matricula = String(body.matricula ?? "").trim();
     const email = String(body.email ?? "").trim().toLowerCase();
     const password = String(body.password ?? "");
+    const tipo = body.tipo === "professor" ? "professor" : "aluno";
+    const table = tipo === "professor" ? "sd_faculty" : "sd_students";
+    const rawRedirect = String(body.redirectTo ?? "");
+    const redirectTo = /^https:\/\/([a-z0-9-]+\.)*(innovago\.app|lovable\.app)(\/|$)|^http:\/\/localhost(:\d+)?(\/|$)/i.test(rawRedirect)
+      ? rawRedirect : "https://projetogo.innovago.app/servicedesk/login";
     if (!/^[A-Za-z0-9.\-/]{3,40}$/.test(matricula)) return json({ error: "Matrícula inválida." }, 400);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || email.length > 255) return json({ error: "E-mail inválido." }, 400);
     if (password.length < 8 || password.length > 72) return json({ error: "A senha deve ter de 8 a 72 caracteres." }, 400);
@@ -42,37 +47,38 @@ Deno.serve(async (req) => {
       return json({ error: msg }, status);
     };
 
-    const { data: rows, error: qErr } = await admin
-      .from("sd_students")
-      .select("id, user_id, status, service_desk_access_active")
-      .eq("enrollment", matricula);
+    const { data: rows, error: qErr } = tipo === "professor"
+      ? await admin.from("sd_faculty").select("id, user_id, status").eq("enrollment", matricula)
+      : await admin.from("sd_students").select("id, user_id, status, service_desk_access_active").eq("enrollment", matricula);
     if (qErr) throw qErr;
     if (!rows || rows.length !== 1) return await fail();
     const st = rows[0];
     if (st.user_id) return await fail("Esta matrícula já possui cadastro. Use \"Entrar\" ou \"Esqueci minha senha\".", 409);
-    if (st.status === "trancado" || !st.service_desk_access_active)
+    if (tipo === "professor" ? st.status !== "ativo" : (st.status === "trancado" || !st.service_desk_access_active))
       return await fail("Seu acesso ao Service Desk está suspenso. Procure a secretaria do seu programa.", 403);
 
-    const { data: created, error: cErr } = await admin.auth.admin.createUser({
-      email, password, email_confirm: true,
-      user_metadata: { source: "servicedesk_first_access" },
+    const pub = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, { auth: { persistSession: false } });
+    const { data: created, error: cErr } = await pub.auth.signUp({
+      email, password,
+      options: { emailRedirectTo: redirectTo, data: { source: "servicedesk_first_access", tipo } },
     });
-    if (cErr || !created.user) {
-      const exists = /already|registered|exists/i.test(cErr?.message ?? "");
+    const fakeExisting = created?.user && (created.user.identities ?? []).length === 0;
+    if (cErr || !created.user || fakeExisting) {
+      const exists = fakeExisting || /already|registered|exists/i.test(cErr?.message ?? "");
       return await fail(exists
         ? "Este e-mail já está cadastrado no ProjetoGO. Use outro e-mail ou entre com ele."
         : "Não foi possível criar o cadastro.", exists ? 409 : 400);
     }
 
-    const { error: uErr } = await admin.from("sd_students")
-      .update({ user_id: created.user.id, email })
+    const { error: uErr } = await admin.from(table)
+      .update(tipo === "professor" ? { user_id: created.user.id } : { user_id: created.user.id, email })
       .eq("id", st.id).is("user_id", null);
     if (uErr) {
-      await admin.auth.admin.deleteUser(created.user.id);
+      await admin.auth.admin.deleteUser(created.user!.id);
       throw uErr;
     }
     await admin.from("sd_first_access_attempts").insert({ matricula, ip, success: true });
-    return json({ ok: true });
+    return json({ ok: true, needsConfirmation: !created.session });
   } catch (e) {
     console.error("sd-first-access", e);
     return json({ error: "Erro interno. Tente novamente." }, 500);
