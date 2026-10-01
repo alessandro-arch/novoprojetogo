@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import * as XLSX from "xlsx";
+import { readSheet, reconcileStudents, reconcileFaculty, type Outcome, type Row } from "@/lib/sd-import";
 import { Plus, Upload, Loader2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -152,29 +152,6 @@ export const FacultyTab = ({ orgId }: { orgId: string }) => {
 };
 
 /* ---------------- Importação ---------------- */
-const norm = (s: any) => String(s ?? "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
-const ALIASES: Record<string, string[]> = {
-  enrollment: ["matricula", "registro", "id"], full_name: ["nome", "nome_completo"], program: ["programa", "ppg"],
-  level: ["nivel", "curso"], entry_date: ["ingresso", "data_ingresso", "data_de_ingresso"], advisor: ["orientador", "matricula_orientador"],
-  status: ["situacao", "status"], contract_type: ["contrato", "tipo_contrato", "tipo_de_contrato"], bond_start: ["inicio", "inicio_vinculo", "inicio_do_vinculo", "data_inicio"],
-  programs: ["programas", "programa", "ppg"], can_advise: ["pode_orientar", "orientador"],
-};
-const pick = (row: Record<string, any>, field: string) => { for (const a of ALIASES[field]) if (row[a] !== undefined && row[a] !== "") return row[a]; return undefined; };
-const parseDate = (v: any): string | null | "invalid" => {
-  if (v === undefined || v === null || v === "") return null;
-  if (v instanceof Date) return v.toISOString().slice(0, 10);
-  if (typeof v === "number") { const d = XLSX.SSF.parse_date_code(v); return d ? `${d.y}-${String(d.m).padStart(2, "0")}-${String(d.d).padStart(2, "0")}` : "invalid"; }
-  const s = String(v).trim(); let m;
-  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/))) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
-  if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return `${m[1]}-${m[2]}-${m[3]}`;
-  return "invalid";
-};
-const yes = (v: any) => ["sim", "s", "x", "true", "1", "yes"].includes(norm(v));
-const mapStatus = (v: any, allowed: string[]) => { const n = norm(v || "ativo"); const m: Record<string, string> = { ativa: "ativo", inativa: "inativo", concluida: "concluido", desligada: "desligado", trancada: "trancado" }; const r = m[n] || n; return allowed.includes(r) ? r : null; };
-
-type Outcome = "novo" | "alterado" | "sem_alteracao" | "ausente" | "erro";
-interface Row { line: number; enrollment: string; outcome: Outcome; data?: any; before?: any; message?: string; diffs?: string[]; extra?: any; }
-
 const LABEL: Record<Outcome, string> = { novo: "Novos", alterado: "Alterados", sem_alteracao: "Sem alterações", ausente: "Ausentes na nova base", erro: "Inconsistências" };
 
 export const ImportTab = ({ orgId, orgLabel }: { orgId: string; orgLabel: string }) => {
@@ -201,77 +178,23 @@ export const ImportTab = ({ orgId, orgLabel }: { orgId: string; orgLabel: string
     if (!period.trim()) return toast.error("Informe o período/semestre");
     setBusy(true); setRows(null);
     try {
-      const wb = XLSX.read(await file.arrayBuffer(), { cellDates: true });
-      const raw: any[] = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
-      if (!raw.length) throw new Error("Planilha vazia");
-      const sheet = raw.map((r) => Object.fromEntries(Object.entries(r).map(([k, v]) => [norm(k), typeof v === "string" ? v.trim() : v])));
-      const progByName = new Map<string, any>(); (programs || []).forEach((p: any) => { progByName.set(norm(p.name), p); if (p.sigla) progByName.set(norm(p.sigla), p); });
+      const sheet = readSheet(await file.arrayBuffer());
+      if (!sheet.length) throw new Error("Planilha vazia");
       const fixedProg = programId !== "__none__" ? (programs || []).find((p: any) => p.id === programId) : null;
-      const seen = new Set<string>(); const out: Row[] = [];
-
+      let out: Row[];
       if (base === "alunos") {
         const [{ data: existing }, { data: faculty }] = await Promise.all([
           db.from("sd_students").select("*").eq("organization_id", orgId),
           db.from("sd_faculty").select("id, enrollment, full_name, can_advise").eq("organization_id", orgId),
         ]);
-        const byEnr = new Map<string, any>((existing || []).map((s: any) => [s.enrollment, s]));
-        const advByEnr = new Map<string, any>((faculty || []).map((f: any) => [String(f.enrollment), f]));
-        const advByName = new Map<string, any>((faculty || []).map((f: any) => [norm(f.full_name), f]));
-        sheet.forEach((r, i) => {
-          const line = i + 2; const enrollment = String(pick(r, "enrollment") ?? "").trim(); const errs: string[] = [];
-          if (!enrollment) errs.push("matrícula vazia"); else if (seen.has(enrollment)) errs.push("matrícula repetida no arquivo"); seen.add(enrollment);
-          const full_name = String(pick(r, "full_name") ?? "").trim(); if (!full_name) errs.push("nome vazio");
-          const progRaw = pick(r, "program"); const prog = progRaw ? progByName.get(norm(progRaw)) : fixedProg;
-          if (!prog) errs.push(progRaw ? `programa não cadastrado: ${progRaw}` : "programa não informado");
-          else if (fixedProg && prog.id !== fixedProg.id) errs.push(`programa diferente do selecionado: ${progRaw}`);
-          const lv = norm(pick(r, "level")); const level = lv.startsWith("mest") || lv === "ms" ? "mestrado" : lv.startsWith("dout") || lv === "dr" ? "doutorado" : null;
-          if (!level) errs.push("nível deve ser Mestrado ou Doutorado");
-          const entry_date = parseDate(pick(r, "entry_date")); if (entry_date === "invalid") errs.push("data de ingresso inválida");
-          const advRaw = pick(r, "advisor"); let advisor_id: string | null = null;
-          if (advRaw) { const a = advByEnr.get(String(advRaw).trim()) || advByName.get(norm(advRaw)); if (!a) errs.push(`orientador não encontrado na base de professores: ${advRaw}`); else advisor_id = a.id; }
-          const status = mapStatus(pick(r, "status"), ["ativo", "inativo", "trancado", "concluido", "desligado"]); if (!status) errs.push("situação inválida");
-          if (errs.length) return out.push({ line, enrollment, outcome: "erro", message: errs.join("; ") });
-          const data = { enrollment, full_name, program_id: prog.id, level, entry_date, advisor_id, status };
-          const before = byEnr.get(enrollment);
-          if (!before) return out.push({ line, enrollment, outcome: "novo", data });
-          const diffs = (["full_name", "program_id", "level", "entry_date", "advisor_id", "status"] as const).filter((k) => (before[k] ?? null) !== (data[k] ?? null));
-          out.push({ line, enrollment, outcome: diffs.length ? "alterado" : "sem_alteracao", data, before, diffs });
-        });
-        (existing || []).filter((s: any) => !seen.has(s.enrollment) && (!fixedProg || s.program_id === fixedProg.id) && s.status === "ativo")
-          .forEach((s: any) => out.push({ line: 0, enrollment: s.enrollment, outcome: "ausente", before: s, message: s.full_name }));
+        out = reconcileStudents(sheet, { programs: programs || [], fixedProg, existing: existing || [], faculty: faculty || [] });
       } else {
-        const { data: cfg } = await db.from("sd_settings").select("value").eq("organization_id", orgId).eq("key", "contract_types").maybeSingle();
-        const contracts = Object.keys(cfg?.value || {});
-        const [{ data: existing }, { data: fp }] = await Promise.all([
+        const [{ data: cfg }, { data: existing }, { data: links }] = await Promise.all([
+          db.from("sd_settings").select("value").eq("organization_id", orgId).eq("key", "contract_types").maybeSingle(),
           db.from("sd_faculty").select("*").eq("organization_id", orgId),
           db.from("sd_faculty_programs").select("faculty_id, program_id").eq("organization_id", orgId),
         ]);
-        const byEnr = new Map<string, any>((existing || []).map((s: any) => [s.enrollment, s]));
-        sheet.forEach((r, i) => {
-          const line = i + 2; const enrollment = String(pick(r, "enrollment") ?? "").trim(); const errs: string[] = [];
-          if (!enrollment) errs.push("matrícula vazia"); else if (seen.has(enrollment)) errs.push("matrícula repetida no arquivo"); seen.add(enrollment);
-          const full_name = String(pick(r, "full_name") ?? "").trim(); if (!full_name) errs.push("nome vazio");
-          const ctRaw = String(pick(r, "contract_type") ?? "").trim().toUpperCase(); const contract_type = ctRaw || null;
-          if (contract_type && contracts.length && !contracts.includes(contract_type)) errs.push(`tipo de contrato não configurado: ${ctRaw}`);
-          const bond_start = parseDate(pick(r, "bond_start")); if (bond_start === "invalid") errs.push("data de início inválida");
-          const progRaw = String(pick(r, "programs") ?? ""); const progIds: string[] = [];
-          progRaw.split(/[;,/|]/).map((x) => x.trim()).filter(Boolean).forEach((p) => { const f = progByName.get(norm(p)); if (f) progIds.push(f.id); else errs.push(`programa não cadastrado: ${p}`); });
-          if (fixedProg && !progIds.includes(fixedProg.id)) progIds.push(fixedProg.id);
-          const status = mapStatus(pick(r, "status"), ["ativo", "inativo"]); if (!status) errs.push("situação inválida");
-          const advRaw = pick(r, "can_advise");
-          if (errs.length) return out.push({ line, enrollment, outcome: "erro", message: errs.join("; ") });
-          const before = byEnr.get(enrollment);
-          const data: any = { enrollment, full_name, contract_type, bond_start, status, can_advise: advRaw !== undefined ? yes(advRaw) : before?.can_advise ?? false };
-          const curProgs = before ? (fp || []).filter((x: any) => x.faculty_id === before.id).map((x: any) => x.program_id) : [];
-          const newProgs = progIds.filter((p) => !curProgs.includes(p));
-          if (!before) return out.push({ line, enrollment, outcome: "novo", data, extra: { progIds } });
-          const diffs: string[] = (["full_name", "contract_type", "bond_start", "status", "can_advise"] as const).filter((k) => (before[k] ?? null) !== (data[k] ?? null));
-          if (newProgs.length) diffs.push("programas");
-          out.push({ line, enrollment, outcome: diffs.length ? "alterado" : "sem_alteracao", data, before, diffs, extra: { progIds: newProgs } });
-        });
-        const inScope = (f: any) => !fixedProg || (fp || []).some((x: any) => x.faculty_id === f.id && x.program_id === fixedProg.id);
-        (existing || []).filter((f: any) => !seen.has(f.enrollment) && f.status === "ativo" && inScope(f))
-          .forEach((f: any) => out.push({ line: 0, enrollment: f.enrollment, outcome: "ausente", before: f, message: f.full_name }));
+        out = reconcileFaculty(sheet, { programs: programs || [], fixedProg, existing: existing || [], links: links || [], contracts: Object.keys(cfg?.value || {}) });
       }
       setRows(out); setShow(null);
     } catch (e: any) { toast.error("Não foi possível ler o arquivo: " + e.message); }
