@@ -106,4 +106,30 @@ describe("Homologação Fase 2 — importação", () => {
     expect(r[0]).toMatchObject({ enrollment: "PJ-AGDA-REGINA-DE-CARVALHO", outcome: "novo", data: { contract_type: "PJ", can_advise: true } });
     expect(r[0].extra.links).toEqual([{ programId: "p-arq", relationshipType: "Permanente" }]);
   });
+
+  it("alunos: nome similar de orientador usa o nome oficial do cadastro de professores", () => {
+    const fac = [
+      { id: "id-F1", enrollment: "F1", full_name: "Augusto César Salomão Mozine", can_advise: true },
+      { id: "id-F2", enrollment: "F2", full_name: "Giovanilton Andre Carretta", can_advise: true },
+      { id: "id-F3", enrollment: "F3", full_name: "Rafael Claudio Simões", can_advise: true },
+      { id: "id-F4", enrollment: "F4", full_name: "Rafael Claudio Simões Filho", can_advise: true },
+    ];
+    const sheet = readSheet(xlsx([
+      ["Matrícula", "Nome", "Programa", "Nível", "Ingresso", "Orientador", "Situação"],
+      ["B1", "Aluno Um", "Ciência Animal", "Mestrado", "01/03/2026", "Augusto Cesar Mozine", "Ativo"],
+      ["B2", "Aluno Dois", "Ciência Animal", "Mestrado", "01/03/2026", "Giovanilton Andre Carreta", "Ativo"],
+      ["B3", "Aluno Três", "Ciência Animal", "Mestrado", "01/03/2026", "Rafael Claudio Simoes", "Ativo"],
+    ]));
+    const r = reconcileStudents(sheet, { programs, existing: [], faculty: fac });
+    const b1 = r.find((x) => x.enrollment === "B1")!;
+    expect(b1.outcome).toBe("novo");
+    expect(b1.data.advisor_id).toBe("id-F1");
+    expect(b1.message).toContain("Augusto César Salomão Mozine");
+    const b2 = r.find((x) => x.enrollment === "B2")!;
+    expect(b2.data.advisor_id).toBe("id-F2");
+    // "Rafael Claudio Simoes" casa com dois professores (tokens contidos nos dois) → ambíguo, não adivinha
+    const b3 = r.find((x) => x.enrollment === "B3")!;
+    expect(b3.outcome).toBe("erro");
+    expect(b3.message).toContain("ambíguo");
+  });
 });
