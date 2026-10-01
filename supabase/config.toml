@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.invite-fomento-admin]
 verify_jwt = false
+
+[functions.sd-first-access]
+verify_jwt = false
