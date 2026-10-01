@@ -7,8 +7,9 @@ export const norm = (s: any) => String(s ?? "").trim().toLowerCase().normalize("
 const ALIASES: Record<string, string[]> = {
   enrollment: ["matricula", "registro", "id"], full_name: ["nome", "nome_completo", "nome_do_aluno", "nome_do_a_aluno_a", "nome_do_professor"], program: ["programa", "ppg"],
   level: ["nivel", "curso"], entry_date: ["ingresso", "data_ingresso", "data_de_ingresso", "inicio_no_curso"], advisor: ["orientador", "orientador_a", "orientadora", "matricula_orientador"],
-  status: ["situacao", "status"], contract_type: ["contrato", "tipo_contrato", "tipo_de_contrato"], bond_start: ["inicio", "inicio_vinculo", "inicio_do_vinculo", "data_inicio"],
+  status: ["situacao", "status"], contract_type: ["tipo_de_vinculo", "tipo_vinculo", "contrato", "tipo_contrato", "tipo_de_contrato"], bond_start: ["inicio", "inicio_vinculo", "inicio_do_vinculo", "data_inicio"],
   programs: ["programas", "programa", "ppg"], can_advise: ["pode_orientar"],
+  relationship_type: ["vinculo"],
   cpf: ["cpf"], phone: ["telefone", "celular", "fone"], email: ["email", "e_mail"], turma: ["turma"],
   expected_end: ["termino_previsto_data_de_conclusao", "termino_previsto", "termino", "data_de_conclusao", "previsao_de_termino"],
   scholarship: ["bolsa", "bolsista"],
@@ -89,28 +90,51 @@ export function reconcileStudents(sheet: any[], ctx: { programs: any[]; fixedPro
 export function reconcileFaculty(sheet: any[], ctx: { programs: any[]; fixedProg?: any; existing: any[]; links: any[]; contracts: string[] }): Row[] {
   const { fixedProg, contracts } = ctx; const progByName = progIndex(ctx.programs);
   const byEnr = new Map<string, any>(ctx.existing.map((s) => [s.enrollment, s]));
-  const seen = new Set<string>(); const out: Row[] = [];
+  const seen = new Set<string>(); const seenRows = new Set<string>(); const out: Row[] = [];
   sheet.forEach((r, i) => {
     const line = r.__line ?? i + 2; const enrollment = String(pick(r, "enrollment") ?? "").trim(); const errs: string[] = [];
-    if (!enrollment) errs.push("matrícula vazia"); else if (seen.has(enrollment)) errs.push("matrícula repetida no arquivo"); seen.add(enrollment);
     const full_name = String(pick(r, "full_name") ?? "").trim(); if (!full_name) errs.push("nome vazio");
-    const ctRaw = String(pick(r, "contract_type") ?? "").trim().toUpperCase(); const contract_type = ctRaw || null;
+    const contractRaw = String(pick(r, "contract_type") ?? "").trim();
+    const contractNorm = norm(contractRaw);
+    const contract_type = contractNorm === "pessoa_juridica" || contractNorm === "pj" ? "PJ" : contractNorm === "clt" ? "CLT" : contractRaw.toUpperCase() || null;
     if (contract_type && contracts.length && !contracts.includes(contract_type)) errs.push(`tipo de contrato não configurado: ${ctRaw}`);
     const bond_start = parseDate(pick(r, "bond_start")); if (bond_start === "invalid") errs.push("data de início inválida");
-    const progRaw = String(pick(r, "programs") ?? ""); const progIds: string[] = [];
-    progRaw.split(/[;,/|]/).map((x) => x.trim()).filter(Boolean).forEach((p) => { const f = progByName.get(norm(p)); if (f) progIds.push(f.id); else errs.push(`programa não cadastrado: ${p}`); });
-    if (fixedProg && !progIds.includes(fixedProg.id)) progIds.push(fixedProg.id);
+    const progRaw = String(pick(r, "programs") ?? ""); const rowProg = progRaw ? progByName.get(norm(progRaw)) : null;
+    if (progRaw && !rowProg) errs.push(`programa não cadastrado: ${progRaw}`);
+    if (fixedProg && rowProg && rowProg.id !== fixedProg.id) return;
+    const selectedProg = fixedProg || rowProg;
+    if (!selectedProg) errs.push("programa não informado");
+    const relationship_type = String(pick(r, "relationship_type") ?? "").trim() || null;
+    const rowKey = `${enrollment}|${norm(full_name)}|${selectedProg?.id || norm(progRaw)}|${norm(relationship_type)}`;
+    if (seenRows.has(rowKey)) return;
+    seenRows.add(rowKey);
+    const isPjPlaceholder = contract_type === "PJ" && (!enrollment || norm(enrollment) === "pj");
+    const identity = isPjPlaceholder ? `PJ-${norm(full_name).toUpperCase().replace(/_/g, "-")}` : enrollment;
+    if (!identity) errs.push("matrícula vazia");
+    if (seen.has(identity)) {
+      const previous = out.find((item) => item.enrollment === identity && item.outcome !== "erro");
+      if (previous && selectedProg) {
+        const link = { programId: selectedProg.id, relationshipType: relationship_type };
+        previous.extra.links = [...(previous.extra.links || []), link];
+        previous.extra.progIds = [...new Set([...(previous.extra.progIds || []), selectedProg.id])];
+      }
+      return;
+    }
+    seen.add(identity);
     const status = mapStatus(pick(r, "status"), ["ativo", "inativo"]); if (!status) errs.push("situação inválida");
     const advRaw = pick(r, "can_advise");
-    if (errs.length) { out.push({ line, enrollment, outcome: "erro", message: errs.join("; ") }); return; }
-    const before = byEnr.get(enrollment);
-    const data: any = { enrollment, full_name, contract_type, bond_start, status, can_advise: advRaw !== undefined ? yes(advRaw) : before?.can_advise ?? false };
+    if (errs.length) { out.push({ line, enrollment: identity, outcome: "erro", message: errs.join("; ") }); return; }
+    const before = byEnr.get(identity);
+    const data: any = { enrollment: identity, full_name, contract_type, bond_start, status, can_advise: advRaw !== undefined ? yes(advRaw) : before?.can_advise ?? true };
     const curProgs = before ? ctx.links.filter((x) => x.faculty_id === before.id).map((x) => x.program_id) : [];
+    const progIds = selectedProg ? [selectedProg.id] : [];
     const newProgs = progIds.filter((p) => !curProgs.includes(p));
-    if (!before) { out.push({ line, enrollment, outcome: "novo", data, extra: { progIds } }); return; }
+    const links = selectedProg ? [{ programId: selectedProg.id, relationshipType: relationship_type }] : [];
+    if (!before) { out.push({ line, enrollment: identity, outcome: "novo", data, extra: { progIds, links } }); return; }
     const diffs: string[] = (["full_name", "contract_type", "bond_start", "status", "can_advise"] as const).filter((k) => (before[k] ?? null) !== (data[k] ?? null));
-    if (newProgs.length) diffs.push("programas");
-    out.push({ line, enrollment, outcome: diffs.length ? "alterado" : "sem_alteracao", data, before, diffs, extra: { progIds: newProgs } });
+    const currentLink = selectedProg ? ctx.links.find((x) => x.faculty_id === before.id && x.program_id === selectedProg.id) : null;
+    if (newProgs.length || (currentLink && (currentLink.relationship_type ?? null) !== relationship_type)) diffs.push("programas");
+    out.push({ line, enrollment: identity, outcome: diffs.length ? "alterado" : "sem_alteracao", data, before, diffs, extra: { progIds: newProgs, links } });
   });
   const inScope = (f: any) => !fixedProg || ctx.links.some((x) => x.faculty_id === f.id && x.program_id === fixedProg.id);
   ctx.existing.filter((f) => !seen.has(f.enrollment) && f.status === "ativo" && inScope(f))
