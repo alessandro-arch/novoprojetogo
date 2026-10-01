@@ -1,0 +1,2 @@
+REVOKE EXECUTE ON FUNCTION public.sd_is_self_person(uuid,uuid), public.sd_is_advisor_of(uuid,uuid), public.sd_is_faculty_self(uuid,uuid) FROM anon, public;
+GRANT EXECUTE ON FUNCTION public.sd_is_self_person(uuid,uuid), public.sd_is_advisor_of(uuid,uuid), public.sd_is_faculty_self(uuid,uuid) TO authenticated;

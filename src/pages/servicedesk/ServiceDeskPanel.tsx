@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Building2, Users, UsersRound, Settings, Loader2, Plus, Trash2, Pencil, BookOpen, GraduationCap, Briefcase, FileSpreadsheet } from "lucide-react";
+import { Building2, Users, UsersRound, Settings, Loader2, Plus, Trash2, Pencil, BookOpen, GraduationCap, Briefcase, FileSpreadsheet, Inbox } from "lucide-react";
 import { ProgramsTab, StudentsTab, FacultyTab, ImportTab } from "@/components/servicedesk/SdBases";
 import RequesterHome from "@/components/servicedesk/RequesterHome";
+import GroupQueues from "@/components/servicedesk/GroupQueues";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import PanelLayout from "@/components/layout/PanelLayout";
@@ -19,6 +20,7 @@ import { toast } from "sonner";
 const db = supabase as any;
 
 const NAV = [
+  { key: "queue", label: "Solicitações", icon: Inbox },
   { key: "institution", label: "Instituição", icon: Building2 },
   { key: "members", label: "Membros", icon: Users },
   { key: "groups", label: "Grupos responsáveis", icon: UsersRound },
@@ -39,7 +41,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 const ServiceDeskPanel = () => {
   const { user, loading, globalRole, signOut } = useAuth();
-  const [nav, setNav] = useState("institution");
+  const [nav, setNav] = useState("queue");
   const [orgId, setOrgId] = useState<string | null>(null);
   const isSuper = globalRole === "icca_admin";
 
@@ -59,10 +61,35 @@ const ServiceDeskPanel = () => {
     },
   });
 
+  const { data: myGroups, isLoading: loadingGroups } = useQuery({
+    queryKey: ["sd-my-groups", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data: gm } = await db.from("sd_group_members").select("group_id, organization_id, sd_groups(id, code, name, is_active)").eq("user_id", user!.id);
+      return (gm || []).filter((x: any) => x.sd_groups && x.sd_groups.is_active !== false).map((x: any) => ({ ...x.sd_groups, organization_id: x.organization_id }));
+    },
+  });
+
+  const { data: orgGroups } = useQuery({
+    queryKey: ["sd-org-groups", orgId], enabled: !!orgId && !!orgs?.length,
+    queryFn: async () => (await db.from("sd_groups").select("id, code, name").eq("organization_id", orgId).eq("is_active", true).order("code")).data || [],
+  });
+
   useEffect(() => { if (!orgId && orgs?.length) setOrgId(orgs[0].id); }, [orgs, orgId]);
 
-  if (loading || isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (loading || isLoading || loadingGroups) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!user) return <Navigate to="/login" replace />;
+  if (!orgs?.length && myGroups?.length) {
+    const gOrg = myGroups[0].organization_id;
+    return (
+      <PanelLayout title="Service Desk" subtitle={myGroups.map((g: any) => g.code).join(" · ")} navItems={[{ key: "queue", label: "Solicitações", icon: Inbox }]} activeNav="queue" onNavChange={() => {}} onSignOut={signOut}>
+        <div className="space-y-6">
+          <h1 className="text-2xl font-bold font-heading">Solicitações — {myGroups.map((g: any) => g.code).join(" e ")}</h1>
+          <GroupQueues orgId={gOrg} groups={myGroups.filter((g: any) => g.organization_id === gOrg)} isAdmin={false} />
+        </div>
+      </PanelLayout>
+    );
+  }
   if (!orgs?.length) return (
     <RequesterHome userId={user.id} onSignOut={() => signOut()} noAccessMessage="Seu acesso ao Service Desk não está ativo. Fale com a secretaria do programa." />
   );
@@ -80,6 +107,7 @@ const ServiceDeskPanel = () => {
             </select>
           )}
         </div>
+        {nav === "queue" && <GroupQueues orgId={org.id} groups={orgGroups || []} isAdmin />}
         {nav === "institution" && <InstitutionTab org={org} isSuper={isSuper} />}
         {nav === "members" && <MembersTab orgId={org.id} />}
         {nav === "groups" && <GroupsTab orgId={org.id} />}

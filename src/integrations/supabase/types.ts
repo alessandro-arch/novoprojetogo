@@ -2265,6 +2265,62 @@ export type Database = {
         }
         Relationships: []
       }
+      sd_divergences: {
+        Row: {
+          created_at: string
+          description: string
+          enrollment: string | null
+          field: string
+          id: string
+          organization_id: string
+          person_kind: string
+          person_name: string | null
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          enrollment?: string | null
+          field: string
+          id?: string
+          organization_id: string
+          person_kind: string
+          person_name?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          enrollment?: string | null
+          field?: string
+          id?: string
+          organization_id?: string
+          person_kind?: string
+          person_name?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sd_divergences_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sd_faculty: {
         Row: {
           absent_in_last_import: boolean
@@ -2278,6 +2334,8 @@ export type Database = {
           id: string
           last_import_id: string | null
           organization_id: string
+          personal_email: string | null
+          phone: string | null
           source_period: string | null
           status: string
           updated_at: string
@@ -2295,6 +2353,8 @@ export type Database = {
           id?: string
           last_import_id?: string | null
           organization_id: string
+          personal_email?: string | null
+          phone?: string | null
           source_period?: string | null
           status?: string
           updated_at?: string
@@ -2312,6 +2372,8 @@ export type Database = {
           id?: string
           last_import_id?: string | null
           organization_id?: string
+          personal_email?: string | null
+          phone?: string | null
           source_period?: string | null
           status?: string
           updated_at?: string
@@ -2682,6 +2744,173 @@ export type Database = {
           },
         ]
       }
+      sd_request_events: {
+        Row: {
+          action: string
+          actor_name: string | null
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          note: string | null
+          organization_id: string
+          request_id: string
+        }
+        Insert: {
+          action: string
+          actor_name?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          organization_id: string
+          request_id: string
+        }
+        Update: {
+          action?: string
+          actor_name?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          organization_id?: string
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sd_request_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "sd_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sd_requests: {
+        Row: {
+          created_at: string
+          current_group_id: string | null
+          id: string
+          organization_id: string
+          requester_email: string | null
+          requester_enrollment: string
+          requester_kind: string
+          requester_name: string
+          requester_program: string | null
+          requester_user_id: string
+          service_id: string
+          status: string
+          step_index: number
+          terms_accepted_at: string | null
+          terms_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_group_id?: string | null
+          id?: string
+          organization_id: string
+          requester_email?: string | null
+          requester_enrollment: string
+          requester_kind: string
+          requester_name: string
+          requester_program?: string | null
+          requester_user_id: string
+          service_id: string
+          status?: string
+          step_index?: number
+          terms_accepted_at?: string | null
+          terms_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_group_id?: string | null
+          id?: string
+          organization_id?: string
+          requester_email?: string | null
+          requester_enrollment?: string
+          requester_kind?: string
+          requester_name?: string
+          requester_program?: string | null
+          requester_user_id?: string
+          service_id?: string
+          status?: string
+          step_index?: number
+          terms_accepted_at?: string | null
+          terms_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sd_requests_current_group_id_fkey"
+            columns: ["current_group_id"]
+            isOneToOne: false
+            referencedRelation: "sd_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sd_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sd_requests_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "sd_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sd_services: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          steps: Json
+          terms_text: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          steps?: Json
+          terms_text?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          steps?: Json
+          terms_text?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sd_services_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sd_settings: {
         Row: {
           created_at: string
@@ -2941,6 +3170,14 @@ export type Database = {
         Returns: string
       }
       normalize_ppg: { Args: { _value: string }; Returns: string }
+      sd_advance_request: {
+        Args: { _action: string; _id: string; _note: string }
+        Returns: undefined
+      }
+      sd_create_request: {
+        Args: { _service_id: string; _terms_hash: string }
+        Returns: string
+      }
       sd_has_role: {
         Args: { _org_id: string; _role: string; _user_id: string }
         Returns: boolean
@@ -2953,11 +3190,36 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      sd_is_advisor_of: {
+        Args: { _advisor_id: string; _user_id: string }
+        Returns: boolean
+      }
+      sd_is_faculty_self: {
+        Args: { _faculty_id: string; _user_id: string }
+        Returns: boolean
+      }
       sd_is_member: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      sd_is_self_person: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
       sd_is_superadmin: { Args: { _user_id: string }; Returns: boolean }
+      sd_me: { Args: never; Returns: Json }
+      sd_report_divergence: {
+        Args: { _description: string; _field: string }
+        Returns: string
+      }
+      sd_resolve_divergence: {
+        Args: { _id: string; _note: string }
+        Returns: undefined
+      }
+      sd_update_my_contact: {
+        Args: { _email: string; _phone: string }
+        Returns: undefined
+      }
       set_fomento_role: {
         Args: { _role: string; _target_user_id: string }
         Returns: undefined

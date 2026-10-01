@@ -60,9 +60,10 @@ const ServiceDeskLogin = () => {
         .eq("status", "ativo")
         .limit(1),
     ]);
+    const { data: groupRows } = await (supabase as any).from("sd_group_members").select("id").eq("user_id", authData.user.id).limit(1);
 
     const isSuperadmin = (roles ?? []).some((r) => r.role === "icca_admin");
-    const isMember = (memberships ?? []).length > 0 || (studentRows ?? []).length > 0 || (facultyRows ?? []).length > 0;
+    const isMember = (memberships ?? []).length > 0 || (studentRows ?? []).length > 0 || (facultyRows ?? []).length > 0 || (groupRows ?? []).length > 0;
 
     if (!isSuperadmin && !isMember) {
       await supabase.auth.signOut();
