@@ -103,7 +103,7 @@ describe("Homologação Fase 2 — importação", () => {
     const fixed = { id: "p-arq", name: "Arquitetura e Cidade", sigla: "PPGAC" };
     const r = reconcileFaculty(sheet, { programs: [...programs, fixed], fixedProg: fixed, existing: [], links: [], contracts: ["CLT", "PJ"] });
     expect(r).toHaveLength(1);
-    expect(r[0]).toMatchObject({ enrollment: "PJ-AGDA-REGINA-DE-CARVALHO", outcome: "novo", data: { contract_type: "PJ", can_advise: true } });
+    expect(r[0]).toMatchObject({ enrollment: "PJ-0001", outcome: "novo", data: { contract_type: "PJ", can_advise: true } });
     expect(r[0].extra.links).toEqual([{ programId: "p-arq", relationshipType: "Permanente" }]);
   });
 
