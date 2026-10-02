@@ -71,7 +71,7 @@ const ResetPassword = () => {
           <p className="text-muted-foreground mb-6">
             Este link de redefinição de senha é inválido ou expirou.
           </p>
-          <Link to="/login" className="text-primary font-medium hover:underline">
+          <Link to={loginPath} className="text-primary font-medium hover:underline">
             Voltar ao login
           </Link>
         </div>
@@ -88,7 +88,7 @@ const ResetPassword = () => {
           <p className="text-muted-foreground mb-6">
             Sua senha foi atualizada com sucesso.
           </p>
-          <Button onClick={() => navigate("/login", { replace: true })} className="w-full">
+          <Button onClick={() => navigate(loginPath, { replace: true })} className="w-full">
             Ir para o login
           </Button>
         </div>
@@ -138,7 +138,7 @@ const ResetPassword = () => {
         </form>
 
         <Link
-          to="/login"
+          to={loginPath}
           className="flex items-center gap-1 text-sm text-muted-foreground mt-6 hover:text-foreground transition-colors justify-center"
         >
           <ArrowLeft className="w-4 h-4" /> Voltar ao login
