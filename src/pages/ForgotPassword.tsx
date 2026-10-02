@@ -27,13 +27,17 @@ const ForgotPassword = () => {
     if (!email.trim()) return;
 
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/reset-password`,
+    const { data, error } = await supabase.functions.invoke("sd-password-reset", {
+      body: { email: email.trim(), back: backTo.includes("servicedesk") ? "sd" : "" },
     });
+    let msg: string | undefined = data?.error;
+    if (error && !msg) {
+      try { msg = (await (error as { context?: Response }).context?.json())?.error; } catch { /* ignore */ }
+    }
     setLoading(false);
 
-    if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    if (error || msg) {
+      toast({ title: "Erro", description: msg ?? "Tente novamente.", variant: "destructive" });
     } else {
       setSent(true);
     }
