@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
-import { Headset, ArrowLeft, Loader2 } from "lucide-react";
+import { Headset, ArrowLeft, Loader2, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Seo from "@/components/Seo";
+import { isCommonPassword, COMMON_PASSWORD_WARNING } from "@/lib/common-passwords";
 
 const ServiceDeskFirstAccess = () => {
   const [matricula, setMatricula] = useState("");
@@ -24,6 +25,10 @@ const ServiceDeskFirstAccess = () => {
     e.preventDefault();
     if (password.length < 8) {
       toast({ title: "Senha muito curta", description: "Use pelo menos 8 caracteres.", variant: "destructive" });
+      return;
+    }
+    if (isCommonPassword(password)) {
+      toast({ title: "Senha muito comum", description: COMMON_PASSWORD_WARNING, variant: "destructive" });
       return;
     }
     if (password !== confirm) {
@@ -106,7 +111,13 @@ const ServiceDeskFirstAccess = () => {
             </div>
             <div>
               <Label htmlFor="pw">Senha</Label>
-              <PasswordInput id="pw" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" className="mt-1" />
+              <PasswordInput id="pw" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" className="mt-1" aria-describedby="pw-warning" />
+              {isCommonPassword(password) && (
+                <p id="pw-warning" role="alert" className="flex items-start gap-1.5 text-xs text-destructive mt-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                  {COMMON_PASSWORD_WARNING}
+                </p>
+              )}
             </div>
             <div>
               <Label htmlFor="pw2">Confirmar senha</Label>
