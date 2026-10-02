@@ -101,15 +101,15 @@ const ServiceDeskPanel = () => {
   ];
   const home = areas.find((a) => a.path !== "/servicedesk/admin")?.path || areas[0]?.path;
 
-  if (!areas.length) return <RequesterHome userId={user.id} onSignOut={() => signOut()} noAccessMessage="Seu acesso ao Service Desk não está ativo. Fale com a secretaria do programa." />;
+  if (!areas.length) return <RequesterHome userId={user.id} onSignOut={() => signOut("/servicedesk/login")} noAccessMessage="Seu acesso ao Service Desk não está ativo. Fale com a secretaria do programa." />;
 
   return (
     <Routes>
       <Route index element={<Navigate to={home} replace />} />
-      <Route path="portal/*" element={requester ? <RequesterHome userId={user.id} onSignOut={() => signOut()} noAccessMessage="" areas={areas} /> : <Navigate to={home} replace />} />
-      <Route path="admin/*" element={orgs?.length ? <AdminArea orgs={orgs} isSuper={isSuper} userId={user.id} areas={areas} onSignOut={signOut} /> : <Navigate to={home} replace />} />
+      <Route path="portal/*" element={requester ? <RequesterHome userId={user.id} onSignOut={() => signOut("/servicedesk/login")} noAccessMessage="" areas={areas} /> : <Navigate to={home} replace />} />
+      <Route path="admin/*" element={orgs?.length ? <AdminArea orgs={orgs} isSuper={isSuper} userId={user.id} areas={areas} onSignOut={() => signOut("/servicedesk/login")} /> : <Navigate to={home} replace />} />
       <Route path="solicitacao/:id" element={<div className="min-h-screen bg-background"><RequestDetail userId={user.id} isAdminOf={isAdminOf} /></div>} />
-      <Route path="atendimento/*" element={panelGroups.length ? <ServiceCenter groups={panelGroups} kindOf={kindOf} userId={user.id} areas={areas} onSignOut={signOut} canResolveDivergences={(g) => isAdminOf(g.organization_id) || kindOf(g) === "approver"} /> : <Navigate to={home} replace />} />
+      <Route path="atendimento/*" element={panelGroups.length ? <ServiceCenter groups={panelGroups} kindOf={kindOf} userId={user.id} areas={areas} onSignOut={() => signOut("/servicedesk/login")} canResolveDivergences={(g) => isAdminOf(g.organization_id) || kindOf(g) === "approver"} /> : <Navigate to={home} replace />} />
       <Route path=":groupCode/*" element={<LegacyGroupRedirect groups={panelGroups} home={home} />} />
     </Routes>
   );
