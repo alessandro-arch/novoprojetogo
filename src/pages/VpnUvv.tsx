@@ -338,7 +338,7 @@ const VpnUvv = () => {
                 Acesse o Portal de Periódicos CAPES de onde estiver
               </h1>
               <p className="mt-7 max-w-2xl text-lg leading-8 text-foreground/80 md:text-xl">
-                Alunos de Mestrado e Doutorado e orientadores da Universidade Vila Velha podem solicitar acesso remoto por meio da VPN institucional.
+                Alunos de Mestrado e Doutorado e seus orientadores credenciados nos programas de pós-graduação da UVV podem solicitar acesso remoto por meio da VPN institucional.
               </p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                 <Button asChild size="lg" className="min-h-12 px-6 text-sm font-bold uppercase">
