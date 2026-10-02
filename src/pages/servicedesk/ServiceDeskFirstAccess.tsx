@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
-import { Headset, ArrowLeft, Loader2 } from "lucide-react";
+import { Headset, ArrowLeft, Loader2, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Seo from "@/components/Seo";
+import { isCommonPassword, COMMON_PASSWORD_WARNING } from "@/lib/common-passwords";
 
 const ServiceDeskFirstAccess = () => {
   const [matricula, setMatricula] = useState("");
