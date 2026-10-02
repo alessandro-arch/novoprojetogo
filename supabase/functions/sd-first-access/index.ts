@@ -65,8 +65,15 @@ Deno.serve(async (req) => {
     const fakeExisting = created?.user && (created.user.identities ?? []).length === 0;
     if (cErr || !created.user || fakeExisting) {
       const m = cErr?.message ?? "";
+      console.error("sd-first-access signup", matricula, cErr?.status, (cErr as any)?.code, m);
       if (/weak|easy to guess|pwned|leaked/i.test(m))
         return json({ error: "Esta senha é muito comum e foi recusada por segurança. Crie uma senha diferente, misturando letras maiúsculas, minúsculas, números e símbolos." }, 422);
+      if (/rate limit|too many/i.test(m) || cErr?.status === 429)
+        return json({ error: "Limite de envio de e-mails de confirmação atingido. Aguarde alguns minutos e tente novamente." }, 429);
+      if (/password/i.test(m))
+        return json({ error: "A senha não atende aos requisitos de segurança. Use letras maiúsculas, minúsculas, números e símbolos." }, 422);
+      if (/sending|smtp|email/i.test(m) && !/already|registered|exists/i.test(m))
+        return json({ error: "Não foi possível enviar o e-mail de confirmação. Confira o e-mail informado ou tente mais tarde." }, 502);
       const exists = fakeExisting || /already|registered|exists/i.test(m);
       return await fail(exists
         ? "Este e-mail já está cadastrado no ProjetoGO. Use outro e-mail ou entre com ele."
