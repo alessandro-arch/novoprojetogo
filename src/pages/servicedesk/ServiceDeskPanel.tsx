@@ -256,8 +256,9 @@ const MembersTab = ({ orgId }: { orgId: string }) => {
   };
   return (
     <div className="space-y-4">
+      <InviteStaffCard orgId={orgId} onDone={refetch} />
       <Card className="rounded-xl"><CardContent className="pt-6 flex flex-wrap gap-3 items-end">
-        <div className="flex-1 min-w-[220px]"><Label>E-mail</Label><Input className="mt-1" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="pessoa@instituicao.br" /></div>
+        <div className="flex-1 min-w-[220px]"><Label>E-mail (pessoa que já tem conta)</Label><Input className="mt-1" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="pessoa@instituicao.br" /></div>
         <div><Label>Papel</Label>
           <select className="mt-1 h-10 rounded-md border border-input bg-background px-3 text-sm block" value={role} onChange={(e) => setRole(e.target.value)}>
             {Object.entries(ROLE_LABELS).filter(([k]) => k !== "solicitante").map(([k, l]) => <option key={k} value={k}>{l}</option>)}
@@ -277,6 +278,56 @@ const MembersTab = ({ orgId }: { orgId: string }) => {
         {!isLoading && !queryError && !data?.length && <p className="text-sm text-muted-foreground">Nenhum membro cadastrado.</p>}
       </div>
     </div>
+  );
+};
+
+const InviteStaffCard = ({ orgId, onDone }: { orgId: string; onDone: () => void }) => {
+  const qc = useQueryClient();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState("operador");
+  const [groupId, setGroupId] = useState("__none__");
+  const [sending, setSending] = useState(false);
+  const { data: groups } = useQuery({
+    queryKey: ["sd-groups-invite", orgId],
+    queryFn: async () => (await db.from("sd_groups").select("id, code, name").eq("organization_id", orgId).order("code")).data || [],
+  });
+  const send = async () => {
+    if (name.trim().length < 3) return toast.error("Informe o nome completo");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return toast.error("Informe um e-mail válido");
+    setSending(true);
+    const { data, error } = await supabase.functions.invoke("sd-invite-staff", {
+      body: { full_name: name.trim(), email: email.trim().toLowerCase(), org_id: orgId, role, group_id: groupId === "__none__" ? null : groupId },
+    });
+    setSending(false);
+    if (error || data?.error) return toast.error("Não foi possível convidar: " + (data?.error || error?.message));
+    if (data?.email_error) toast.warning("Acesso criado, mas o e-mail de convite não foi enviado.");
+    else toast.success(data?.is_new ? "Convite enviado. A pessoa vai receber um e-mail para criar a senha." : "Pessoa já tinha conta: acesso liberado e aviso enviado por e-mail.");
+    setName(""); setEmail(""); setGroupId("__none__");
+    onDone(); qc.invalidateQueries({ queryKey: ["sd-groups"] });
+  };
+  return (
+    <Card className="rounded-xl"><CardContent className="pt-6 space-y-3">
+      <div>
+        <h2 className="font-semibold">Convidar técnico por e-mail</h2>
+        <p className="text-xs text-muted-foreground">Para equipe que não é aluno nem professor. A pessoa recebe um e-mail para criar a senha e já entra com acesso à Central de Atendimento.</p>
+      </div>
+      <div className="flex flex-wrap gap-3 items-end">
+        <div className="flex-1 min-w-[200px]"><Label>Nome completo</Label><Input className="mt-1" value={name} onChange={(e) => setName(e.target.value)} /></div>
+        <div className="flex-1 min-w-[200px]"><Label>E-mail</Label><Input className="mt-1" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tecnico@instituicao.br" /></div>
+        <div><Label>Papel</Label>
+          <select className="mt-1 h-10 rounded-md border border-input bg-background px-3 text-sm block" value={role} onChange={(e) => setRole(e.target.value)}>
+            <option value="operador">{ROLE_LABELS.operador || "Operador"}</option>
+            <option value="admin">{ROLE_LABELS.admin || "Administrador"}</option>
+          </select></div>
+        <div><Label>Grupo responsável</Label>
+          <select className="mt-1 h-10 rounded-md border border-input bg-background px-3 text-sm block" value={groupId} onChange={(e) => setGroupId(e.target.value)}>
+            <option value="__none__">Nenhum</option>
+            {(groups || []).map((g: any) => <option key={g.id} value={g.id}>{g.code}, {g.name}</option>)}
+          </select></div>
+        <Button onClick={send} disabled={sending}>{sending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Plus className="w-4 h-4 mr-1" />} Enviar convite</Button>
+      </div>
+    </CardContent></Card>
   );
 };
 
