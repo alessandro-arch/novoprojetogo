@@ -2839,10 +2839,61 @@ export type Database = {
           },
         ]
       }
+      sd_request_versions: {
+        Row: {
+          changed_by: string
+          created_at: string
+          cycle: number
+          field: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          organization_id: string
+          request_id: string
+        }
+        Insert: {
+          changed_by: string
+          created_at?: string
+          cycle: number
+          field: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          organization_id: string
+          request_id: string
+        }
+        Update: {
+          changed_by?: string
+          created_at?: string
+          cycle?: number
+          field?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          organization_id?: string
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sd_request_versions_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "sd_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sd_requests: {
         Row: {
+          correction_cycle: number
+          correction_fields: string[] | null
+          correction_note: string | null
+          correction_requested_at: string | null
+          correction_requested_by: string | null
+          correction_return_group_id: string | null
           created_at: string
           current_group_id: string | null
+          form_data: Json
           id: string
           organization_id: string
           protocol: string | null
@@ -2852,6 +2903,7 @@ export type Database = {
           requester_name: string
           requester_program: string | null
           requester_user_id: string
+          resubmitted_at: string | null
           service_id: string
           stage_entered_at: string
           status: string
@@ -2861,8 +2913,15 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          correction_cycle?: number
+          correction_fields?: string[] | null
+          correction_note?: string | null
+          correction_requested_at?: string | null
+          correction_requested_by?: string | null
+          correction_return_group_id?: string | null
           created_at?: string
           current_group_id?: string | null
+          form_data?: Json
           id?: string
           organization_id: string
           protocol?: string | null
@@ -2872,6 +2931,7 @@ export type Database = {
           requester_name: string
           requester_program?: string | null
           requester_user_id: string
+          resubmitted_at?: string | null
           service_id: string
           stage_entered_at?: string
           status?: string
@@ -2881,8 +2941,15 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          correction_cycle?: number
+          correction_fields?: string[] | null
+          correction_note?: string | null
+          correction_requested_at?: string | null
+          correction_requested_by?: string | null
+          correction_return_group_id?: string | null
           created_at?: string
           current_group_id?: string | null
+          form_data?: Json
           id?: string
           organization_id?: string
           protocol?: string | null
@@ -2892,6 +2959,7 @@ export type Database = {
           requester_name?: string
           requester_program?: string | null
           requester_user_id?: string
+          resubmitted_at?: string | null
           service_id?: string
           stage_entered_at?: string
           status?: string
@@ -2929,6 +2997,7 @@ export type Database = {
           code: string
           created_at: string
           description: string | null
+          form_fields: Json
           id: string
           is_active: boolean
           name: string
@@ -2941,6 +3010,7 @@ export type Database = {
           code: string
           created_at?: string
           description?: string | null
+          form_fields?: Json
           id?: string
           is_active?: boolean
           name: string
@@ -2953,6 +3023,7 @@ export type Database = {
           code?: string
           created_at?: string
           description?: string | null
+          form_fields?: Json
           id?: string
           is_active?: boolean
           name?: string
@@ -3235,7 +3306,7 @@ export type Database = {
         Returns: undefined
       }
       sd_create_request: {
-        Args: { _service_id: string; _terms_hash: string }
+        Args: { _form?: Json; _service_id: string; _terms_hash: string }
         Returns: string
       }
       sd_has_role: {
@@ -3272,8 +3343,16 @@ export type Database = {
         Args: { _description: string; _field: string }
         Returns: string
       }
+      sd_request_correction: {
+        Args: { _fields: string[]; _id: string; _note: string }
+        Returns: undefined
+      }
       sd_resolve_divergence: {
         Args: { _id: string; _note: string }
+        Returns: undefined
+      }
+      sd_resubmit_request: {
+        Args: { _form: Json; _id: string }
         Returns: undefined
       }
       sd_update_my_contact: {

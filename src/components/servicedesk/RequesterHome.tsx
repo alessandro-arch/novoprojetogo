@@ -65,6 +65,7 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
 
   const [service, setService] = useState<any>(null);
   const [accepted, setAccepted] = useState(false);
+  const [form, setForm] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [divOpen, setDivOpen] = useState(false);
   const [divField, setDivField] = useState("");
@@ -107,7 +108,6 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
   const pendencias: { text: string; tone: "alert" | "warn" }[] = [
     ...(!c.email ? [{ text: "Informe seu e-mail pessoal em Meu cadastro.", tone: "alert" as const }] : []),
     ...(!r.phone ? [{ text: "Informe seu celular com WhatsApp em Meu cadastro.", tone: "alert" as const }] : []),
-    ...(requests || []).filter((q: any) => q.status === "correcao").map((q: any) => ({ text: `${q.protocol}: a equipe pediu uma correção.`, tone: "alert" as const })),
     ...(suspended ? [{ text: "Seu acesso a novas solicitações está suspenso. Fale com a secretaria do programa.", tone: "warn" as const }] : []),
   ];
   const unread = (notifs || []).filter((n: any) => !n.read_at).length;
@@ -127,12 +127,12 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
     setBusy(true);
     const stamp = new Date().toISOString();
     const hash = await sha256(`${service.terms_text}|${userId}|${r.enrollment}|${stamp}`);
-    const { data: id, error } = await db.rpc("sd_create_request", { _service_id: service.id, _terms_hash: hash });
+    const { data: id, error } = await db.rpc("sd_create_request", { _service_id: service.id, _terms_hash: hash, _form: form });
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Solicitação enviada");
     notify({ request_id: id, event: "criada" });
-    setService(null); setAccepted(false);
+    setService(null); setAccepted(false); setForm({});
     qc.invalidateQueries({ queryKey: ["sd-my-requests", userId] });
     qc.invalidateQueries({ queryKey: ["sd-notif", userId] });
   };
@@ -155,10 +155,27 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
         return (
           <div key={s.id} className="flex flex-wrap items-center justify-between gap-2 border rounded-lg p-3">
             <div><p className="font-medium text-sm">{s.name}</p><p className="text-xs text-muted-foreground">{s.description}</p></div>
-            <Button size="sm" disabled={suspended || open} onClick={() => { setService(s); setAccepted(false); }}>{open ? "Pedido em aberto" : "Solicitar"}</Button>
+            <Button size="sm" disabled={suspended || open} onClick={() => { setService(s); setAccepted(false); setForm({}); }}>{open ? "Pedido em aberto" : "Solicitar"}</Button>
           </div>
         );
       })}
+    </div>
+  );
+
+  const actionNeeded = (requests || []).filter((q: any) => q.status === "correcao");
+  const ActionNeeded = () => !actionNeeded.length ? null : (
+    <div className="space-y-2">
+      {actionNeeded.map((q: any) => (
+        <div key={q.id} className="border border-destructive/50 rounded-lg p-3 flex flex-wrap items-center justify-between gap-2">
+          <div className="text-sm">
+            <p className="font-semibold text-destructive">Ação necessária</p>
+            <p className="font-medium">{q.sd_services?.name} · {q.protocol}</p>
+            <p className="text-xs text-muted-foreground">Correção #{q.correction_cycle} pedida por {q.correction_requested_by} em {fmt(q.correction_requested_at)}</p>
+            <p className="text-xs mt-1 line-clamp-2">{q.correction_note}</p>
+          </div>
+          <Button size="sm" asChild><Link to={`/servicedesk/solicitacao/${q.id}`}>Corrigir solicitação</Link></Button>
+        </div>
+      ))}
     </div>
   );
 
@@ -202,6 +219,7 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
               <KpiCard label="Pendências" value={pendencias.length} tone={pendencias.length ? "alert" : "default"} />
               <button className="text-left" onClick={() => navigate(`${BASE}/notificacoes`)}><KpiCard label="Notificações não lidas" value={unread} /></button>
             </div>
+            <ActionNeeded />
             {!!pendencias.length && (
               <Card className="rounded-xl"><CardHeader><CardTitle className="text-base">Minha caixa</CardTitle></CardHeader><CardContent className="space-y-1">
                 {pendencias.map((p, i) => <p key={i} className="text-sm flex gap-2"><AlertTriangle className={`w-4 h-4 shrink-0 mt-0.5 ${p.tone === "alert" ? "text-destructive" : "text-muted-foreground"}`} />{p.text}</p>)}
@@ -218,7 +236,7 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
           </div>
         } />
         <Route path="servicos" element={<><h1 className="text-2xl font-bold font-heading">Serviços</h1><ServicesList /></>} />
-        <Route path="solicitacoes" element={<><h1 className="text-2xl font-bold font-heading">Minhas solicitações</h1><RequestsList rows={requests || []} /></>} />
+        <Route path="solicitacoes" element={<><h1 className="text-2xl font-bold font-heading">Minhas solicitações</h1><ActionNeeded /><RequestsList rows={requests || []} /></>} />
         <Route path="notificacoes" element={
           <><h1 className="text-2xl font-bold font-heading">Notificações</h1>
             <div className="space-y-2">{!notifs?.length && <p className="text-sm text-muted-foreground">Nenhuma notificação.</p>}
@@ -285,9 +303,15 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
       <Dialog open={!!service} onOpenChange={(o) => !o && setService(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>{service?.name}</DialogTitle></DialogHeader>
+          {(service?.form_fields || []).map((f: any) => (
+            <div key={f.key}><Label>{f.label}{f.required ? " *" : ""}</Label>
+              {f.type === "textarea" ? <Textarea rows={3} maxLength={4000} value={form[f.key] || ""} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
+                : <Input maxLength={4000} value={form[f.key] || ""} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />}
+            </div>
+          ))}
           <div className="text-sm whitespace-pre-line border rounded-lg p-3 max-h-64 overflow-y-auto bg-muted/30">{service?.terms_text}</div>
           <label className="flex items-start gap-2 text-sm"><Checkbox checked={accepted} onCheckedChange={(v) => setAccepted(!!v)} />Li e aceito o termo de uso.</label>
-          <DialogFooter><Button variant="outline" onClick={() => setService(null)}>Cancelar</Button><Button disabled={!accepted || busy} onClick={sendRequest}>Enviar solicitação</Button></DialogFooter>
+          <DialogFooter><Button variant="outline" onClick={() => setService(null)}>Cancelar</Button><Button disabled={!accepted || busy || (service?.form_fields || []).some((f: any) => f.required && (form[f.key] || "").trim().length < 3)} onClick={sendRequest}>Enviar solicitação</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
