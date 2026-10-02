@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
     const site = "https://projetogo.innovago.app";
     let actionHtml: string;
     if (isNew) {
-      const { data: link, error: lErr } = await admin.auth.admin.generateLink({ type: "recovery", email, options: { redirectTo: `${site}/reset-password` } });
+      const { data: link, error: lErr } = await admin.auth.admin.generateLink({ type: "recovery", email, options: { redirectTo: `${site}/reset-password?back=sd` } });
       if (lErr) return json({ error: lErr.message }, 500);
       actionHtml = `<p>Para começar, crie a sua senha clicando no botão abaixo:</p>
         <p><a href="${link.properties.action_link}" style="background:#1e3a5f;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;display:inline-block">Criar minha senha</a></p>
