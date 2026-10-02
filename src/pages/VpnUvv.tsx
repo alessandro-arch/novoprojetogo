@@ -139,6 +139,117 @@ const SectionHeading = ({ eyebrow, title, description }: { eyebrow: string; titl
   </div>
 );
 
+type EligibilityResult =
+  | { kind: "idle" }
+  | { kind: "loading" }
+  | { kind: "eligible"; role: string }
+  | { kind: "suspended" }
+  | { kind: "not_found" }
+  | { kind: "error" };
+
+const EligibilityCheck = () => {
+  const [enrollment, setEnrollment] = useState("");
+  const [result, setResult] = useState<EligibilityResult>({ kind: "idle" });
+
+  const handleCheck = async (event: FormEvent) => {
+    event.preventDefault();
+    const value = enrollment.trim();
+    if (!value) return;
+    setResult({ kind: "loading" });
+    const { data, error } = await supabase.rpc("sd_check_vpn_eligibility", { _enrollment: value });
+    if (error) {
+      setResult({ kind: "error" });
+      return;
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row || !row.found) {
+      setResult({ kind: "not_found" });
+    } else if (row.eligible) {
+      setResult({ kind: "eligible", role: String(row.role) });
+    } else {
+      setResult({ kind: "suspended" });
+    }
+  };
+
+  return (
+    <article className="rounded-lg border border-success/25 bg-success/5 p-7 shadow-card md:p-10">
+      <p className="text-xs font-bold uppercase tracking-widest text-success">Verifique sua elegibilidade</p>
+      <h3 className="mt-3 text-2xl font-extrabold text-foreground md:text-3xl">Confirme sua matrícula</h3>
+      <p className="mt-3 max-w-xl text-base leading-7 text-muted-foreground">
+        Digite sua matrícula para verificar se você já está apto a solicitar o acesso VPN CAPES.
+      </p>
+
+      <form onSubmit={handleCheck} className="mt-6 flex flex-col gap-3 sm:max-w-xl sm:flex-row">
+        <Input
+          value={enrollment}
+          onChange={(event) => setEnrollment(event.target.value)}
+          placeholder="Digite sua matrícula"
+          aria-label="Sua matrícula"
+          className="h-12 flex-1 bg-background"
+        />
+        <Button type="submit" size="lg" className="min-h-12 px-8" disabled={result.kind === "loading" || !enrollment.trim()}>
+          {result.kind === "loading" ? "Verificando..." : "Verificar"}
+        </Button>
+      </form>
+
+      {result.kind === "eligible" && (
+        <div className="mt-6 flex items-start gap-4 rounded-md border border-success/25 bg-success/10 p-5 sm:max-w-xl">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success text-success-foreground">
+            <CheckCircle2 className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="font-bold text-foreground">{result.role === "orientador" ? "Vínculo ativo" : "Matrícula ativa"}</p>
+            <p className="mt-1 text-sm leading-6 text-foreground/80">Você está apto a solicitar o acesso VPN CAPES pelo Service Desk Acadêmico.</p>
+          </div>
+          <span className="ml-auto hidden shrink-0 sm:block" aria-hidden="true">
+            {result.role === "orientador" ? <CircleUserRound className="h-8 w-8 text-primary" /> : <GraduationCap className="h-8 w-8 text-primary" />}
+          </span>
+        </div>
+      )}
+
+      {result.kind === "not_found" && (
+        <div className="mt-6 flex items-start gap-4 rounded-md border border-warning/30 bg-warning/10 p-5 sm:max-w-xl">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-warning text-warning-foreground">
+            <AlertCircle className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="font-bold text-foreground">Matrícula não localizada</p>
+            <p className="mt-1 text-sm leading-6 text-foreground/80">Confira os números digitados. Em caso de divergência, procure sua coordenação de programa.</p>
+          </div>
+        </div>
+      )}
+
+      {result.kind === "suspended" && (
+        <div className="mt-6 flex items-start gap-4 rounded-md border border-warning/30 bg-warning/10 p-5 sm:max-w-xl">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-warning text-warning-foreground">
+            <AlertCircle className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="font-bold text-foreground">Acesso suspenso</p>
+            <p className="mt-1 text-sm leading-6 text-foreground/80">Sua matrícula consta em situação que impede a solicitação neste momento. Procure sua coordenação de programa.</p>
+          </div>
+        </div>
+      )}
+
+      {result.kind === "error" && (
+        <div className="mt-6 flex items-start gap-4 rounded-md border border-warning/30 bg-warning/10 p-5 sm:max-w-xl">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-warning text-warning-foreground">
+            <AlertCircle className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="font-bold text-foreground">Não foi possível verificar agora</p>
+            <p className="mt-1 text-sm leading-6 text-foreground/80">Tente novamente em instantes.</p>
+          </div>
+        </div>
+      )}
+
+      <p className="mt-6 max-w-xl text-sm leading-6 text-muted-foreground">
+        Em caso de divergência nos dados, entre em contato com sua coordenação de programa.
+      </p>
+    </article>
+  );
+};
+
 const VpnUvv = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
