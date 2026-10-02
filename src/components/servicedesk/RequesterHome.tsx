@@ -100,7 +100,7 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
     : [
         ["Nome", r.full_name], ["Matrícula", r.enrollment], ["Tipo de contrato", r.contract_type || "—"],
         ["Programas", progs || "—"], ["Situação do vínculo", r.status || "—"],
-        ...(r.contract_end || r.bond_deadline ? [["Prazo do vínculo", fmt(r.contract_end || r.bond_deadline)] as [string, string]] : []),
+        ...(r.bond_deadline ? [["Prazo do vínculo", fmt(r.bond_deadline)] as [string, string]] : []),
       ];
 
   const openReqs = (requests || []).filter((q: any) => isOpen(q.status));
@@ -212,7 +212,7 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
               <Card className="rounded-xl"><CardHeader><CardTitle className="text-base">Solicitações recentes</CardTitle></CardHeader><CardContent><RequestsList rows={(requests || []).slice(0, 3)} /></CardContent></Card>
             </div>
             <Card className="rounded-xl"><CardHeader><CardTitle className="text-base">Prazos</CardTitle></CardHeader><CardContent className="text-sm space-y-1">
-              {isStudent ? <><p>Prazo regular: <b>{fmt(r.regular_deadline)}</b></p><p>Prazo vigente: <b>{fmt(r.current_deadline)}</b></p></> : <p>Prazo do vínculo: <b>{r.contract_type === "CLT" ? "Indeterminado" : fmt(r.contract_end || r.bond_deadline)}</b></p>}
+              {isStudent ? <><p>Prazo regular: <b>{fmt(r.regular_deadline)}</b></p><p>Prazo vigente: <b>{fmt(r.current_deadline)}</b></p></> : <p>Prazo do vínculo: <b>{r.contract_type === "CLT" ? "Indeterminado" : fmt(r.bond_deadline)}</b></p>}
               <p className="text-xs text-muted-foreground">A validade de acessos (como a VPN) aparecerá aqui quando estiverem ativos.</p>
             </CardContent></Card>
           </div>
