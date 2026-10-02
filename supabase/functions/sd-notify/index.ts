@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
       } as any);
       if (sendErr) throw new Error(String((sendErr as any).message || sendErr));
       await admin.from("sd_requests").update({ vpn_email_sent_at: new Date().toISOString() }).eq("id", r.id);
-      await admin.from("sd_request_events").insert({ request_id: r.id, organization_id: r.organization_id, actor_name: "Sistema", action: "vpn_enviado", note: `Arquivo .conf e instruções enviados para ${to}` });
+      await admin.from("sd_request_events").insert({ request_id: r.id, organization_id: r.organization_id, actor_user_id: (await userClient.auth.getUser()).data.user?.id, actor_name: "Sistema", action: "vpn_enviado", note: `Arquivo .conf e instruções enviados para ${to}` });
       return new Response(JSON.stringify({ ok: true }), { headers: { ...cors, "Content-Type": "application/json" } });
     }
     if (to && event === "corrigir" && r.status === "correcao") await resend.emails.send({
