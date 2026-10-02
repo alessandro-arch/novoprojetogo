@@ -43,6 +43,11 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
     queryFn: async () => (await db.from("sd_students").select("level, entry_date, current_deadline, advisor:sd_faculty(full_name), sd_programs(name)").eq("organization_id", r.organization_id).eq("enrollment", r.requester_enrollment).maybeSingle()).data,
   });
 
+  const { data: vpnInstructions } = useQuery({
+    queryKey: ["sd-vpn-instructions", r?.organization_id], enabled: !!r?.organization_id && !!r?.vpn_status,
+    queryFn: async () => (await db.from("sd_settings").select("value").eq("organization_id", r.organization_id).eq("key", "vpn_instructions").maybeSingle()).data?.value as string | undefined,
+  });
+
   const { data: versions = [] } = useQuery({
     queryKey: ["sd-req-versions", id],
     queryFn: async () => (await db.from("sd_request_versions").select("*").eq("request_id", id).order("cycle", { ascending: false }).order("created_at")).data || [],
@@ -211,6 +216,12 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
             {r.vpn_conf_path && <Button variant="outline" onClick={downloadConf}><Download className="w-4 h-4 mr-2" />Baixar arquivo .conf</Button>}
             {!isOwner && !r.vpn_email_sent_at && <Button variant="secondary" onClick={() => sendConf(r.id)}><Send className="w-4 h-4 mr-2" />Reenviar e-mail</Button>}
           </div>
+          {isOwner && vpnInstructions && (
+            <div className="mt-3 rounded-lg border bg-muted/40 p-4">
+              <p className="text-sm font-semibold mb-2">Instruções de uso da VPN</p>
+              <div className="text-sm whitespace-pre-wrap leading-relaxed">{vpnInstructions}</div>
+            </div>
+          )}
         </CardContent></Card>
       )}
 
