@@ -369,6 +369,90 @@ const VpnUvv = () => {
           </div>
         </section>
 
+        <section id="instrucoes-instalacao" className="scroll-mt-24 py-20 md:py-28">
+          <div className="container px-4 md:px-8">
+            <SectionHeading
+              eyebrow="Passo a passo"
+              title="Instruções de Instalação"
+              description="Guia completo para instalar, importar sua configuração e utilizar a VPN com segurança."
+            />
+
+            <div className="mt-10 grid gap-5 lg:grid-cols-2">
+              <article className="rounded-lg border border-border bg-card p-7 shadow-card md:p-9">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    <Laptop className="h-5 w-5" />
+                  </span>
+                  <h3 className="text-xl font-bold">Computador Windows ou macOS</h3>
+                </div>
+                <ol className="mt-6 space-y-3 text-sm leading-6 text-muted-foreground">
+                  <li>Instale o aplicativo oficial WireGuard em <a className="font-semibold text-primary underline-offset-4 hover:underline" href={WIREGUARD_URL} target="_blank" rel="noreferrer">wireguard.com/install</a>.</li>
+                  <li>Abra o WireGuard.</li>
+                  <li>Selecione a opção "Adicionar túnel" ou "Add Tunnel".</li>
+                  <li>Escolha "Importar túnel de arquivo" ou "Import tunnel from file".</li>
+                  <li>Selecione o arquivo .conf anexado ao e-mail de liberação.</li>
+                  <li>Após a importação, selecione o túnel "VPNCAPES" e clique em "Ativar".</li>
+                </ol>
+              </article>
+
+              <article className="rounded-lg border border-border bg-card p-7 shadow-card md:p-9">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    <Smartphone className="h-5 w-5" />
+                  </span>
+                  <h3 className="text-xl font-bold">Celular Android ou iPhone</h3>
+                </div>
+                <ol className="mt-6 space-y-3 text-sm leading-6 text-muted-foreground">
+                  <li>Instale o aplicativo oficial WireGuard pela Play Store ou App Store.</li>
+                  <li>Salve o arquivo .conf anexado ao e-mail no dispositivo.</li>
+                  <li>Abra o WireGuard e toque no botão +.</li>
+                  <li>Selecione "Importar de arquivo ou arquivo compactado".</li>
+                  <li>Localize e selecione o arquivo .conf.</li>
+                  <li>Ative o túnel "VPNCAPES".</li>
+                </ol>
+              </article>
+            </div>
+
+            <article className="mt-5 rounded-lg border border-border bg-card p-7 shadow-card md:p-9">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
+                  <Wifi className="h-5 w-5" />
+                </span>
+                <h3 className="text-xl font-bold">Como utilizar</h3>
+              </div>
+              <ol className="mt-6 max-w-3xl space-y-3 text-sm leading-6 text-muted-foreground">
+                <li>Conecte o dispositivo à sua internet residencial ou rede móvel.</li>
+                <li>Abra o WireGuard e ative a VPNCAPES.</li>
+                <li>Acesse o <a className="font-semibold text-primary underline-offset-4 hover:underline" href={CAPES_URL} target="_blank" rel="noreferrer">Portal de Periódicos CAPES</a> normalmente.</li>
+                <li>Ao concluir a consulta, volte ao WireGuard e desative a VPN.</li>
+              </ol>
+              <p className="mt-5 max-w-3xl text-sm leading-6 text-muted-foreground">
+                Enquanto a VPN estiver ativa, a navegação do dispositivo utilizará a conexão e o IP institucional. Por isso, mantenha-a ativada somente durante o uso acadêmico.
+              </p>
+            </article>
+
+            <article className="mt-5 rounded-lg border border-primary/30 bg-primary/5 p-7 md:p-9">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                  <LockKeyhole className="h-5 w-5" />
+                </span>
+                <h3 className="text-xl font-bold">Segurança da sua credencial</h3>
+              </div>
+              <p className="mt-5 text-sm font-semibold text-foreground">O arquivo anexado é uma credencial pessoal. Por segurança:</p>
+              <ul className="mt-3 max-w-3xl space-y-2 text-sm leading-6 text-muted-foreground">
+                <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" /> Não encaminhe nem compartilhe o arquivo com outras pessoas.</li>
+                <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" /> Não publique o arquivo em grupos ou pastas compartilhadas.</li>
+                <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" /> Utilize-o em apenas um dispositivo.</li>
+                <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" /> Após a importação, exclua o arquivo da pasta de downloads e do e-mail, se possível.</li>
+                <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" /> Em caso de perda, troca ou formatação do dispositivo, solicite uma nova configuração à equipe de TI.</li>
+              </ul>
+              <p className="mt-6 max-w-3xl text-sm leading-6 text-muted-foreground">
+                Caso a VPN não conecte ou o Portal CAPES não reconheça o acesso institucional, entre em contato com a equipe de TI informando o dispositivo utilizado e, se possível, enviando uma captura do erro. Não envie o conteúdo do arquivo .conf nem qualquer chave privada.
+              </p>
+            </article>
+          </div>
+        </section>
+
         <section className="py-20 md:py-24">
           <div className="container px-4 md:px-8">
             <div className="relative overflow-hidden rounded-lg bg-primary p-7 text-primary-foreground md:p-12">
