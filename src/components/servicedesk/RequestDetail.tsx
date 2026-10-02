@@ -199,7 +199,7 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
       )}
 
       <div className="grid md:grid-cols-2 gap-4">
-        <Card className="rounded-xl"><CardHeader><CardTitle className="text-base">Solicitante</CardTitle></CardHeader><CardContent>
+        <Card className="rounded-xl"><CardHeader><CardTitle className="text-base">Quem solicitou</CardTitle></CardHeader><CardContent>
           <dl className="grid grid-cols-2 gap-3">{info.map(([k, v]) => <div key={k}><dt className="text-xs text-muted-foreground">{k}</dt><dd className="text-sm font-medium capitalize-first">{v}</dd></div>)}</dl>
           <div className="mt-4 space-y-1 text-sm">
             {r.terms_accepted_at && <p className="flex items-center gap-2"><Check className="w-4 h-4 text-primary" />Termo aceito em {fmtDT(r.terms_accepted_at)}</p>}
