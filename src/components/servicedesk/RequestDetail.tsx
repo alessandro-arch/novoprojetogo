@@ -217,7 +217,7 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
       {showVpnForm && (
         <Card className="rounded-xl"><CardHeader><CardTitle className="text-base">Configuração VPN</CardTitle></CardHeader><CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">A configuração da VPN e a geração do arquivo .conf são realizadas externamente no WireGuard. Após concluir a configuração, carregue abaixo o arquivo individual do solicitante.</p>
-          <div><Label>Arquivo .conf *</Label><Input type="file" accept=".conf" onChange={(e) => setConf(e.target.files?.[0] || null)} /></div>
+          <div><Label>Arquivo .conf *</Label><Input type="file" accept=".conf" className="file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary/90" onChange={(e) => setConf(e.target.files?.[0] || null)} /></div>
           <div className="grid sm:grid-cols-2 gap-3">
             <div><Label>IP VPN (opcional)</Label><Input maxLength={64} value={vpn.ip} onChange={(e) => setVpn({ ...vpn, ip: e.target.value })} placeholder="10.0.0.12" /></div>
             <div><Label>PublicKey do Peer (opcional)</Label><Input maxLength={200} value={vpn.key} onChange={(e) => setVpn({ ...vpn, key: e.target.value })} /></div>
