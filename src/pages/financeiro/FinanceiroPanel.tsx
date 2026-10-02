@@ -85,7 +85,7 @@ const FinanceiroPanel = () => {
           <Link to="/profile" className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
             <UserCircle className="w-4 h-4" /> Meu Cadastro
           </Link>
-          <button onClick={signOut} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+          <button onClick={() => signOut()} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
             <LogOut className="w-4 h-4" /> Sair
           </button>
         </div>

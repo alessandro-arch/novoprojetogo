@@ -90,7 +90,7 @@ const Profile = () => {
             <Link to="/dashboard">
               <Button variant="ghost" size="sm"><ArrowLeft className="w-4 h-4 mr-1" /> Voltar</Button>
             </Link>
-            <Button variant="ghost" size="sm" onClick={signOut}>
+            <Button variant="ghost" size="sm" onClick={() => signOut()}>
               <LogOut className="w-4 h-4 mr-1" /> Sair
             </Button>
           </div>

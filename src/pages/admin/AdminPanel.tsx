@@ -111,7 +111,7 @@ const AdminPanel = () => {
             <Link to="/profile">
               <Button variant="ghost" size="sm"><UserCircle className="w-4 h-4 mr-1" /> Cadastro</Button>
             </Link>
-            <Button variant="ghost" size="sm" onClick={signOut}>
+            <Button variant="ghost" size="sm" onClick={() => signOut()}>
               <LogOut className="w-4 h-4 mr-2" /> Sair
             </Button>
           </div>
