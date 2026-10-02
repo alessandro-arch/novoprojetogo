@@ -134,10 +134,12 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
     ["sd-req", "sd-queue", "sd-req-events", "sd-notif"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
   };
 
+  const facProgs = (faculty?.sd_faculty_programs || []).map((p: any) => p.sd_programs?.sigla || p.sd_programs?.name).filter(Boolean).join(", ");
   const info: [string, string][] = [
     ["Solicitante", r.requester_name], ["Matrícula", r.requester_enrollment], ["Tipo", r.requester_kind],
-    ["Programa", student?.sd_programs?.name || r.requester_program || "-"],
+    ["Programa", student?.sd_programs?.name || facProgs || r.requester_program || "-"],
     ...(student ? [["Nível", student.level || "-"], ["Orientador(a)", student.advisor?.full_name || "-"], ["Ingresso", fmtDate(student.entry_date)], ["Prazo vigente", fmtDate(student.current_deadline)]] as [string, string][] : []),
+    ...(faculty ? [["Contrato", faculty.contract_type || "-"], ["Situação do vínculo", faculty.status || "-"], ["Prazo do vínculo", faculty.contract_type === "CLT" ? "Indeterminado" : fmtDate(faculty.bond_deadline)]] as [string, string][] : []),
     ["E-mail", r.requester_email || "-"],
   ];
 
