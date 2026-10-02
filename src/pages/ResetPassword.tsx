@@ -17,7 +17,13 @@ const ResetPassword = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Convites do Service Desk chegam com ?back=sd para voltar ao login do módulo
+  const [backToServiceDesk, setBackToServiceDesk] = useState(false);
+
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("back") === "sd") {
+      setBackToServiceDesk(true);
+    }
     const hash = window.location.hash;
     if (hash.includes("type=recovery")) {
       setIsRecovery(true);
@@ -31,6 +37,8 @@ const ResetPassword = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const loginPath = backToServiceDesk ? "/servicedesk/login" : "/login";
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
