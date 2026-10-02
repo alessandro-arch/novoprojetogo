@@ -101,7 +101,7 @@ const ReviewManagement = ({ editalId, editalTitle }: { editalId: string; editalT
           comments_to_committee: r.comments_to_committee,
           submitted_at: r.submitted_at,
           scores: (r.review_scores || []).map((s: any) => ({
-            criteria_name: s.scoring_criteria?.name || "—",
+            criteria_name: s.scoring_criteria?.name || "-",
             score: s.score,
             max_score: s.scoring_criteria?.max_score || 10,
             weight: s.scoring_criteria?.weight || 1,
@@ -176,7 +176,7 @@ const ReviewManagement = ({ editalId, editalTitle }: { editalId: string; editalT
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-xl font-bold font-heading text-foreground mb-1">Avaliações — {editalTitle}</h3>
+        <h3 className="text-xl font-bold font-heading text-foreground mb-1">Avaliações, {editalTitle}</h3>
         <p className="text-sm text-muted-foreground">Acompanhe as avaliações e emita o parecer final</p>
       </div>
 
@@ -253,7 +253,7 @@ const ReviewManagement = ({ editalId, editalTitle }: { editalId: string; editalT
         <Dialog open={!!selectedProposal} onOpenChange={() => setSelectedProposal(null)}>
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{selectedProposal.proposal_masked_id} — Avaliações</DialogTitle>
+              <DialogTitle>{selectedProposal.proposal_masked_id}, Avaliações</DialogTitle>
             </DialogHeader>
             <div className="space-y-6">
               {selectedProposal.reviews.length === 0 ? (
@@ -267,7 +267,7 @@ const ReviewManagement = ({ editalId, editalTitle }: { editalId: string; editalT
                     <CardContent className="space-y-3">
                       <div className="flex items-center gap-3">
                         <span className="text-sm text-muted-foreground">Nota:</span>
-                        <span className="text-lg font-bold text-primary">{r.overall_score?.toFixed(2) || "—"}</span>
+                        <span className="text-lg font-bold text-primary">{r.overall_score?.toFixed(2) || "-"}</span>
                         {recommendationLabel(r.recommendation)}
                       </div>
                       {r.scores.length > 0 && (
@@ -320,7 +320,7 @@ const ReviewManagement = ({ editalId, editalTitle }: { editalId: string; editalT
       <Dialog open={decisionDialog} onOpenChange={(open) => { if (!open) { setDecisionDialog(false); setSelectedProposal(null); } }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Parecer Final — {selectedProposal?.proposal_masked_id}</DialogTitle>
+            <DialogTitle>Parecer Final, {selectedProposal?.proposal_masked_id}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {selectedProposal?.average_score !== null && selectedProposal?.average_score !== undefined && (

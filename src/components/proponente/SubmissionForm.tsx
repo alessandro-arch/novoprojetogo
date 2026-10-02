@@ -328,7 +328,7 @@ const SubmissionForm = ({ editalId, editalTitle, editalStartDate, editalEndDate,
 
     const sectionsHtml = snapshot.sections.sort((a, b) => a.sort_order - b.sort_order).map(s => {
       const questionsHtml = s.questions.sort((a, b) => a.sort_order - b.sort_order).map(q => {
-        let answerDisplay = answers[q.id] || "—";
+        let answerDisplay = answers[q.id] || "-";
         if (Array.isArray(answerDisplay)) answerDisplay = answerDisplay.join(", ");
         if (q.options_source === "knowledge_areas" && snapshot.knowledge_areas) {
           const ka = snapshot.knowledge_areas.find(k => k.id === answerDisplay);
@@ -562,7 +562,7 @@ const SubmissionForm = ({ editalId, editalTitle, editalStartDate, editalEndDate,
           <Button variant="ghost" size="sm" onClick={() => setStep("area")}>
             <ArrowLeft className="w-4 h-4 mr-1" /> Área
           </Button>
-          <Badge variant="secondary" className="text-xs">Etapa 2 — Formulário</Badge>
+          <Badge variant="secondary" className="text-xs">Etapa 2, Formulário</Badge>
         </div>
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={saveDraft} disabled={saving || isClosed}>

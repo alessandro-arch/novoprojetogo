@@ -87,7 +87,7 @@ const ServiceCenter = ({ groups, kindOf, userId, areas, onSignOut, canResolveDiv
     ...(isApprover ? [
       { label: "Aguardando análise", value: analysis.length, tone: analysis.length ? "alert" : "default" },
       { label: "Correções pendentes", value: awaitingRequester.length, hint: received.length ? `${received.length} correção(ões) recebida(s)` : undefined },
-      { label: "Prorrogações", value: "—", tone: "muted", hint: "Disponível na próxima etapa" },
+      { label: "Prorrogações", value: "-", tone: "muted", hint: "Disponível na próxima etapa" },
       { label: "Prazos acadêmicos em 90 dias", value: soon.length },
     ] : []),
     ...(isExecutor ? [
@@ -122,8 +122,8 @@ const ServiceCenter = ({ groups, kindOf, userId, areas, onSignOut, canResolveDiv
       <tbody>{rows.map((r: any) => {
         const st = r.vpn_valid_until && r.vpn_valid_until < today() ? "Revogação pendente" : r.vpn_valid_until && r.vpn_valid_until <= plusDays(expiryDays) ? "Vence em breve" : "Ativo";
         return <tr key={r.id} className="border-t hover:bg-muted/40 cursor-pointer" onClick={() => window.location.assign(`/servicedesk/solicitacao/${r.id}`)}>
-          <td className="p-2">{r.requester_name}</td><td className="p-2">{r.requester_enrollment}</td><td className="p-2 font-mono text-xs">{r.protocol}</td><td className="p-2">{r.requester_program || "—"}</td>
-          <td className="p-2">{fmtDate(r.vpn_released_at)}</td><td className="p-2">{fmtDate(r.vpn_valid_until)}</td><td className="p-2">{r.vpn_ip || "—"}</td>
+          <td className="p-2">{r.requester_name}</td><td className="p-2">{r.requester_enrollment}</td><td className="p-2 font-mono text-xs">{r.protocol}</td><td className="p-2">{r.requester_program || "-"}</td>
+          <td className="p-2">{fmtDate(r.vpn_released_at)}</td><td className="p-2">{fmtDate(r.vpn_valid_until)}</td><td className="p-2">{r.vpn_ip || "-"}</td>
           <td className="p-2"><Badge variant={st === "Ativo" ? "secondary" : st === "Vence em breve" ? "outline" : "destructive"}>{st}</Badge></td></tr>;
       })}</tbody>
     </table></div>

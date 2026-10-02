@@ -216,7 +216,7 @@ const ReviewerActivatePage = () => {
           <CardHeader className="text-center">
             <CardTitle>Complete seu Cadastro</CardTitle>
             <CardDescription>
-              Convite de <strong>{orgName}</strong> — {reviewer?.email}
+              Convite de <strong>{orgName}</strong>, {reviewer?.email}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -390,7 +390,7 @@ const ReviewerActivatePage = () => {
 
           <div className="text-center pt-2">
             <a href="/login" className="text-sm text-primary hover:underline">
-              Já tenho conta — Fazer login
+              Já tenho conta, Fazer login
             </a>
           </div>
         </CardContent>

@@ -219,21 +219,21 @@ const FomentoProjectsList = ({ onNewProject, onEditProject, onBatchImport }: Pro
                 ) : (
                   filtered.map((p) => (
                     <TableRow key={p.id}>
-                      <TableCell className="font-mono text-xs">{p.processo_uvv || "—"}</TableCell>
+                      <TableCell className="font-mono text-xs">{p.processo_uvv || "-"}</TableCell>
                       <TableCell className="max-w-[150px] truncate">{p.pesquisador_principal}</TableCell>
                       <TableCell className="max-w-[200px] truncate font-medium">{p.titulo}</TableCell>
-                      <TableCell><Badge variant="outline">{AREA_LABELS[p.area || ""] || p.area || "—"}</Badge></TableCell>
-                      <TableCell>{FONTE_LABELS[p.fonte || ""] || p.fonte || "—"}</TableCell>
-                      <TableCell className="max-w-[120px] truncate">{p.orgao_financiador || "—"}</TableCell>
-                      <TableCell><Badge variant="secondary">{STATUS_LABELS[p.status || ""] || p.status || "—"}</Badge></TableCell>
+                      <TableCell><Badge variant="outline">{AREA_LABELS[p.area || ""] || p.area || "-"}</Badge></TableCell>
+                      <TableCell>{FONTE_LABELS[p.fonte || ""] || p.fonte || "-"}</TableCell>
+                      <TableCell className="max-w-[120px] truncate">{p.orgao_financiador || "-"}</TableCell>
+                      <TableCell><Badge variant="secondary">{STATUS_LABELS[p.status || ""] || p.status || "-"}</Badge></TableCell>
                       <TableCell className="text-xs whitespace-nowrap">
-                        {formatDateBR(p.vigencia_inicio)} — {formatDateBR(p.vigencia_fim)}
+                        {formatDateBR(p.vigencia_inicio) } a {formatDateBR(p.vigencia_fim)}
                       </TableCell>
                       <TableCell className="text-right font-mono">{formatBRL(Number(p.valor_total))}</TableCell>
                       <TableCell>
                         {(docCounts?.[p.id] || 0) > 0 ? (
                           <span className="inline-flex items-center gap-1 text-sm"><Paperclip className="w-3.5 h-3.5" />{docCounts[p.id]}</span>
-                        ) : "—"}
+                        ) : "-"}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">

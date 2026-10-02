@@ -45,7 +45,7 @@ const FomentoSection = () => {
             ProjetoGO Fomento
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Monitore toda a captação de recursos da sua instituição — de agências
+            Monitore toda a captação de recursos da sua instituição, de agências
             de fomento a parcerias privadas.
           </p>
         </div>

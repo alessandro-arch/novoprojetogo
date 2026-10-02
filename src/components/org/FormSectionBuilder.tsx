@@ -593,7 +593,7 @@ const FormSectionBuilder = ({ formId, formStatus, editalId, editalDbStatus, onSt
                       )}
                       {(q.type === "text" || q.type === "short_text" || q.type === "long_text") && (q as any).validation_rules?.max_chars && (
                         <span className="text-xs text-muted-foreground">
-                          {(q as any).validation_rules.min_chars ? `${(q as any).validation_rules.min_chars}–` : "máx "}{(q as any).validation_rules.max_chars} caracteres
+                          {(q as any).validation_rules.min_chars ? `${(q as any).validation_rules.min_chars}-` : "máx "}{(q as any).validation_rules.max_chars} caracteres
                         </span>
                       )}
                     </div>

@@ -215,15 +215,15 @@ const ReconciliationManager = ({ executionId, userId }: Props) => {
                   return (
                     <TableRow key={r.id}>
                       <TableCell className="text-sm">
-                        {r.bank_transactions?.description_raw?.substring(0, 30)}... — {formatCurrency(Math.abs(r.bank_transactions?.amount || 0))}
+                        {r.bank_transactions?.description_raw?.substring(0, 30)}..., {formatCurrency(Math.abs(r.bank_transactions?.amount || 0))}
                       </TableCell>
                       <TableCell className="text-sm">
-                        {r.project_expenses?.description || "—"}
+                        {r.project_expenses?.description || "-"}
                       </TableCell>
                       <TableCell>
                         <Badge className={st.color}>{st.label}</Badge>
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground capitalize">{r.match_rule || "—"}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground capitalize">{r.match_rule || "-"}</TableCell>
                     </TableRow>
                   );
                 })}

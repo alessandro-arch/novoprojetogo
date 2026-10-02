@@ -81,7 +81,7 @@ const handler = async (req: Request): Promise<Response> => {
       await resend.emails.send({
         from: "ProjetoGO <onboarding@resend.dev>",
         to: [invite.email],
-        subject: `Convite para Avaliador — ${org?.name || "ProjetoGO"}`,
+        subject: `Convite para Avaliador | ${org?.name || "ProjetoGO"}`,
         html: `
           <!DOCTYPE html><html><head><meta charset="utf-8">
           <style>body{font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:0}.container{max-width:600px;margin:40px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)}.header{background:#1a1a2e;color:#fff;padding:32px;text-align:center}.header h1{margin:0;font-size:22px}.content{padding:32px}.cta{text-align:center;margin:32px 0 16px}.cta a{background:#3b82f6;color:#fff;padding:14px 36px;border-radius:6px;text-decoration:none;font-weight:600;display:inline-block}.footer{text-align:center;padding:20px;color:#94a3b8;font-size:12px;border-top:1px solid #f1f5f9}</style>
@@ -89,12 +89,12 @@ const handler = async (req: Request): Promise<Response> => {
             <div class="header"><h1>📋 Convite para Avaliador</h1></div>
             <div class="content">
               <p>Olá, <strong>${fullName}</strong>,</p>
-              <p>Você foi convidado(a) pela organização <strong>${org?.name || "—"}</strong> para atuar como avaliador(a) no ProjetoGO.</p>
+              <p>Você foi convidado(a) pela organização <strong>${org?.name || "-"}</strong> para atuar como avaliador(a) no ProjetoGO.</p>
               <div class="cta"><a href="${inviteUrl}">Aceitar Convite</a></div>
               ${codeDisplay ? `<p style="text-align:center;color:#475569;font-size:14px;margin-top:8px;">Ou use o código: <strong style="font-family:monospace;font-size:16px;letter-spacing:2px;">${codeDisplay}</strong><br/>em <a href="${activateUrl}">${activateUrl}</a></p>` : ''}
               <p style="color:#64748b;font-size:14px;">Este convite é válido por 7 dias.</p>
             </div>
-            <div class="footer"><p>ProjetoGO — Email automático, não responda.</p></div>
+            <div class="footer"><p>ProjetoGO, Email automático, não responda.</p></div>
           </div></body></html>`,
       });
     }

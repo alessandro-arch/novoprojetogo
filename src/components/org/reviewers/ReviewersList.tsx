@@ -384,7 +384,7 @@ const ReviewersList = ({ orgId, onViewReviewer }: Props) => {
                           )}
                         </>
                       ) : (
-                        <span className="text-xs text-muted-foreground/50 italic">—</span>
+                        <span className="text-xs text-muted-foreground/50 italic">-</span>
                       )}
                     </div>
                     <div>

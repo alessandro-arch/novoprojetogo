@@ -64,7 +64,7 @@ ${submission.cnpq_area_code ? `<p><strong>Área CNPq:</strong> ${submission.cnpq
 </div>
 <table>${answersHtml}</table>
 <div class="footer">
-<p>Documento arquivado com integridade criptográfica SHA-256 — ProjetoGO</p>
+<p>Documento arquivado com integridade criptográfica SHA-256, ProjetoGO</p>
 <p>Gerado em: ${new Date().toISOString()}</p>
 </div></body></html>`;
 }

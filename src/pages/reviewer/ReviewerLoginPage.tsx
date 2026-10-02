@@ -58,14 +58,14 @@ const ReviewerLoginPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center gradient-hero p-4">
       <Seo
-        title="Portal do Avaliador — ProjetoGO"
+        title="Portal do Avaliador | ProjetoGO"
         description="Área de acesso dos avaliadores do ProjetoGO para análise de propostas de editais."
         path="/avaliador"
       />
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">
           <div className="w-12 h-12 rounded-lg gradient-primary flex items-center justify-center mx-auto mb-2"><ShieldCheck className="w-6 h-6 text-primary-foreground" /></div>
-          <h1 className="text-xl font-semibold leading-none tracking-tight">ProjetoGO — Portal do Avaliador</h1>
+          <h1 className="text-xl font-semibold leading-none tracking-tight">ProjetoGO | Portal do Avaliador</h1>
           <h2 className="text-sm font-normal text-muted-foreground">
             Acesse com seu e-mail ou CPF cadastrado como avaliador.
           </h2>

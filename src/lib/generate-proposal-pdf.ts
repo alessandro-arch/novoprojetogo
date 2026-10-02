@@ -74,7 +74,7 @@ export function generateProposalPdf(data: PdfData) {
     doc.text(`${item.label}: `, MARGIN_LEFT, y);
     const labelWidth = doc.getTextWidth(`${item.label}: `);
     doc.setFont("helvetica", "normal");
-    const valLines = doc.splitTextToSize(item.value || "—", CONTENT_WIDTH - labelWidth);
+    const valLines = doc.splitTextToSize(item.value || "-", CONTENT_WIDTH - labelWidth);
     doc.text(valLines, MARGIN_LEFT + labelWidth, y);
     y += valLines.length * 5 + 2;
   }
@@ -135,7 +135,7 @@ export function generateProposalPdf(data: PdfData) {
       // Answer
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
-      const answerText = q.answer || "—";
+      const answerText = q.answer || "-";
 
       // Check if answer contains table-like data (budget module)
       if (answerText.includes("\n") && answerText.includes("|")) {

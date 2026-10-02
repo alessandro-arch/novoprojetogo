@@ -49,7 +49,7 @@ export function generateSubmissionReceipt(data: ReceiptData) {
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(80);
-  doc.text("Plataforma ProjetoGO — Comprovante Oficial de Protocolo", PW / 2, y, { align: "center" });
+  doc.text("Plataforma ProjetoGO, Comprovante Oficial de Protocolo", PW / 2, y, { align: "center" });
   y += 10;
 
   // === SEPARATOR ===
@@ -69,7 +69,7 @@ export function generateSubmissionReceipt(data: ReceiptData) {
   doc.setFontSize(18);
   doc.setFont("courier", "bold");
   doc.setTextColor(20, 50, 100);
-  doc.text(data.protocol || "—", PW / 2, y + 20, { align: "center" });
+  doc.text(data.protocol || "-", PW / 2, y + 20, { align: "center" });
   doc.setTextColor(0);
   y += 36;
 
@@ -107,7 +107,7 @@ export function generateSubmissionReceipt(data: ReceiptData) {
 
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0);
-    const valLines = doc.splitTextToSize(field.value || "—", CW / 2 - 5);
+    const valLines = doc.splitTextToSize(field.value || "-", CW / 2 - 5);
     doc.text(valLines[0], PW / 2 + 5, y + 2);
     y += 10;
   }

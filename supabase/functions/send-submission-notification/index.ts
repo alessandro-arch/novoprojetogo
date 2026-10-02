@@ -59,7 +59,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "ProjetoGO <noreply@innovago.app>",
       to: [recipientEmail],
-      subject: `Proposta submetida com sucesso — Protocolo ${protocol}`,
+      subject: `Proposta submetida com sucesso | Protocolo ${protocol}`,
       html: `
         <!DOCTYPE html>
         <html>

@@ -416,18 +416,18 @@ const FomentoBolsistaBatchImport = ({ onBack }: Props) => {
                           {phase === "review" ? (
                             <Input className="h-7 text-xs min-w-[120px]" value={b.nome_bolsista}
                               onChange={e => updateField(i, "nome_bolsista", e.target.value)} />
-                          ) : <span className="text-sm truncate">{b.nome_bolsista || "—"}</span>}
+                          ) : <span className="text-sm truncate">{b.nome_bolsista || "-"}</span>}
                         </TableCell>
                         <TableCell>
                           {phase === "review" ? (
                             <Select value={b.modalidade || "none"} onValueChange={v => updateField(i, "modalidade", v === "none" ? "" : v)}>
                               <SelectTrigger className="h-7 text-xs min-w-[100px]"><SelectValue /></SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="none">—</SelectItem>
+                                <SelectItem value="none">-</SelectItem>
                                 {Object.entries(MODALIDADE_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
                               </SelectContent>
                             </Select>
-                          ) : <span className="text-sm truncate">{MODALIDADE_LABELS[b.modalidade] || b.modalidade || "—"}</span>}
+                          ) : <span className="text-sm truncate">{MODALIDADE_LABELS[b.modalidade] || b.modalidade || "-"}</span>}
                         </TableCell>
                         {phase === "review" && (
                           <>
@@ -487,7 +487,7 @@ const FomentoBolsistaBatchImport = ({ onBack }: Props) => {
       <Dialog open={editIdx !== null} onOpenChange={() => setEditIdx(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Editar Bolsista — {editBolsista?.fileName}</DialogTitle>
+            <DialogTitle>Editar Bolsista, {editBolsista?.fileName}</DialogTitle>
           </DialogHeader>
           {editBolsista && editIdx !== null && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
@@ -504,7 +504,7 @@ const FomentoBolsistaBatchImport = ({ onBack }: Props) => {
                 <Select value={editBolsista.modalidade || "none"} onValueChange={v => updateField(editIdx, "modalidade", v === "none" ? "" : v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">—</SelectItem>
+                    <SelectItem value="none">-</SelectItem>
                     {Object.entries(MODALIDADE_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -570,7 +570,7 @@ const FomentoBolsistaBatchImport = ({ onBack }: Props) => {
                 </Select>
                 {isPpgPendente(editBolsista.ppg_nome) && (
                   <p className="text-[11px] text-[hsl(var(--warning))] mt-1">
-                    Programa não reconhecido — selecione um dos programas oficiais.
+                    Programa não reconhecido, selecione um dos programas oficiais.
                   </p>
                 )}
               </div>

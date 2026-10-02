@@ -372,7 +372,7 @@ const FormLibraryEditor = ({ formId, orgId, onBack }: Props) => {
                           type="number"
                           value={field.min_chars ?? ""}
                           onChange={(e) => updateField(field.id, { min_chars: e.target.value ? Number(e.target.value) : null })}
-                          placeholder="—"
+                          placeholder="-"
                           disabled={readOnly}
                           className="mt-1"
                         />
@@ -383,7 +383,7 @@ const FormLibraryEditor = ({ formId, orgId, onBack }: Props) => {
                           type="number"
                           value={field.max_chars ?? ""}
                           onChange={(e) => updateField(field.id, { max_chars: e.target.value ? Number(e.target.value) : null })}
-                          placeholder="—"
+                          placeholder="-"
                           disabled={readOnly}
                           className="mt-1"
                         />

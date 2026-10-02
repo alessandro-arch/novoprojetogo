@@ -245,8 +245,8 @@ const FomentoBolsistaForm = ({ bolsistaId, onBack }: Props) => {
         </Button>
       </div>
 
-      {extractionStatus === "success" && <Badge className="bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))]">✅ Extraído via IA — revise os campos</Badge>}
-      {extractionStatus === "error" && <Badge variant="destructive">⚠️ Erro na extração — preencha manualmente</Badge>}
+      {extractionStatus === "success" && <Badge className="bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))]">✅ Extraído via IA, revise os campos</Badge>}
+      {extractionStatus === "error" && <Badge variant="destructive">⚠️ Erro na extração, preencha manualmente</Badge>}
 
       {/* [A] AI Extraction */}
       {!isEditing && (
@@ -349,7 +349,7 @@ const FomentoBolsistaForm = ({ bolsistaId, onBack }: Props) => {
           </div>
           <div>
             <Label>Valor Total Calculado</Label>
-            <Input value={totalCalc > 0 ? formatBRL(totalCalc) : "—"} disabled className="bg-muted font-mono" />
+            <Input value={totalCalc > 0 ? formatBRL(totalCalc) : "-"} disabled className="bg-muted font-mono" />
           </div>
         </div>
       </SectionCard>
@@ -363,7 +363,7 @@ const FomentoBolsistaForm = ({ bolsistaId, onBack }: Props) => {
             <SelectContent>
               <SelectItem value="__none__">Nenhum</SelectItem>
               {(projects ?? []).map((p) => (
-                <SelectItem key={p.id} value={p.id}>{p.titulo} — {p.pesquisador_principal}</SelectItem>
+                <SelectItem key={p.id} value={p.id}>{p.titulo}, {p.pesquisador_principal}</SelectItem>
               ))}
             </SelectContent>
           </Select>

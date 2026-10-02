@@ -63,7 +63,7 @@ const ServiceDeskFirstAccess = () => {
   return (
     <div className="min-h-screen flex bg-background">
       <Seo
-        title="Primeiro acesso — Service Desk Acadêmico | ProjetoGO"
+        title="Primeiro acesso | Service Desk Acadêmico | ProjetoGO"
         description="Crie seu acesso ao Service Desk Acadêmico com sua matrícula."
         path="/servicedesk/primeiro-acesso"
         noindex
@@ -119,7 +119,7 @@ const ServiceDeskFirstAccess = () => {
           </form>
           </>)}
           <Link to="/servicedesk/login" className="flex items-center gap-1 text-sm text-muted-foreground mt-6 hover:text-foreground justify-center">
-            <ArrowLeft className="w-4 h-4" /> Já tenho cadastro — entrar
+            <ArrowLeft className="w-4 h-4" /> Já tenho cadastro, entrar
           </Link>
         </div>
       </div>

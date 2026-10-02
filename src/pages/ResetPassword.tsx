@@ -91,7 +91,7 @@ const ResetPassword = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Seo
-        title="Redefinir senha — ProjetoGO"
+        title="Redefinir senha | ProjetoGO"
         description="Defina uma nova senha para a sua conta ProjetoGO."
         path="/reset-password"
         noindex

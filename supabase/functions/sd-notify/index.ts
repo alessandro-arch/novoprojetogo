@@ -5,7 +5,7 @@ const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-const STATUS: Record<string, string> = { em_analise: "Em análise", aprovado: "Aprovado — aguardando execução", em_andamento: "Em andamento", concluido: "Concluído", recusado: "Recusado", correcao: "Correção necessária" };
+const STATUS: Record<string, string> = { em_analise: "Em análise", aprovado: "Aprovado, aguardando execução", em_andamento: "Em andamento", concluido: "Concluído", recusado: "Recusado", correcao: "Correção necessária" };
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
 Deno.serve(async (req) => {
@@ -107,7 +107,7 @@ Caso a VPN não conecte ou o Portal CAPES não reconheça o acesso institucional
         if (emails.length) await resend.emails.send({
           from: "ProjetoGO <noreply@innovago.app>", to: emails,
           subject: event === "reenviar" ? `Correção recebida: ${svc} | ${r.protocol}` : `Nova solicitação na sua fila: ${svc}`,
-          html: `<p>Há uma solicitação aguardando sua equipe.</p><p><b>${svc}</b> — ${esc(r.requester_name)} (${esc(r.requester_enrollment)})</p><p><a href="${reqLink}">Abrir a solicitação</a></p>`,
+          html: `<p>Há uma solicitação aguardando sua equipe.</p><p><b>${svc}</b>, ${esc(r.requester_name)} (${esc(r.requester_enrollment)})</p><p><a href="${reqLink}">Abrir a solicitação</a></p>`,
         });
       }
     }

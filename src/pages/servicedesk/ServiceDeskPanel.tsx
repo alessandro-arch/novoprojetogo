@@ -136,7 +136,7 @@ const AdminArea = ({ orgs, isSuper, userId, areas, onSignOut }: { orgs: any[]; i
     queryFn: async () => (await db.from("sd_requests").select("*, sd_services(name, steps)").eq("organization_id", org.id).order("created_at", { ascending: false })).data || [],
   });
   return (
-    <PanelLayout title="Service Desk — Administração" subtitle={org.sigla || org.name} navItems={NAV} activeNav={nav} onNavChange={setNav} onSignOut={onSignOut}>
+    <PanelLayout title="Service Desk | Administração" subtitle={org.sigla || org.name} navItems={NAV} activeNav={nav} onNavChange={setNav} onSignOut={onSignOut}>
       <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold font-heading">{NAV.find((n) => n.key === nav)?.label}</h1>

@@ -101,15 +101,15 @@ const MinhasPropostas = ({ orgId, userId }: Props) => {
         .single();
 
       generateSubmissionReceipt({
-        protocol: proposal.blind_code ?? "—",
+        protocol: proposal.blind_code ?? "-",
         editalTitle: (proposal.editais as any)?.title ?? "Edital",
-        proponenteName: profile?.full_name ?? "—",
-        proponenteEmail: profile?.email ?? "—",
+        proponenteName: profile?.full_name ?? "-",
+        proponenteEmail: profile?.email ?? "-",
         proponenteCpf: profile?.cpf_last4 ? `***.***.***-${profile.cpf_last4}` : undefined,
         cnpqArea: profile?.research_area_cnpq ?? undefined,
         submittedAt: proposal.submitted_at
           ? new Date(proposal.submitted_at).toLocaleString("pt-BR")
-          : "—",
+          : "-",
         submissionId: proposal.id,
       });
     } catch {
@@ -143,12 +143,12 @@ const MinhasPropostas = ({ orgId, userId }: Props) => {
 
       generateProposalPdf({
         editalTitle: (proposal.editais as any)?.title ?? "Edital",
-        proponenteName: profile?.full_name ?? "—",
-        proponenteEmail: profile?.email ?? "—",
-        protocol: proposal.blind_code ?? "—",
+        proponenteName: profile?.full_name ?? "-",
+        proponenteEmail: profile?.email ?? "-",
+        protocol: proposal.blind_code ?? "-",
         submittedAt: proposal.submitted_at
           ? new Date(proposal.submitted_at).toLocaleString("pt-BR")
-          : "—",
+          : "-",
         cnpqArea: profile?.research_area_cnpq ?? undefined,
         submissionId: proposal.id,
         sections: [

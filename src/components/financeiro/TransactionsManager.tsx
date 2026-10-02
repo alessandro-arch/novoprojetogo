@@ -110,7 +110,7 @@ const TransactionsManager = ({ executionId }: Props) => {
                   <SelectContent>
                     {statements?.map((s: any) => (
                       <SelectItem key={s.id} value={s.id}>
-                        {(s as any).project_bank_accounts?.bank_name} — {s.statement_period_start || "Sem período"}
+                        {(s as any).project_bank_accounts?.bank_name}, {s.statement_period_start || "Sem período"}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -197,7 +197,7 @@ const TransactionsManager = ({ executionId }: Props) => {
                       {t.direction === "debit" ? "- " : "+ "}{formatCurrency(Math.abs(t.amount))}
                     </TableCell>
                     <TableCell className="text-right font-mono text-muted-foreground">
-                      {t.balance_after != null ? formatCurrency(t.balance_after) : "—"}
+                      {t.balance_after != null ? formatCurrency(t.balance_after) : "-"}
                     </TableCell>
                   </TableRow>
                 ))}

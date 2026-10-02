@@ -93,14 +93,14 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
 
   const fields: [string, string][] = isStudent
     ? [
-        ["Nome", r.full_name], ["Matrícula", r.enrollment], ["Programa", r.sd_programs?.name || "—"],
-        ["Nível", r.level || "—"], ["Turma", r.turma || "—"], ["Ingresso", fmt(r.entry_date)],
-        ["Orientador(a)", r.advisor?.full_name || "—"], ["Prazo regular", fmt(r.regular_deadline)],
-        ["Prazo vigente", fmt(r.current_deadline)], ["Situação", r.status || "—"],
+        ["Nome", r.full_name], ["Matrícula", r.enrollment], ["Programa", r.sd_programs?.name || "-"],
+        ["Nível", r.level || "-"], ["Turma", r.turma || "-"], ["Ingresso", fmt(r.entry_date)],
+        ["Orientador(a)", r.advisor?.full_name || "-"], ["Prazo regular", fmt(r.regular_deadline)],
+        ["Prazo vigente", fmt(r.current_deadline)], ["Situação", r.status || "-"],
       ]
     : [
-        ["Nome", r.full_name], ["Matrícula", r.enrollment], ["Tipo de contrato", r.contract_type || "—"],
-        ["Programas", progs || "—"], ["Situação do vínculo", r.status || "—"],
+        ["Nome", r.full_name], ["Matrícula", r.enrollment], ["Tipo de contrato", r.contract_type || "-"],
+        ["Programas", progs || "-"], ["Situação do vínculo", r.status || "-"],
         ...(r.bond_deadline ? [["Prazo do vínculo", fmt(r.bond_deadline)] as [string, string]] : []),
       ];
 
@@ -202,7 +202,7 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
     { to: `${BASE}/cadastro`, label: "Meu cadastro", icon: UserCircle },
   ];
   const first = r.full_name?.split(" ")[0];
-  const subtitle = isStudent ? `${r.level ? r.level[0].toUpperCase() + r.level.slice(1) : ""} em ${r.sd_programs?.name || "—"} · Matrícula ${r.enrollment}` : `Vínculo: ${r.contract_type || "—"} · Situação: ${r.status} · Matrícula ${r.enrollment}`;
+  const subtitle = isStudent ? `${r.level ? r.level[0].toUpperCase() + r.level.slice(1) : ""} em ${r.sd_programs?.name || "-"} · Matrícula ${r.enrollment}` : `Vínculo: ${r.contract_type || "-"} · Situação: ${r.status} · Matrícula ${r.enrollment}`;
 
   return (
     <SdShell title="Meu Service Desk" subtitle={isStudent ? "Área do aluno" : "Área do professor"} userId={userId} areas={areas} nav={nav} onSignOut={onSignOut}>
@@ -256,7 +256,7 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
               </CardHeader>
               <CardContent>
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {fields.map(([k, v]) => <div key={k}><dt className="text-xs text-muted-foreground">{k}</dt><dd className="text-sm font-medium">{v || "—"}</dd></div>)}
+                  {fields.map(([k, v]) => <div key={k}><dt className="text-xs text-muted-foreground">{k}</dt><dd className="text-sm font-medium">{v || "-"}</dd></div>)}
                 </dl>
                 <p className="text-xs text-muted-foreground mt-4">Estes dados vêm da base oficial da instituição e não podem ser editados aqui. Se algo estiver errado, use "Informar divergência".</p>
                 {!!divergences?.length && (
@@ -265,7 +265,7 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
                       <div key={d.id} className="text-xs flex flex-wrap gap-2 items-center">
                         <Badge variant={d.status === "resolvida" ? "secondary" : "outline"}>{d.status === "resolvida" ? "Resolvida" : "Em revisão"}</Badge>
                         <span>{d.field}: {d.description}</span>
-                        {d.resolution_note && <span className="text-muted-foreground">— {d.resolution_note}</span>}
+                        {d.resolution_note && <span className="text-muted-foreground">- {d.resolution_note}</span>}
                       </div>
                     ))}
                   </div>

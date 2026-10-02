@@ -6,11 +6,11 @@ import { CheckCircle2, Circle, XCircle } from "lucide-react";
 const db = supabase as any;
 
 export const STATUS_LABEL: Record<string, string> = {
-  em_analise: "Aguardando análise", aprovado: "Autorizado — aguardando execução", em_andamento: "Em execução",
+  em_analise: "Aguardando análise", aprovado: "Autorizado, aguardando execução", em_andamento: "Em execução",
   concluido: "Concluído", recusado: "Indeferido", correcao: "Aguardando solicitante",
 };
 export const ACTION_LABEL: Record<string, string> = {
-  criada: "Solicitação enviada", aprovar: "Autorizada — encaminhada para execução", iniciar: "Execução iniciada", concluir: "Concluída",
+  criada: "Solicitação enviada", aprovar: "Autorizada, encaminhada para execução", iniciar: "Execução iniciada", concluir: "Concluída",
   recusar: "Indeferida", corrigir: "Correção solicitada", reenviar: "Solicitante reenviou a correção",
   impedimento: "Impedimento técnico registrado", liberar_vpn: "Acesso VPN liberado", vpn_enviado: "Arquivo .conf enviado por e-mail",
 };
@@ -29,7 +29,7 @@ export const notify = (body: Record<string, unknown>) => {
   supabase.functions.invoke("sd-notify", { body }).catch(() => {});
 };
 
-export const fmtDate = (d?: string | null) => (d ? d.slice(0, 10).split("-").reverse().join("/") : "—");
+export const fmtDate = (d?: string | null) => (d ? d.slice(0, 10).split("-").reverse().join("/") : "-");
 export const fmtDT = (d: string) => new Date(d).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 const fmtDur = (ms: number) => {
   const h = Math.round(ms / 36e5);
