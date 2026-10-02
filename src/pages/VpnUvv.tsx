@@ -348,11 +348,11 @@ const VpnUvv = () => {
                 description="Após a liberação, você receberá seu arquivo individual de configuração e as instruções para utilização da VPN."
               />
               <Button asChild size="lg" className="mt-8 min-h-12">
-                <a href={WIREGUARD_URL} target="_blank" rel="noreferrer">
-                  <Download /> Baixar WireGuard
+                <a href="#instrucoes-instalacao">
+                  <BookOpen /> Instruções de Instalação
                 </a>
               </Button>
-              <p className="mt-4 text-sm text-muted-foreground">As instruções completas também serão enviadas com sua configuração.</p>
+              <p className="mt-4 text-sm text-muted-foreground">O aplicativo oficial está disponível em <a className="font-semibold text-primary underline-offset-4 hover:underline" href={WIREGUARD_URL} target="_blank" rel="noreferrer">wireguard.com/install</a>.</p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-lg border border-border bg-background p-7">
