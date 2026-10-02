@@ -39,28 +39,25 @@ const ROLE_LABELS: Record<string, string> = {
   solicitante: "Solicitante",
 };
 
+/**
+ * Roteador do Service Desk: cada pessoa vai para a sua área conforme papéis e grupos já existentes.
+ * Portal (aluno/professor) · painel de cada grupo responsável · administração · detalhe da solicitação.
+ */
 const ServiceDeskPanel = () => {
   const { user, loading, globalRole, signOut } = useAuth();
-  const [nav, setNav] = useState("queue");
-  const [orgId, setOrgId] = useState<string | null>(null);
   const isSuper = globalRole === "icca_admin";
 
   const { data: orgs, isLoading } = useQuery({
     queryKey: ["sd-orgs", user?.id, isSuper],
     enabled: !!user,
     queryFn: async () => {
-      if (isSuper) {
-        const { data } = await db.from("organizations").select("*").order("name");
-        return data || [];
-      }
-      const { data: m } = await db.from("sd_members").select("organization_id, role").eq("user_id", user!.id).eq("role", "admin");
+      if (isSuper) return (await db.from("organizations").select("*").order("name")).data || [];
+      const { data: m } = await db.from("sd_members").select("organization_id, role").eq("user_id", user!.id).eq("role", "admin").eq("status", "ativo");
       const ids = (m || []).map((x: any) => x.organization_id);
       if (!ids.length) return [];
-      const { data } = await db.from("organizations").select("*").in("id", ids);
-      return data || [];
+      return (await db.from("organizations").select("*").in("id", ids)).data || [];
     },
   });
-
   const { data: myGroups, isLoading: loadingGroups } = useQuery({
     queryKey: ["sd-my-groups", user?.id],
     enabled: !!user,
@@ -69,45 +66,91 @@ const ServiceDeskPanel = () => {
       return (gm || []).filter((x: any) => x.sd_groups && x.sd_groups.is_active !== false).map((x: any) => ({ ...x.sd_groups, organization_id: x.organization_id }));
     },
   });
-
-  const { data: orgGroups } = useQuery({
-    queryKey: ["sd-org-groups", orgId], enabled: !!orgId && !!orgs?.length,
-    queryFn: async () => (await db.from("sd_groups").select("id, code, name").eq("organization_id", orgId).eq("is_active", true).order("code")).data || [],
+  const { data: requester, isLoading: loadingReq } = useRequester(user?.id);
+  // Grupos visíveis: os meus + (para administradores) todos os grupos das instituições que administro.
+  const adminOrgIds = (orgs || []).map((o: any) => o.id);
+  const { data: adminGroups = [] } = useQuery({
+    queryKey: ["sd-admin-groups", adminOrgIds.join(",")], enabled: adminOrgIds.length > 0,
+    queryFn: async () => (await db.from("sd_groups").select("id, code, name, organization_id").in("organization_id", adminOrgIds).eq("is_active", true).order("code")).data || [],
+  });
+  const panelGroups = Array.from(new Map([...(myGroups || []), ...adminGroups].map((g: any) => [g.id, g])).values()) as SdGroup[];
+  const groupOrgIds = Array.from(new Set(panelGroups.map((g) => g.organization_id)));
+  const { data: services = [] } = useQuery({
+    queryKey: ["sd-services-steps", groupOrgIds.join(",")], enabled: groupOrgIds.length > 0,
+    queryFn: async () => (await db.from("sd_services").select("organization_id, steps").in("organization_id", groupOrgIds)).data || [],
   });
 
-  useEffect(() => { if (!orgId && orgs?.length) setOrgId(orgs[0].id); }, [orgs, orgId]);
+  if (loading || isLoading || loadingGroups || loadingReq) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (!user) return <Navigate to="/servicedesk/login" replace />;
 
-  if (loading || isLoading || loadingGroups) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
-  if (!user) return <Navigate to="/login" replace />;
-  if (!orgs?.length && myGroups?.length) {
-    const gOrg = myGroups[0].organization_id;
-    return (
-      <PanelLayout title="Service Desk" subtitle={myGroups.map((g: any) => g.code).join(" · ")} navItems={[{ key: "queue", label: "Solicitações", icon: Inbox }]} activeNav="queue" onNavChange={() => {}} onSignOut={signOut}>
-        <div className="space-y-6">
-          <h1 className="text-2xl font-bold font-heading">Solicitações — {myGroups.map((g: any) => g.code).join(" e ")}</h1>
-          <GroupQueues orgId={gOrg} groups={myGroups.filter((g: any) => g.organization_id === gOrg)} isAdmin={false} />
-        </div>
-      </PanelLayout>
-    );
-  }
-  if (!orgs?.length) return (
-    <RequesterHome userId={user.id} onSignOut={() => signOut()} noAccessMessage="Seu acesso ao Service Desk não está ativo. Fale com a secretaria do programa." />
-  );
+  // Grupo que aparece na 1ª etapa de algum serviço = painel de análise; demais = painel de execução.
+  const kindOf = (g: SdGroup): PanelKind =>
+    services.some((s: any) => s.organization_id === g.organization_id && (s.steps || [])[0] === g.code) ? "approver" : "executor";
+  const isAdminOf = (orgId: string) => isSuper || adminOrgIds.includes(orgId);
 
-  const org = orgs.find((o: any) => o.id === orgId) || orgs[0];
+  const areas: SdArea[] = [
+    ...(requester ? [{ path: "/servicedesk/portal", label: "Meu Service Desk" }] : []),
+    ...panelGroups.map((g) => ({ path: `/servicedesk/${g.code.toLowerCase()}`, label: `Painel ${g.code}` })),
+    ...(orgs?.length ? [{ path: "/servicedesk/admin", label: "Administração" }] : []),
+  ];
+  const home = areas.find((a) => a.path !== "/servicedesk/admin")?.path || areas[0]?.path;
+
+  if (!areas.length) return <RequesterHome userId={user.id} onSignOut={() => signOut()} noAccessMessage="Seu acesso ao Service Desk não está ativo. Fale com a secretaria do programa." />;
 
   return (
-    <PanelLayout title="Service Desk" subtitle={org.sigla || org.name} navItems={NAV} activeNav={nav} onNavChange={setNav} onSignOut={signOut}>
+    <Routes>
+      <Route index element={<Navigate to={home} replace />} />
+      <Route path="portal/*" element={requester ? <RequesterHome userId={user.id} onSignOut={() => signOut()} noAccessMessage="" areas={areas} /> : <Navigate to={home} replace />} />
+      <Route path="admin/*" element={orgs?.length ? <AdminArea orgs={orgs} isSuper={isSuper} userId={user.id} areas={areas} onSignOut={signOut} /> : <Navigate to={home} replace />} />
+      <Route path="solicitacao/:id" element={<div className="min-h-screen bg-background"><RequestDetail userId={user.id} isAdminOf={isAdminOf} /></div>} />
+      <Route path=":groupCode/*" element={<GroupRoute groups={panelGroups} kindOf={kindOf} userId={user.id} areas={areas} onSignOut={signOut} home={home} canDiv={(g) => isAdminOf(g.organization_id) || kindOf(g) === "approver"} />} />
+    </Routes>
+  );
+};
+
+const GroupRoute = ({ groups, kindOf, userId, areas, onSignOut, home, canDiv }: { groups: SdGroup[]; kindOf: (g: SdGroup) => PanelKind; userId: string; areas: SdArea[]; onSignOut: () => void; home: string; canDiv: (g: SdGroup) => boolean }) => {
+  const { groupCode } = useParams();
+  const g = groups.find((x) => x.code.toLowerCase() === (groupCode || "").toLowerCase());
+  if (!g) return <Navigate to={home} replace />;
+  return <GroupPanel key={g.id} group={g} kind={kindOf(g)} userId={userId} areas={areas} onSignOut={onSignOut} canResolveDivergences={canDiv(g)} />;
+};
+
+const AdminArea = ({ orgs, isSuper, userId, areas, onSignOut }: { orgs: any[]; isSuper: boolean; userId: string; areas: SdArea[]; onSignOut: () => void }) => {
+  const [nav, setNav] = useState("queue");
+  const [orgId, setOrgId] = useState<string>(orgs[0].id);
+  const navigate = useNavigate();
+  const org = orgs.find((o: any) => o.id === orgId) || orgs[0];
+  const { data: orgGroups } = useQuery({
+    queryKey: ["sd-org-groups", org.id],
+    queryFn: async () => (await db.from("sd_groups").select("id, code, name").eq("organization_id", org.id).eq("is_active", true).order("code")).data || [],
+  });
+  const { data: allReqs = [] } = useQuery({
+    queryKey: ["sd-queue", org.id],
+    queryFn: async () => (await db.from("sd_requests").select("*, sd_services(name, steps)").eq("organization_id", org.id).order("created_at", { ascending: false })).data || [],
+  });
+  return (
+    <PanelLayout title="Service Desk — Administração" subtitle={org.sigla || org.name} navItems={NAV} activeNav={nav} onNavChange={setNav} onSignOut={onSignOut}>
       <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold font-heading">{NAV.find((n) => n.key === nav)?.label}</h1>
-          {orgs.length > 1 && (
-            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={org.id} onChange={(e) => setOrgId(e.target.value)}>
-              {orgs.map((o: any) => <option key={o.id} value={o.id}>{o.sigla || o.name}</option>)}
-            </select>
-          )}
+          <div className="flex items-center gap-2">
+            {areas.length > 1 && (
+              <select aria-label="Área" className="h-10 rounded-md border border-input bg-background px-3 text-sm" value="/servicedesk/admin" onChange={(e) => navigate(e.target.value)}>
+                {areas.map((a) => <option key={a.path} value={a.path}>{a.label}</option>)}
+              </select>
+            )}
+            {orgs.length > 1 && (
+              <select aria-label="Instituição" className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={org.id} onChange={(e) => setOrgId(e.target.value)}>
+                {orgs.map((o: any) => <option key={o.id} value={o.id}>{o.sigla || o.name}</option>)}
+              </select>
+            )}
+            <NotificationBell userId={userId} />
+          </div>
         </div>
-        {nav === "queue" && <GroupQueues orgId={org.id} groups={orgGroups || []} isAdmin />}
+        {nav === "queue" && <FilteredRequests rows={allReqs} />}
+        {nav === "users" && <UsersAccessTab orgId={org.id} />}
+        {nav === "services" && <ServicesTab orgId={org.id} />}
+        {nav === "audit" && <AuditTab orgId={org.id} />}
         {nav === "institution" && <InstitutionTab org={org} isSuper={isSuper} />}
         {nav === "members" && <MembersTab orgId={org.id} />}
         {nav === "groups" && <GroupsTab orgId={org.id} />}
@@ -116,6 +159,7 @@ const ServiceDeskPanel = () => {
         {nav === "faculty" && <FacultyTab orgId={org.id} />}
         {nav === "imports" && <ImportTab orgId={org.id} orgLabel={org.sigla || org.name} />}
         {nav === "settings" && <SettingsTab orgId={org.id} />}
+        {false && orgGroups && <GroupQueues orgId={org.id} groups={orgGroups || []} isAdmin />}
       </div>
     </PanelLayout>
   );
