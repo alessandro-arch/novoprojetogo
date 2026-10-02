@@ -3366,6 +3366,13 @@ export type Database = {
       }
       sd_is_superadmin: { Args: { _user_id: string }; Returns: boolean }
       sd_me: { Args: never; Returns: Json }
+      sd_members_signup_status: {
+        Args: { _org_id: string }
+        Returns: {
+          has_signed_in: boolean
+          user_id: string
+        }[]
+      }
       sd_release_vpn: {
         Args: {
           _id: string
