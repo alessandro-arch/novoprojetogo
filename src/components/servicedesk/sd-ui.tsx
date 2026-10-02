@@ -71,7 +71,7 @@ export const SdShell = ({ title, subtitle, userId, areas, nav, onSignOut, childr
           </div>
           <div className="flex items-center gap-2">
             {areas.length > 1 && (
-              <select aria-label="Área" className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={areas.find((a) => location.pathname.startsWith(a.path))?.path || ""} onChange={(e) => navigate(e.target.value)}>
+              <select aria-label="Área" className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={areas.find((a) => window.location.pathname.startsWith(a.path))?.path || ""} onChange={(e) => navigate(e.target.value)}>
                 {areas.map((a) => <option key={a.path} value={a.path}>{a.label}</option>)}
               </select>
             )}
