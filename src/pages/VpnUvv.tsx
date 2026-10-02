@@ -452,6 +452,12 @@ const VpnUvv = () => {
           </div>
         </section>
 
+        <section aria-label="Verifique sua elegibilidade" className="pb-20 md:pb-28">
+          <div className="container px-4 md:px-8">
+            <EligibilityCheck />
+          </div>
+        </section>
+
         <section className="border-y border-border bg-card py-20 md:py-28">
           <div className="container grid gap-12 px-4 md:px-8 lg:grid-cols-2 lg:gap-20">
             <div>
