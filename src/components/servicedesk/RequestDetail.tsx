@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, Loader2, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Check, Loader2, AlertTriangle, Download, Send } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import { StatusBadge, RequestTimeline, notify, isOpen, fmtDate, fmtDT } from "./
 
 const db = supabase as any;
 
-const ACT_TITLE: Record<string, string> = { aprovar: "Autorizar", corrigir: "Solicitar correção", recusar: "Indeferir", iniciar: "Marcar em execução", concluir: "Liberar / concluir" };
+const ACT_TITLE: Record<string, string> = { aprovar: "Autorizar", corrigir: "Solicitar correção", recusar: "Indeferir", concluir: "Concluir", impedimento: "Registrar impedimento técnico" };
 
 /** Detalhe da solicitação: uma única tela com dados, termo, linha do tempo e ações da etapa atual. */
 const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgId: string) => boolean }) => {
@@ -27,10 +27,12 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
   const [busy, setBusy] = useState(false);
   const [corrFields, setCorrFields] = useState<string[]>([]);
   const [edit, setEdit] = useState<Record<string, string> | null>(null);
+  const [conf, setConf] = useState<File | null>(null);
+  const [vpn, setVpn] = useState({ ip: "", key: "", note: "", ok: false });
 
   const { data: r, isLoading } = useQuery({
     queryKey: ["sd-req", id],
-    queryFn: async () => (await db.from("sd_requests").select("*, sd_services(name, steps, form_fields), sd_groups(id, code, name)").eq("id", id).maybeSingle()).data,
+    queryFn: async () => (await db.from("sd_requests").select("*, sd_services(name, code, steps, form_fields), sd_groups(id, code, name)").eq("id", id).maybeSingle()).data,
   });
   const { data: myGroupIds = [] } = useQuery({
     queryKey: ["sd-my-group-ids", userId],
