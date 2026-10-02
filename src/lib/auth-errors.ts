@@ -11,6 +11,7 @@ export function translateAuthError(message: string): string {
     "Email rate limit exceeded": "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
     "For security purposes, you can only request this once every 60 seconds": "Aguarde 60 segundos antes de tentar novamente.",
     "New password should be different from the old password.": "A nova senha deve ser diferente da senha atual.",
+    "Password is known to be weak": "Esta senha é muito comum e foi recusada por segurança. Crie uma senha diferente, misturando letras maiúsculas, minúsculas, números e símbolos.",
   };
 
   for (const [key, value] of Object.entries(map)) {

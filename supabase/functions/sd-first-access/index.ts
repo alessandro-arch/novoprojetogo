@@ -64,7 +64,10 @@ Deno.serve(async (req) => {
     });
     const fakeExisting = created?.user && (created.user.identities ?? []).length === 0;
     if (cErr || !created.user || fakeExisting) {
-      const exists = fakeExisting || /already|registered|exists/i.test(cErr?.message ?? "");
+      const m = cErr?.message ?? "";
+      if (/weak|easy to guess|pwned|leaked/i.test(m))
+        return json({ error: "Esta senha é muito comum e foi recusada por segurança. Crie uma senha diferente, misturando letras maiúsculas, minúsculas, números e símbolos." }, 422);
+      const exists = fakeExisting || /already|registered|exists/i.test(m);
       return await fail(exists
         ? "Este e-mail já está cadastrado no ProjetoGO. Use outro e-mail ou entre com ele."
         : "Não foi possível criar o cadastro.", exists ? 409 : 400);
