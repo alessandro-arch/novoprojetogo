@@ -169,7 +169,7 @@ export const RequestTable = ({ rows, empty = "Nenhuma solicitação." }: { rows:
             <td className="p-2">{r.sd_services?.name}</td>
             <td className="p-2">{r.requester_program || "—"}</td>
             <td className="p-2">{fmtDate(r.created_at)}{isStale(r) && <div className="text-xs text-destructive">parada há mais de {STALE_DAYS} dias</div>}</td>
-            <td className="p-2"><StatusBadge status={r.status} /></td>
+            <td className="p-2"><StatusBadge status={r.status} />{r.correction_cycle > 0 && r.resubmitted_at && isOpen(r.status) && r.status !== "correcao" && <div className="text-xs text-primary font-medium mt-1">Correção recebida (#{r.correction_cycle})</div>}</td>
           </tr>
         ))}</tbody>
       </table>

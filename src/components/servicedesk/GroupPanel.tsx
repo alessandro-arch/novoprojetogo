@@ -46,6 +46,8 @@ const GroupPanel = ({ group, kind, userId, areas, onSignOut, canResolveDivergenc
   const mine = reqs.filter((r: any) => r.current_group_id === group.id && isOpen(r.status));
   const correcao = mine.filter((r: any) => r.status === "correcao");
   const waiting = mine.filter((r: any) => r.status !== "correcao");
+  const awaitingRequester = reqs.filter((r: any) => r.status === "correcao" && r.correction_return_group_id === group.id);
+  const received = waiting.filter((r: any) => r.correction_cycle > 0 && r.resubmitted_at);
   const closed = touched.filter((r: any) => !isOpen(r.status));
   const active = touched.filter((r: any) => r.status === "concluido");
   const openDivs = divs.filter((d: any) => d.status !== "resolvida");
@@ -70,7 +72,8 @@ const GroupPanel = ({ group, kind, userId, areas, onSignOut, canResolveDivergenc
   const inbox = kind === "approver"
     ? [
         { tone: "alert", n: waiting.length, t: "solicitações aguardando você" },
-        { tone: "warn", n: correcao.length, t: "aguardando correção do solicitante" },
+        { tone: "warn", n: received.length, t: "correções recebidas para nova análise" },
+        { tone: "muted", n: awaitingRequester.length, t: "aguardando solicitante" },
         { tone: "muted", n: openDivs.length, t: "divergências em aberto" },
       ]
     : [
@@ -85,7 +88,7 @@ const GroupPanel = ({ group, kind, userId, areas, onSignOut, canResolveDivergenc
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {kind === "approver" ? <>
           <KpiCard label="Aguardando análise" value={waiting.length} tone={waiting.length ? "alert" : "default"} />
-          <KpiCard label="Correções pendentes" value={correcao.length} />
+          <KpiCard label="Aguardando solicitante" value={awaitingRequester.length} hint={received.length ? `${received.length} correção(ões) recebida(s)` : undefined} />
           <KpiCard label="Prorrogações" value="—" tone="muted" hint="Disponível na próxima etapa" />
           <KpiCard label="Prazos acadêmicos em 90 dias" value={soon.length} />
         </> : <>
@@ -110,7 +113,8 @@ const GroupPanel = ({ group, kind, userId, areas, onSignOut, canResolveDivergenc
     <SdShell title={`Painel ${group.code}`} subtitle={group.name} userId={userId} areas={areas} nav={nav} onSignOut={onSignOut}>
       <Routes>
         <Route index element={<Dashboard />} />
-        <Route path="solicitacoes" element={<><h1 className="text-2xl font-bold font-heading">Solicitações</h1><FilteredRequests rows={mine} empty={`Nada aguardando ${group.code}.`} /></>} />
+        <Route path="solicitacoes" element={<><h1 className="text-2xl font-bold font-heading">Solicitações</h1><FilteredRequests rows={mine} empty={`Nada aguardando ${group.code}.`} />
+          <h2 className="font-semibold mt-6">Aguardando solicitante</h2><RequestTable rows={awaitingRequester} empty="Nenhuma solicitação aguardando correção." /></>} />
         <Route path="aguardando" element={<><h1 className="text-2xl font-bold font-heading">Aguardando configuração</h1><FilteredRequests rows={mine} empty="Nada para configurar." /></>} />
         <Route path="ativos" element={<><h1 className="text-2xl font-bold font-heading">Acessos ativos</h1><FilteredRequests rows={active} empty="Nenhum acesso ativo." /></>} />
         <Route path="prorrogacoes" element={<Placeholder title="Prorrogações" text="Os pedidos de prorrogação aparecerão aqui quando o fluxo da VPN for ativado." />} />

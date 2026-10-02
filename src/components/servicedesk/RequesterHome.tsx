@@ -108,7 +108,6 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
   const pendencias: { text: string; tone: "alert" | "warn" }[] = [
     ...(!c.email ? [{ text: "Informe seu e-mail pessoal em Meu cadastro.", tone: "alert" as const }] : []),
     ...(!r.phone ? [{ text: "Informe seu celular com WhatsApp em Meu cadastro.", tone: "alert" as const }] : []),
-    ...(requests || []).filter((q: any) => q.status === "correcao").map((q: any) => ({ text: `${q.protocol}: a equipe pediu uma correção.`, tone: "alert" as const })),
     ...(suspended ? [{ text: "Seu acesso a novas solicitações está suspenso. Fale com a secretaria do programa.", tone: "warn" as const }] : []),
   ];
   const unread = (notifs || []).filter((n: any) => !n.read_at).length;
