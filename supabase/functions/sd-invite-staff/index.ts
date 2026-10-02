@@ -30,7 +30,8 @@ Deno.serve(async (req) => {
     const { data: { user: caller } } = await userClient.auth.getUser();
     if (!caller) return json({ error: "Não autenticado" }, 401);
     const { data: isAdmin } = await userClient.rpc("sd_is_admin", { _user_id: caller.id, _org_id: orgId });
-    if (!isAdmin) return json({ error: "Apenas administradores da instituição podem convidar" }, 403);
+    const { data: isSuper } = isAdmin ? { data: true } : await userClient.rpc("sd_is_superadmin", { _user_id: caller.id });
+    if (!isAdmin && !isSuper) return json({ error: "Apenas administradores da instituição podem convidar" }, 403);
 
     const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: org } = await admin.from("organizations").select("name, sigla").eq("id", orgId).single();
