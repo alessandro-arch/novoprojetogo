@@ -35,12 +35,33 @@ Deno.serve(async (req) => {
     const { data: fa } = await admin.from("sd_faculty").select("personal_email").eq("user_id", r.requester_user_id).maybeSingle();
     const to = st?.email || fa?.personal_email || authUser?.user?.email;
     const protocol = esc(r.protocol || "");
+    if (event === "liberar_vpn") {
+      if (!r.vpn_conf_path || r.vpn_status !== "ativo") return new Response("not released", { status: 400, headers: cors });
+      if (r.vpn_email_sent_at) return new Response(JSON.stringify({ ok: true, already: true }), { headers: { ...cors, "Content-Type": "application/json" } });
+      const { data: file, error: dlErr } = await admin.storage.from("servicedesk").download(r.vpn_conf_path);
+      if (dlErr || !file) throw new Error("arquivo .conf indisponível");
+      const b64 = btoa(String.fromCharCode(...new Uint8Array(await file.arrayBuffer())));
+      const { data: ins } = await admin.from("sd_settings").select("value").eq("organization_id", r.organization_id).eq("key", "vpn_instructions").maybeSingle();
+      const instr = esc(typeof ins?.value === "string" ? ins.value : "").replace(/\n/g, "<br>");
+      const fname = r.vpn_conf_path.split("/").pop();
+      if (!to) throw new Error("solicitante sem e-mail");
+      const { error: sendErr } = await resend.emails.send({
+        from: "ProjetoGO <noreply@innovago.app>", to: [to],
+        subject: `Seu acesso VPN foi liberado | ${r.protocol}`,
+        html: `<p>Olá, ${esc(r.requester_name.split(" ")[0])}.</p><p>Seu acesso <b>${svc}</b> (protocolo <b>${protocol}</b>) foi liberado. O arquivo de configuração segue anexo e também está disponível na sua área do Service Desk.</p>${r.vpn_valid_until ? `<p>Validade: <b>${r.vpn_valid_until.split("-").reverse().join("/")}</b></p>` : ""}${instr ? `<p><b>Instruções</b><br>${instr}</p>` : ""}<p><a href="${reqLink}">Abrir a solicitação</a></p>`,
+        attachments: [{ filename: fname, content: b64 }],
+      } as any);
+      if (sendErr) throw new Error(String((sendErr as any).message || sendErr));
+      await admin.from("sd_requests").update({ vpn_email_sent_at: new Date().toISOString() }).eq("id", r.id);
+      await admin.from("sd_request_events").insert({ request_id: r.id, organization_id: r.organization_id, actor_user_id: (await userClient.auth.getUser()).data.user?.id, actor_name: "Sistema", action: "vpn_enviado", note: `Arquivo .conf e instruções enviados para ${to}` });
+      return new Response(JSON.stringify({ ok: true }), { headers: { ...cors, "Content-Type": "application/json" } });
+    }
     if (to && event === "corrigir" && r.status === "correcao") await resend.emails.send({
       from: "ProjetoGO <noreply@innovago.app>", to: [to],
       subject: `Correção necessária em sua solicitação | ${r.protocol}`,
       html: `<p>Olá, ${esc(r.requester_name.split(" ")[0])}.</p><p>A equipe responsável pediu uma correção na sua solicitação <b>${svc}</b> (protocolo <b>${protocol}</b>).</p><p><b>Orientação:</b> ${esc(r.correction_note || "")}</p><p><a href="${reqLink}" style="display:inline-block;padding:10px 16px;background:#1e2433;color:#fff;border-radius:8px;text-decoration:none">Corrigir solicitação</a></p>`,
     });
-    else if (to && event !== "reenviar") await resend.emails.send({
+    else if (to && !["reenviar", "impedimento"].includes(event)) await resend.emails.send({
       from: "ProjetoGO <noreply@innovago.app>", to: [to],
       subject: `${svc}: ${STATUS[r.status] || r.status}`,
       html: `<p>Olá, ${esc(r.requester_name)}.</p><p>Sua solicitação <b>${svc}</b> está: <b>${STATUS[r.status] || r.status}</b>.</p>${note}<p><a href="${link}">Acessar o Service Desk</a></p>`,

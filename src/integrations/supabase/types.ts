@@ -2911,6 +2911,15 @@ export type Database = {
           terms_accepted_at: string | null
           terms_hash: string | null
           updated_at: string
+          vpn_conf_path: string | null
+          vpn_email_sent_at: string | null
+          vpn_ip: string | null
+          vpn_peer_key: string | null
+          vpn_released_at: string | null
+          vpn_released_by: string | null
+          vpn_status: string | null
+          vpn_tech_note: string | null
+          vpn_valid_until: string | null
         }
         Insert: {
           correction_cycle?: number
@@ -2939,6 +2948,15 @@ export type Database = {
           terms_accepted_at?: string | null
           terms_hash?: string | null
           updated_at?: string
+          vpn_conf_path?: string | null
+          vpn_email_sent_at?: string | null
+          vpn_ip?: string | null
+          vpn_peer_key?: string | null
+          vpn_released_at?: string | null
+          vpn_released_by?: string | null
+          vpn_status?: string | null
+          vpn_tech_note?: string | null
+          vpn_valid_until?: string | null
         }
         Update: {
           correction_cycle?: number
@@ -2967,6 +2985,15 @@ export type Database = {
           terms_accepted_at?: string | null
           terms_hash?: string | null
           updated_at?: string
+          vpn_conf_path?: string | null
+          vpn_email_sent_at?: string | null
+          vpn_ip?: string | null
+          vpn_peer_key?: string | null
+          vpn_released_at?: string | null
+          vpn_released_by?: string | null
+          vpn_status?: string | null
+          vpn_tech_note?: string | null
+          vpn_valid_until?: string | null
         }
         Relationships: [
           {
@@ -3339,6 +3366,16 @@ export type Database = {
       }
       sd_is_superadmin: { Args: { _user_id: string }; Returns: boolean }
       sd_me: { Args: never; Returns: Json }
+      sd_release_vpn: {
+        Args: {
+          _id: string
+          _ip: string
+          _note: string
+          _path: string
+          _peer_key: string
+        }
+        Returns: undefined
+      }
       sd_report_divergence: {
         Args: { _description: string; _field: string }
         Returns: string
