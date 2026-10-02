@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Building2, Users, UsersRound, Settings, Loader2, Plus, Trash2, Pencil, BookOpen, GraduationCap, Briefcase, FileSpreadsheet, Inbox } from "lucide-react";
+import { Building2, Users, UsersRound, Settings, Loader2, Plus, Trash2, Pencil, BookOpen, GraduationCap, Briefcase, FileSpreadsheet, Inbox, UserCog, LayoutList, ScrollText } from "lucide-react";
 import { ProgramsTab, StudentsTab, FacultyTab, ImportTab } from "@/components/servicedesk/SdBases";
-import RequesterHome from "@/components/servicedesk/RequesterHome";
-import GroupQueues from "@/components/servicedesk/GroupQueues";
+import RequesterHome, { useRequester } from "@/components/servicedesk/RequesterHome";
+import GroupPanel, { PanelKind, SdGroup } from "@/components/servicedesk/GroupPanel";
+import RequestDetail from "@/components/servicedesk/RequestDetail";
+import { SdArea, NotificationBell, FilteredRequests } from "@/components/servicedesk/sd-ui";
+import { UsersAccessTab, ServicesTab, AuditTab } from "@/components/servicedesk/AdminExtras";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import PanelLayout from "@/components/layout/PanelLayout";
@@ -21,6 +24,9 @@ const db = supabase as any;
 
 const NAV = [
   { key: "queue", label: "Solicitações", icon: Inbox },
+  { key: "users", label: "Usuários e acessos", icon: UserCog },
+  { key: "services", label: "Serviços", icon: LayoutList },
+  { key: "audit", label: "Auditoria", icon: ScrollText },
   { key: "institution", label: "Instituição", icon: Building2 },
   { key: "members", label: "Membros", icon: Users },
   { key: "groups", label: "Grupos responsáveis", icon: UsersRound },
@@ -159,7 +165,6 @@ const AdminArea = ({ orgs, isSuper, userId, areas, onSignOut }: { orgs: any[]; i
         {nav === "faculty" && <FacultyTab orgId={org.id} />}
         {nav === "imports" && <ImportTab orgId={org.id} orgLabel={org.sigla || org.name} />}
         {nav === "settings" && <SettingsTab orgId={org.id} />}
-        {false && orgGroups && <GroupQueues orgId={org.id} groups={orgGroups || []} isAdmin />}
       </div>
     </PanelLayout>
   );
