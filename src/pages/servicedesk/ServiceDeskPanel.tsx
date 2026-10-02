@@ -233,7 +233,8 @@ const MembersTab = ({ orgId }: { orgId: string }) => {
       const ids = (data || []).map((m: any) => m.user_id);
       const { data: profs, error: profilesError } = ids.length ? await db.from("profiles").select("user_id, full_name, email").in("user_id", ids) : { data: [], error: null };
       if (profilesError) throw profilesError;
-      return (data || []).map((m: any) => ({ ...m, profile: (profs || []).find((p: any) => p.user_id === m.user_id) }));
+      const { data: signup } = await db.rpc("sd_members_signup_status", { _org_id: orgId });
+      return (data || []).map((m: any) => ({ ...m, profile: (profs || []).find((p: any) => p.user_id === m.user_id), has_signed_in: (signup || []).find((s: any) => s.user_id === m.user_id)?.has_signed_in ?? false }));
     },
   });
   const add = async () => {
@@ -346,6 +347,7 @@ const MemberCard = ({ member, onUpdate, onRemove }: any) => {
           <p className="font-medium text-sm">{member.profile?.full_name || "Nome não informado"}</p>
           <p className="text-xs text-muted-foreground">{member.profile?.email || "E-mail não disponível"}</p>
           {!editing && <p className="mt-1 text-xs">{ROLE_LABELS[member.role] || member.role} · {member.status}</p>}
+          <Badge className="mt-1" variant={member.has_signed_in ? "default" : "outline"}>{member.has_signed_in ? "Cadastro concluído" : "Aguardando cadastro"}</Badge>
         </div>
         <div className="flex w-full gap-2 sm:w-auto">
           <Button className="flex-1 sm:flex-none" size="sm" variant="outline" onClick={() => setEditing((value) => !value)}><Pencil className="mr-1 h-4 w-4" /> Editar</Button>
