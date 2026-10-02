@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.3";
+import { Resend } from "npm:resend@2.0.0";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -57,38 +58,55 @@ Deno.serve(async (req) => {
     if (tipo === "professor" ? st.status !== "ativo" : (st.status === "trancado" || !st.service_desk_access_active))
       return await fail("Seu acesso ao Service Desk está suspenso. Procure a secretaria do seu programa.", 403);
 
-    const pub = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, { auth: { persistSession: false } });
-    const { data: created, error: cErr } = await pub.auth.signUp({
-      email, password,
-      options: { emailRedirectTo: redirectTo, data: { source: "servicedesk_first_access", tipo } },
+    // Cria a conta sem usar o envio de e-mails do sistema de login (que tem limite por hora)
+    // e envia a confirmação pelo Resend.
+    const { data: link, error: cErr } = await admin.auth.admin.generateLink({
+      type: "signup", email, password,
+      options: { redirectTo, data: { source: "servicedesk_first_access", tipo } },
     });
-    const fakeExisting = created?.user && (created.user.identities ?? []).length === 0;
-    if (cErr || !created.user || fakeExisting) {
+    const createdUser = link?.user;
+    if (cErr || !createdUser) {
       const m = cErr?.message ?? "";
       console.error("sd-first-access signup", matricula, cErr?.status, (cErr as any)?.code, m);
       if (/weak|easy to guess|pwned|leaked/i.test(m))
         return json({ error: "Esta senha é muito comum e foi recusada por segurança. Crie uma senha diferente, misturando letras maiúsculas, minúsculas, números e símbolos." }, 422);
-      if (/rate limit|too many/i.test(m) || cErr?.status === 429)
-        return json({ error: "Limite de envio de e-mails de confirmação atingido. Aguarde alguns minutos e tente novamente." }, 429);
       if (/password/i.test(m))
         return json({ error: "A senha não atende aos requisitos de segurança. Use letras maiúsculas, minúsculas, números e símbolos." }, 422);
-      if (/sending|smtp|email/i.test(m) && !/already|registered|exists/i.test(m))
-        return json({ error: "Não foi possível enviar o e-mail de confirmação. Confira o e-mail informado ou tente mais tarde." }, 502);
-      const exists = fakeExisting || /already|registered|exists/i.test(m);
+      const exists = /already|registered|exists/i.test(m);
       return await fail(exists
         ? "Este e-mail já está cadastrado no ProjetoGO. Use outro e-mail ou entre com ele."
         : "Não foi possível criar o cadastro.", exists ? 409 : 400);
     }
 
     const { error: uErr } = await admin.from(table)
-      .update(tipo === "professor" ? { user_id: created.user.id } : { user_id: created.user.id, email })
+      .update(tipo === "professor" ? { user_id: createdUser.id } : { user_id: createdUser.id, email })
       .eq("id", st.id).is("user_id", null);
     if (uErr) {
-      await admin.auth.admin.deleteUser(created.user!.id);
+      await admin.auth.admin.deleteUser(createdUser.id);
       throw uErr;
     }
+
+    const actionLink = link.properties?.action_link ?? "";
+    const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+    const { error: sendErr } = await resend.emails.send({
+      from: "ProjetoGO <noreply@innovago.app>",
+      to: [email],
+      subject: "Confirme seu e-mail, Service Desk ProjetoGO",
+      html: `<div style="font-family:Arial,sans-serif;max-width:560px">
+        <p>Olá!</p>
+        <p>Recebemos o seu primeiro acesso ao Service Desk. Para ativar a sua conta, confirme o seu e-mail clicando no botão abaixo:</p>
+        <p><a href="${actionLink}" style="background:#1e3a5f;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;display:inline-block">Confirmar e-mail</a></p>
+        <p>Depois, entre sempre em <a href="https://projetogo.innovago.app/servicedesk/login">projetogo.innovago.app/servicedesk/login</a> com este e-mail e a senha criada.</p>
+        <p style="color:#666;font-size:12px">Se você não fez este cadastro, ignore este e-mail.</p></div>`,
+    });
+    if (sendErr) {
+      console.error("sd-first-access resend", sendErr);
+      await admin.from(table).update({ user_id: null }).eq("id", st.id).eq("user_id", createdUser.id);
+      await admin.auth.admin.deleteUser(createdUser.id);
+      return json({ error: "Não foi possível enviar o e-mail de confirmação. Confira o e-mail informado ou tente mais tarde." }, 502);
+    }
     await admin.from("sd_first_access_attempts").insert({ matricula, ip, success: true });
-    return json({ ok: true, needsConfirmation: !created.session });
+    return json({ ok: true, needsConfirmation: true });
   } catch (e) {
     console.error("sd-first-access", e);
     return json({ error: "Erro interno. Tente novamente." }, 500);
