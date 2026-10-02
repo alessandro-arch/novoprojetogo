@@ -3332,6 +3332,14 @@ export type Database = {
         Args: { _action: string; _id: string; _note: string }
         Returns: undefined
       }
+      sd_check_vpn_eligibility: {
+        Args: { _enrollment: string }
+        Returns: {
+          eligible: boolean
+          found: boolean
+          role: string
+        }[]
+      }
       sd_create_request: {
         Args: { _form?: Json; _service_id: string; _terms_hash: string }
         Returns: string
