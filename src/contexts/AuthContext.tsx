@@ -17,7 +17,7 @@ interface AuthContextType {
   globalRole: AppRole | null;
   membership: UserMembership | null;
   fomentoRole: string | null;
-  signOut: () => Promise<void>;
+  signOut: (redirectTo?: string) => Promise<void>;
   refreshRoles: () => Promise<void>;
 }
 
@@ -140,7 +140,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, [fetchRoles]);
 
-  const signOut = useCallback(async () => {
+  const signOut = useCallback(async (redirectTo = "/login") => {
     // 1. Sign out from Supabase
     await supabase.auth.signOut();
 
@@ -157,7 +157,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     // 4. Replace history to prevent back-button access
-    window.location.replace("/login");
+    window.location.replace(redirectTo);
   }, [queryClient]);
 
   return (
