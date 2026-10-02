@@ -51,10 +51,10 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
 
   const steps: string[] = r.sd_services?.steps || [];
   const last = r.step_index >= steps.length - 1;
+  const formFields: any[] = r.sd_services?.form_fields || [];
   const canAct = isOpen(r.status) && r.status !== "correcao" && r.requester_user_id !== userId && (isAdminOf(r.organization_id) || (r.current_group_id && myGroupIds.includes(r.current_group_id)));
   const actions = !canAct ? [] : last ? [...(r.status !== "em_andamento" ? ["iniciar"] : []), "concluir", "recusar"] : ["aprovar", ...(formFields.length ? ["corrigir"] : []), "recusar"];
 
-  const formFields: any[] = r.sd_services?.form_fields || [];
   const labelOf = (k: string) => formFields.find((f) => f.key === k)?.label || k;
   const isOwner = r.requester_user_id === userId;
   const fixing = isOwner && r.status === "correcao";
