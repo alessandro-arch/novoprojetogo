@@ -43,6 +43,11 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
     queryFn: async () => (await db.from("sd_students").select("level, entry_date, current_deadline, advisor:sd_faculty(full_name), sd_programs(name)").eq("organization_id", r.organization_id).eq("enrollment", r.requester_enrollment).maybeSingle()).data,
   });
 
+  const { data: vpnInstructions } = useQuery({
+    queryKey: ["sd-vpn-instructions", r?.organization_id], enabled: !!r?.organization_id && !!r?.vpn_status,
+    queryFn: async () => (await db.from("sd_settings").select("value").eq("organization_id", r.organization_id).eq("key", "vpn_instructions").maybeSingle()).data?.value as string | undefined,
+  });
+
   const { data: versions = [] } = useQuery({
     queryKey: ["sd-req-versions", id],
     queryFn: async () => (await db.from("sd_request_versions").select("*").eq("request_id", id).order("cycle", { ascending: false }).order("created_at")).data || [],
