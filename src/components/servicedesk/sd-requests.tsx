@@ -7,11 +7,11 @@ const db = supabase as any;
 
 export const STATUS_LABEL: Record<string, string> = {
   em_analise: "Aguardando análise", aprovado: "Autorizado — aguardando execução", em_andamento: "Em execução",
-  concluido: "Concluído", recusado: "Indeferido", correcao: "Correção solicitada",
+  concluido: "Concluído", recusado: "Indeferido", correcao: "Aguardando solicitante",
 };
 export const ACTION_LABEL: Record<string, string> = {
   criada: "Solicitação enviada", aprovar: "Autorizada", iniciar: "Execução iniciada", concluir: "Concluída",
-  recusar: "Indeferida", corrigir: "Correção solicitada",
+  recusar: "Indeferida", corrigir: "Correção solicitada", reenviar: "Solicitante reenviou a correção",
 };
 export const OPEN_STATUSES = ["em_analise", "aprovado", "em_andamento", "correcao"];
 export const isOpen = (s: string) => OPEN_STATUSES.includes(s);
