@@ -41,8 +41,39 @@ Deno.serve(async (req) => {
       const { data: file, error: dlErr } = await admin.storage.from("servicedesk").download(r.vpn_conf_path);
       if (dlErr || !file) throw new Error("arquivo .conf indisponível");
       const b64 = btoa(String.fromCharCode(...new Uint8Array(await file.arrayBuffer())));
+      const DEFAULT_VPN_INSTRUCTIONS = `O arquivo anexado é uma credencial pessoal. Por segurança:
+• Não encaminhe nem compartilhe o arquivo com outras pessoas;
+• Não publique o arquivo em grupos ou pastas compartilhadas;
+• Utilize-o em apenas um dispositivo;
+• Após a importação, exclua o arquivo da pasta de downloads e do e-mail, se possível;
+• Em caso de perda, troca ou formatação do dispositivo, solicite uma nova configuração à equipe de TI.
+
+COMPUTADOR (WINDOWS OU MACOS)
+1. Instale o aplicativo oficial WireGuard: https://www.wireguard.com/install/
+2. Abra o WireGuard.
+3. Selecione "Adicionar túnel" ou "Add Tunnel".
+4. Escolha "Importar túnel de arquivo" ou "Import tunnel from file".
+5. Selecione o arquivo .conf anexado a este e-mail.
+6. Após a importação, selecione o túnel "VPNCAPES" e clique em "Ativar".
+
+CELULAR (ANDROID OU IPHONE)
+1. Instale o aplicativo oficial WireGuard pela Play Store ou App Store.
+2. Salve o arquivo .conf anexado no dispositivo.
+3. Abra o WireGuard e toque no botão +.
+4. Selecione "Importar de arquivo ou arquivo compactado".
+5. Localize e selecione o arquivo .conf.
+6. Ative o túnel "VPNCAPES".
+
+COMO UTILIZAR
+• Conecte o dispositivo à sua internet residencial ou rede móvel.
+• Abra o WireGuard e ative a VPNCAPES.
+• Acesse o Portal de Periódicos CAPES normalmente.
+• Ao concluir a consulta, volte ao WireGuard e desative a VPN.
+• Enquanto a VPN estiver ativa, a navegação do dispositivo utilizará a conexão e o IP institucional. Por isso, mantenha-a ativada somente durante o uso acadêmico.
+
+Caso a VPN não conecte ou o Portal CAPES não reconheça o acesso institucional, entre em contato com a equipe de TI informando o dispositivo utilizado e, se possível, enviando uma captura do erro. Não envie o conteúdo do arquivo .conf nem qualquer chave privada.`;
       const { data: ins } = await admin.from("sd_settings").select("value").eq("organization_id", r.organization_id).eq("key", "vpn_instructions").maybeSingle();
-      const instr = esc(typeof ins?.value === "string" ? ins.value : "").replace(/\n/g, "<br>");
+      const instr = esc(typeof ins?.value === "string" && ins.value ? ins.value : DEFAULT_VPN_INSTRUCTIONS).replace(/\n/g, "<br>");
       const fname = r.vpn_conf_path.split("/").pop();
       if (!to) throw new Error("solicitante sem e-mail");
       const { error: sendErr } = await resend.emails.send({
