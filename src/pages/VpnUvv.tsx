@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import {
+  AlertCircle,
   ArrowRight,
   BookOpen,
   CheckCircle2,
@@ -89,7 +91,7 @@ const faqs = [
   },
   {
     question: "Quem pode solicitar?",
-    answer: "Alunos regularmente matriculados nos cursos de Mestrado e Doutorado e professores com vínculo institucional ativo na Universidade Vila Velha.",
+    answer: "Alunos regularmente matriculados nos cursos de Mestrado e Doutorado e orientadores com vínculo institucional ativo na Universidade Vila Velha.",
   },
   {
     question: "Para que posso utilizar esse acesso?",
@@ -144,7 +146,7 @@ const VpnUvv = () => {
     <div className="min-h-screen bg-background text-foreground">
       <Seo
         title="Acesso VPN ao Portal CAPES | Universidade Vila Velha"
-        description="Solicite o acesso VPN institucional da Universidade Vila Velha para utilizar remotamente o Portal de Periódicos CAPES. Disponível para alunos de Mestrado e Doutorado e professores elegíveis."
+        description="Solicite o acesso VPN institucional da Universidade Vila Velha para utilizar remotamente o Portal de Periódicos CAPES. Disponível para alunos de Mestrado e Doutorado e orientadores elegíveis."
         path="/vpn-uvv"
       />
 
@@ -225,7 +227,7 @@ const VpnUvv = () => {
                 Acesse o Portal de Periódicos CAPES de onde estiver
               </h1>
               <p className="mt-7 max-w-2xl text-lg leading-8 text-foreground/80 md:text-xl">
-                Alunos de Mestrado e Doutorado e professores da Universidade Vila Velha podem solicitar acesso remoto por meio da VPN institucional.
+                Alunos de Mestrado e Doutorado e orientadores da Universidade Vila Velha podem solicitar acesso remoto por meio da VPN institucional.
               </p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                 <Button asChild size="lg" className="min-h-12 px-6 text-sm font-bold uppercase">
@@ -332,8 +334,8 @@ const VpnUvv = () => {
               </article>
               <article className="group rounded-lg border border-border bg-card p-7 shadow-card transition-colors hover:border-primary/40 md:p-9">
                 <CircleUserRound className="h-9 w-9 text-primary" />
-                <h3 className="mt-8 text-2xl font-bold">Professores</h3>
-                <p className="mt-3 max-w-md leading-7 text-muted-foreground">Professores com vínculo institucional ativo na Universidade Vila Velha.</p>
+                <h3 className="mt-8 text-2xl font-bold">Orientadores</h3>
+                <p className="mt-3 max-w-md leading-7 text-muted-foreground">Orientadores com vínculo institucional ativo na Universidade Vila Velha.</p>
               </article>
             </div>
           </div>
