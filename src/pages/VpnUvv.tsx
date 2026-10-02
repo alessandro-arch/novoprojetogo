@@ -5,8 +5,6 @@ import {
   BookOpen,
   CheckCircle2,
   ChevronRight,
-  CircleUserRound,
-  Download,
   GraduationCap,
   Headphones,
   Laptop,
