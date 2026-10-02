@@ -30,6 +30,7 @@ import FomentoProtectedRoute from "./components/FomentoProtectedRoute";
 import ServiceDeskPanel from "./pages/servicedesk/ServiceDeskPanel";
 import ServiceDeskLogin from "./pages/servicedesk/ServiceDeskLogin";
 import ServiceDeskFirstAccess from "./pages/servicedesk/ServiceDeskFirstAccess";
+import VpnUvv from "./pages/VpnUvv";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +63,7 @@ const App = () => (
               <Route path="/fomento/*" element={<FomentoProtectedRoute><FomentoPanel /></FomentoProtectedRoute>} />
               <Route path="/servicedesk/login" element={<ServiceDeskLogin />} />
               <Route path="/servicedesk/primeiro-acesso" element={<ServiceDeskFirstAccess />} />
+              <Route path="/vpn-uvv" element={<VpnUvv />} />
               <Route path="/servicedesk/*" element={<ProtectedRoute loginPath="/servicedesk/login"><ServiceDeskPanel /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>

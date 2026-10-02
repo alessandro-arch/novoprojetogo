@@ -6,3 +6,4 @@
 - The `institutions` table is the eMEC catalogue for profile affiliation, not a tenant — do not reuse it for Service Desk.
 - Student account status is module-scoped through `sd_students.service_desk_access_active`; never disable the shared ProjetoGO account when blocking Service Desk access.
 - Service Desk areas: /servicedesk routes each user to Portal (sd_students/sd_faculty), a panel per responsible group (/servicedesk/<group code>, approver vs executor derived from service steps, never from group names) or /servicedesk/admin; request detail at /servicedesk/solicitacao/:id — one shared request/notification model, no parallel user structures.
+- Public institution guides are orientation-only entry pages that reuse existing Service Desk login and first-access routes, never parallel authentication or workflows.
