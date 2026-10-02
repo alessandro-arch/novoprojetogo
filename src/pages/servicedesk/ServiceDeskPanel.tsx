@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2, Users, UsersRound, Settings, Loader2, Plus, Trash2, Pencil, BookOpen, GraduationCap, Briefcase, FileSpreadsheet, Inbox, UserCog, LayoutList, ScrollText } from "lucide-react";
 import { ProgramsTab, StudentsTab, FacultyTab, ImportTab } from "@/components/servicedesk/SdBases";
 import RequesterHome, { useRequester } from "@/components/servicedesk/RequesterHome";
-import GroupPanel, { PanelKind, SdGroup } from "@/components/servicedesk/GroupPanel";
+import ServiceCenter, { PanelKind, SdGroup } from "@/components/servicedesk/ServiceCenter";
 import RequestDetail from "@/components/servicedesk/RequestDetail";
 import { SdArea, NotificationBell, FilteredRequests } from "@/components/servicedesk/sd-ui";
 import { UsersAccessTab, ServicesTab, AuditTab } from "@/components/servicedesk/AdminExtras";
@@ -96,7 +96,7 @@ const ServiceDeskPanel = () => {
 
   const areas: SdArea[] = [
     ...(requester ? [{ path: "/servicedesk/portal", label: "Meu Service Desk" }] : []),
-    ...panelGroups.map((g) => ({ path: `/servicedesk/${g.code.toLowerCase()}`, label: `Painel ${g.code}` })),
+    ...(panelGroups.length ? [{ path: "/servicedesk/atendimento", label: "Central de Atendimento" }] : []),
     ...(orgs?.length ? [{ path: "/servicedesk/admin", label: "Administração" }] : []),
   ];
   const home = areas.find((a) => a.path !== "/servicedesk/admin")?.path || areas[0]?.path;
@@ -109,16 +109,17 @@ const ServiceDeskPanel = () => {
       <Route path="portal/*" element={requester ? <RequesterHome userId={user.id} onSignOut={() => signOut()} noAccessMessage="" areas={areas} /> : <Navigate to={home} replace />} />
       <Route path="admin/*" element={orgs?.length ? <AdminArea orgs={orgs} isSuper={isSuper} userId={user.id} areas={areas} onSignOut={signOut} /> : <Navigate to={home} replace />} />
       <Route path="solicitacao/:id" element={<div className="min-h-screen bg-background"><RequestDetail userId={user.id} isAdminOf={isAdminOf} /></div>} />
-      <Route path=":groupCode/*" element={<GroupRoute groups={panelGroups} kindOf={kindOf} userId={user.id} areas={areas} onSignOut={signOut} home={home} canDiv={(g) => isAdminOf(g.organization_id) || kindOf(g) === "approver"} />} />
+      <Route path="atendimento/*" element={panelGroups.length ? <ServiceCenter groups={panelGroups} kindOf={kindOf} userId={user.id} areas={areas} onSignOut={signOut} canResolveDivergences={(g) => isAdminOf(g.organization_id) || kindOf(g) === "approver"} /> : <Navigate to={home} replace />} />
+      <Route path=":groupCode/*" element={<LegacyGroupRedirect groups={panelGroups} home={home} />} />
     </Routes>
   );
 };
 
-const GroupRoute = ({ groups, kindOf, userId, areas, onSignOut, home, canDiv }: { groups: SdGroup[]; kindOf: (g: SdGroup) => PanelKind; userId: string; areas: SdArea[]; onSignOut: () => void; home: string; canDiv: (g: SdGroup) => boolean }) => {
+/** Compatibilidade: /servicedesk/<código do grupo> antigo leva à Central de Atendimento no contexto do grupo. */
+const LegacyGroupRedirect = ({ groups, home }: { groups: SdGroup[]; home: string }) => {
   const { groupCode } = useParams();
   const g = groups.find((x) => x.code.toLowerCase() === (groupCode || "").toLowerCase());
-  if (!g) return <Navigate to={home} replace />;
-  return <GroupPanel key={g.id} group={g} kind={kindOf(g)} userId={userId} areas={areas} onSignOut={onSignOut} canResolveDivergences={canDiv(g)} />;
+  return <Navigate to={g ? `/servicedesk/atendimento?grupo=${g.code.toLowerCase()}` : home} replace />;
 };
 
 const AdminArea = ({ orgs, isSuper, userId, areas, onSignOut }: { orgs: any[]; isSuper: boolean; userId: string; areas: SdArea[]; onSignOut: () => void }) => {

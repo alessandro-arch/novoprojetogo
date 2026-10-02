@@ -10,8 +10,9 @@ export const STATUS_LABEL: Record<string, string> = {
   concluido: "Concluído", recusado: "Indeferido", correcao: "Aguardando solicitante",
 };
 export const ACTION_LABEL: Record<string, string> = {
-  criada: "Solicitação enviada", aprovar: "Autorizada", iniciar: "Execução iniciada", concluir: "Concluída",
+  criada: "Solicitação enviada", aprovar: "Autorizada — encaminhada para execução", iniciar: "Execução iniciada", concluir: "Concluída",
   recusar: "Indeferida", corrigir: "Correção solicitada", reenviar: "Solicitante reenviou a correção",
+  impedimento: "Impedimento técnico registrado", liberar_vpn: "Acesso VPN liberado", vpn_enviado: "Arquivo .conf enviado por e-mail",
 };
 export const OPEN_STATUSES = ["em_analise", "aprovado", "em_andamento", "correcao"];
 export const isOpen = (s: string) => OPEN_STATUSES.includes(s);
@@ -46,7 +47,7 @@ export const RequestTimeline = ({ requestId, status }: { requestId: string; stat
     <ol className="space-y-3">
       {data.map((e: any, i: number) => {
         const prev = data[i - 1];
-        const bad = e.action === "recusar";
+        const bad = e.action === "recusar" || e.action === "impedimento";
         return (
           <li key={e.id} className="flex gap-3">
             {bad ? <XCircle className="w-4 h-4 mt-0.5 text-destructive shrink-0" /> : <CheckCircle2 className="w-4 h-4 mt-0.5 text-primary shrink-0" />}
