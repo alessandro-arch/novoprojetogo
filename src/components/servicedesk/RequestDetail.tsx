@@ -53,7 +53,13 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
   const last = r.step_index >= steps.length - 1;
   const formFields: any[] = r.sd_services?.form_fields || [];
   const canAct = isOpen(r.status) && r.status !== "correcao" && r.requester_user_id !== userId && (isAdminOf(r.organization_id) || (r.current_group_id && myGroupIds.includes(r.current_group_id)));
-  const actions = !canAct ? [] : last ? [...(r.status !== "em_andamento" ? ["iniciar"] : []), "concluir", "recusar"] : ["aprovar", ...(formFields.length ? ["corrigir"] : []), "recusar"];
+  // Tipo da etapa vem da posição no workflow do serviço: 1ª = análise; seguintes = execução.
+  const execStage = r.step_index > 0;
+  const isVpn = /vpn/i.test(r.sd_services?.code || "");
+  const showVpnForm = canAct && execStage && last && isVpn;
+  const actions = !canAct ? []
+    : !execStage ? (last ? ["concluir", "recusar"] : ["aprovar", ...(formFields.length ? ["corrigir"] : []), "recusar"])
+    : [...(last && !isVpn ? ["concluir"] : []), ...(!last ? ["aprovar"] : []), "impedimento"];
 
   const labelOf = (k: string) => formFields.find((f) => f.key === k)?.label || k;
   const isOwner = r.requester_user_id === userId;
@@ -84,6 +90,37 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
     notify({ request_id: r.id, event: act });
     setAct(null); setNote(""); setCorrFields([]);
     ["sd-req", "sd-queue", "sd-req-events", "sd-notif", "sd-req-versions"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
+  };
+
+  const sendConf = async (rid: string) => {
+    const { error } = await supabase.functions.invoke("sd-notify", { body: { request_id: rid, event: "liberar_vpn" } });
+    if (error) toast.error("Acesso liberado, mas o e-mail não foi enviado. Use “Reenviar e-mail”.");
+    else toast.success("Arquivo .conf enviado ao e-mail do solicitante");
+    ["sd-req", "sd-req-events"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
+  };
+
+  const downloadConf = async () => {
+    const { data, error } = await supabase.storage.from("servicedesk").createSignedUrl(r.vpn_conf_path, 120, { download: true });
+    if (error || !data) return toast.error("Não foi possível baixar o arquivo");
+    window.location.assign(data.signedUrl);
+  };
+
+  const release = async () => {
+    if (!conf) return;
+    if (!/\.conf$/i.test(conf.name) || conf.size > 64 * 1024) return toast.error("Envie um arquivo .conf de até 64 KB");
+    const txt = await conf.text();
+    if (!/\[Interface\]/i.test(txt) || !/\[Peer\]/i.test(txt)) return toast.error("Arquivo .conf inválido: faltam as seções [Interface] e [Peer]");
+    setBusy(true);
+    const safe = `${(r.requester_enrollment || "acesso").replace(/[^A-Za-z0-9_-]/g, "")}-${r.protocol?.replace(/[^A-Za-z0-9_-]/g, "") || "vpn"}.conf`;
+    const path = `${r.organization_id}/vpn/${r.id}/${safe}`;
+    const up = await supabase.storage.from("servicedesk").upload(path, conf, { upsert: true, contentType: "text/plain" });
+    if (up.error) { setBusy(false); return toast.error("Falha ao armazenar o arquivo: " + up.error.message); }
+    const { error } = await db.rpc("sd_release_vpn", { _id: r.id, _path: path, _ip: vpn.ip, _peer_key: vpn.key, _note: vpn.note });
+    if (error) { setBusy(false); return toast.error(error.message); }
+    toast.success("Acesso VPN liberado");
+    await sendConf(r.id);
+    setBusy(false); setConf(null);
+    ["sd-req", "sd-queue", "sd-req-events", "sd-notif"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
   };
 
   const info: [string, string][] = [
@@ -159,18 +196,39 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
         <Card className="rounded-xl"><CardHeader><CardTitle className="text-base">Linha do tempo</CardTitle></CardHeader><CardContent><RequestTimeline requestId={r.id} status={r.status} /></CardContent></Card>
       </div>
 
-      {canAct && last && (
-        <Card className="rounded-xl border-dashed"><CardHeader><CardTitle className="text-base">Dados da configuração</CardTitle></CardHeader><CardContent className="grid sm:grid-cols-3 gap-3">
-          <div><Label>IP VPN</Label><Input disabled placeholder="Na próxima etapa" /></div>
-          <div><Label>PublicKey do Peer</Label><Input disabled placeholder="Na próxima etapa" /></div>
-          <div><Label>Arquivo .conf</Label><Input disabled type="file" /></div>
-          <p className="sm:col-span-3 text-xs text-muted-foreground">Estes campos serão ativados com o fluxo da VPN.</p>
+      {r.vpn_status && (
+        <Card className="rounded-xl"><CardHeader><CardTitle className="text-base">Acesso VPN</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">
+          <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div><dt className="text-xs text-muted-foreground">Liberado em</dt><dd>{r.vpn_released_at ? fmtDT(r.vpn_released_at) : "—"}</dd></div>
+            <div><dt className="text-xs text-muted-foreground">Validade</dt><dd>{fmtDate(r.vpn_valid_until)}</dd></div>
+            {!isOwner && <><div><dt className="text-xs text-muted-foreground">Técnico</dt><dd>{r.vpn_released_by || "—"}</dd></div><div><dt className="text-xs text-muted-foreground">IP VPN</dt><dd>{r.vpn_ip || "—"}</dd></div></>}
+          </dl>
+          {!isOwner && r.vpn_tech_note && <p className="text-xs"><span className="text-muted-foreground">Observação técnica:</span> {r.vpn_tech_note}</p>}
+          <p className="text-xs text-muted-foreground">{r.vpn_email_sent_at ? `Arquivo enviado por e-mail em ${fmtDT(r.vpn_email_sent_at)}` : "Envio por e-mail ainda não registrado"}</p>
+          <div className="flex flex-wrap gap-2">
+            {r.vpn_conf_path && <Button variant="outline" onClick={downloadConf}><Download className="w-4 h-4 mr-2" />Baixar arquivo .conf</Button>}
+            {!isOwner && !r.vpn_email_sent_at && <Button variant="secondary" onClick={() => sendConf(r.id)}><Send className="w-4 h-4 mr-2" />Reenviar e-mail</Button>}
+          </div>
+        </CardContent></Card>
+      )}
+
+      {showVpnForm && (
+        <Card className="rounded-xl"><CardHeader><CardTitle className="text-base">Configuração VPN</CardTitle></CardHeader><CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">A configuração da VPN e a geração do arquivo .conf são realizadas externamente no WireGuard. Após concluir a configuração, carregue abaixo o arquivo individual do solicitante.</p>
+          <div><Label>Arquivo .conf *</Label><Input type="file" accept=".conf" onChange={(e) => setConf(e.target.files?.[0] || null)} /></div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div><Label>IP VPN (opcional)</Label><Input maxLength={64} value={vpn.ip} onChange={(e) => setVpn({ ...vpn, ip: e.target.value })} placeholder="10.0.0.12" /></div>
+            <div><Label>PublicKey do Peer (opcional)</Label><Input maxLength={200} value={vpn.key} onChange={(e) => setVpn({ ...vpn, key: e.target.value })} /></div>
+          </div>
+          <div><Label>Observação técnica (opcional)</Label><Textarea rows={2} maxLength={2000} value={vpn.note} onChange={(e) => setVpn({ ...vpn, note: e.target.value })} /></div>
+          <label className="flex items-start gap-2 text-sm"><Checkbox className="mt-0.5" checked={vpn.ok} onCheckedChange={(v) => setVpn({ ...vpn, ok: !!v })} />Confirmo que a configuração foi realizada no WireGuard e que o arquivo carregado corresponde a este solicitante.</label>
+          <Button disabled={busy || !conf || !vpn.ok} onClick={release}>{busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}LIBERAR ACESSO E ENVIAR</Button>
         </CardContent></Card>
       )}
 
       {!!actions.length && (
         <div className="flex flex-wrap gap-2">
-          {actions.map((a) => <Button key={a} variant={a === "recusar" ? "destructive" : a === "corrigir" || a === "iniciar" ? "secondary" : "default"} onClick={() => setAct(a)}>{ACT_TITLE[a]}</Button>)}
+          {actions.map((a) => <Button key={a} variant={a === "recusar" || a === "impedimento" ? (a === "recusar" ? "destructive" : "outline") : a === "corrigir" ? "secondary" : "default"} onClick={() => setAct(a)}>{ACT_TITLE[a]}</Button>)}
         </div>
       )}
 
@@ -182,9 +240,9 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
               {formFields.map((f) => <label key={f.key} className="flex items-center gap-2 text-sm"><Checkbox checked={corrFields.includes(f.key)} onCheckedChange={(v) => setCorrFields(v ? [...corrFields, f.key] : corrFields.filter((x) => x !== f.key))} />{f.label}</label>)}
             </div>
           )}
-          <Label>{act === "recusar" ? "Motivo (obrigatório)" : act === "corrigir" ? "Motivo / orientação da correção (obrigatório)" : "Observação (opcional)"}</Label>
+          <Label>{act === "recusar" ? "Motivo (obrigatório)" : act === "corrigir" ? "Motivo / orientação da correção (obrigatório)" : act === "impedimento" ? "Descreva o impedimento técnico (obrigatório)" : "Observação (opcional)"}</Label>
           <Textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} />
-          <DialogFooter><Button variant="outline" onClick={() => setAct(null)}>Cancelar</Button><Button disabled={busy || ((act === "recusar" || act === "corrigir") && note.trim().length < 3) || (act === "corrigir" && !corrFields.length)} onClick={run}>Confirmar</Button></DialogFooter>
+          <DialogFooter><Button variant="outline" onClick={() => setAct(null)}>Cancelar</Button><Button disabled={busy || ((act === "recusar" || act === "corrigir" || act === "impedimento") && note.trim().length < 3) || (act === "corrigir" && !corrFields.length)} onClick={run}>Confirmar</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
