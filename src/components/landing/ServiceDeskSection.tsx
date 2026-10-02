@@ -1,0 +1,103 @@
+import { Headset, Workflow, ShieldCheck, Bell, CheckCircle2, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+
+const serviceDeskFeatures = [
+  "Catálogo de serviços por instituição",
+  "Solicitações com protocolo único e linha do tempo",
+  "Workflow com etapas e grupos responsáveis",
+  "Correção e reenvio sem perder o histórico",
+  "Liberação de acesso VPN ao Portal de Periódicos CAPES",
+  "Notificações por e-mail em cada etapa",
+];
+
+const highlights = [
+  {
+    icon: Workflow,
+    title: "Workflow por etapas",
+    description:
+      "Cada serviço tem suas etapas e grupos responsáveis, como secretaria acadêmica e TI, com transferência automática de responsabilidade.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Dados institucionais oficiais",
+    description:
+      "O solicitante vê seus dados oficiais somente leitura e pode informar divergências para a equipe corrigir.",
+  },
+  {
+    icon: Bell,
+    title: "Acompanhamento transparente",
+    description:
+      "Alunos e professores acompanham o andamento, recebem avisos por e-mail e baixam arquivos liberados na própria solicitação.",
+  },
+];
+
+const ServiceDeskSection = () => {
+  const navigate = useNavigate();
+
+  return (
+    <section className="py-20 bg-muted/30">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-14">
+          <Badge className="mb-4 text-[11px]">Novo módulo</Badge>
+          <h2 className="text-3xl md:text-4xl font-bold font-heading text-foreground mb-4">
+            ProjetoGO Service Desk
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Central de atendimento digital para serviços acadêmicos e
+            administrativos da sua instituição, do pedido à conclusão.
+          </p>
+        </div>
+
+        {/* Highlights */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-14">
+          {highlights.map((d) => (
+            <div key={d.title} className="flex flex-col items-center text-center">
+              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                <d.icon className="w-7 h-7 text-primary" />
+              </div>
+              <h3 className="text-lg font-bold font-heading text-foreground mb-2">
+                {d.title}
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {d.description}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Feature list + CTA */}
+        <div className="max-w-2xl mx-auto">
+          <div className="p-8 rounded-xl border border-border/50 bg-card">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-11 h-11 rounded-full bg-muted flex items-center justify-center">
+                <Headset className="w-5 h-5 text-primary" />
+              </div>
+              <h3 className="text-lg font-bold font-heading text-foreground">
+                Funcionalidades do módulo
+              </h3>
+            </div>
+            <ul className="space-y-3 mb-8">
+              {serviceDeskFeatures.map((f) => (
+                <li key={f} className="flex items-start gap-3 text-sm text-foreground">
+                  <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+            <Button
+              variant="dark"
+              className="w-full gap-2"
+              onClick={() => navigate("/servicedesk/login")}
+            >
+              Acessar Service Desk <ArrowRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default ServiceDeskSection;
