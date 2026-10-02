@@ -590,7 +590,7 @@ const OrgForm = ({
                       <div key={log.id} className="text-xs text-muted-foreground">
                         📧 Enviado em{" "}
                         {format(new Date(log.enviado_em), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                        {" — "}{log.email}
+                        {", "}{log.email}
                       </div>
                     ))}
                   </div>

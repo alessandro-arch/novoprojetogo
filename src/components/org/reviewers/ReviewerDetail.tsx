@@ -136,9 +136,9 @@ const ReviewerDetail = ({ reviewerId, orgId, onBack }: Props) => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div><p className="text-xs text-muted-foreground">Instituição</p><p className="text-sm font-medium">{formatInstitutionDisplay(reviewer.institution, null)}</p></div>
-              <div><p className="text-xs text-muted-foreground">CPF</p><p className="text-sm font-medium">{reviewer.cpf_last4 ? `***.***.***${reviewer.cpf_last4.slice(0, 2)}-${reviewer.cpf_last4.slice(2)}` : "—"}</p></div>
-              <div><p className="text-xs text-muted-foreground">ORCID</p><p className="text-sm font-medium">{reviewer.orcid || "—"}</p></div>
-              <div><p className="text-xs text-muted-foreground">Lattes</p>{reviewer.lattes_url ? <a href={reviewer.lattes_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary flex items-center gap-1 hover:underline">Ver Lattes <ExternalLink className="w-3 h-3" /></a> : <p className="text-sm text-muted-foreground">—</p>}</div>
+              <div><p className="text-xs text-muted-foreground">CPF</p><p className="text-sm font-medium">{reviewer.cpf_last4 ? `***.***.***${reviewer.cpf_last4.slice(0, 2)}-${reviewer.cpf_last4.slice(2)}` : "-"}</p></div>
+              <div><p className="text-xs text-muted-foreground">ORCID</p><p className="text-sm font-medium">{reviewer.orcid || "-"}</p></div>
+              <div><p className="text-xs text-muted-foreground">Lattes</p>{reviewer.lattes_url ? <a href={reviewer.lattes_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary flex items-center gap-1 hover:underline">Ver Lattes <ExternalLink className="w-3 h-3" /></a> : <p className="text-sm text-muted-foreground">-</p>}</div>
               <div><p className="text-xs text-muted-foreground">Cadastrado em</p><p className="text-sm font-medium">{format(new Date(reviewer.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p></div>
             </div>
             {reviewer.bio && (<><Separator /><div><p className="text-xs text-muted-foreground mb-1">Mini bio</p><p className="text-sm">{reviewer.bio}</p></div></>)}

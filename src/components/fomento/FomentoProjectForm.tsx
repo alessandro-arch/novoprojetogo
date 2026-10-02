@@ -92,10 +92,10 @@ const LinkedBolsistas = ({ projectId, navigate }: { projectId: string; navigate:
               {items.map((b) => (
                 <TableRow key={b.id} className="cursor-pointer hover:bg-accent/50" onClick={() => navigate(`/fomento/bolsistas/${b.id}/editar`)}>
                   <TableCell className="font-medium">{b.nome_bolsista}</TableCell>
-                  <TableCell><Badge variant="outline">{MODALIDADE_LABELS[b.modalidade || ""] || b.modalidade || "—"}</Badge></TableCell>
-                  <TableCell>{b.orientador || "—"}</TableCell>
-                  <TableCell><Badge variant={b.status === "ativo" ? "default" : "secondary"}>{BOLSISTA_STATUS_LABELS[b.status || ""] || "—"}</Badge></TableCell>
-                  <TableCell className="text-right font-mono">{b.valor_mensal != null ? formatBRL(Number(b.valor_mensal)) : "—"}</TableCell>
+                  <TableCell><Badge variant="outline">{MODALIDADE_LABELS[b.modalidade || ""] || b.modalidade || "-"}</Badge></TableCell>
+                  <TableCell>{b.orientador || "-"}</TableCell>
+                  <TableCell><Badge variant={b.status === "ativo" ? "default" : "secondary"}>{BOLSISTA_STATUS_LABELS[b.status || ""] || "-"}</Badge></TableCell>
+                  <TableCell className="text-right font-mono">{b.valor_mensal != null ? formatBRL(Number(b.valor_mensal)) : "-"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -442,10 +442,10 @@ const FomentoProjectForm = ({ projectId, onBack }: Props) => {
       </div>
 
       {extractionStatus === "success" && (
-        <Badge className="bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))]">✅ Extraído via IA — revise os campos</Badge>
+        <Badge className="bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))]">✅ Extraído via IA, revise os campos</Badge>
       )}
       {extractionStatus === "error" && (
-        <Badge variant="destructive">⚠️ Erro na extração — preencha manualmente</Badge>
+        <Badge variant="destructive">⚠️ Erro na extração, preencha manualmente</Badge>
       )}
 
       {/* [A] AI Extraction — available on new and edit */}

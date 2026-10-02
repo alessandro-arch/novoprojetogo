@@ -27,7 +27,7 @@ export const UsersAccessTab = ({ orgId }: { orgId: string }) => {
       const rows: any[] = staffIds.map((id) => {
         const mem = (m.data || []).find((x: any) => x.user_id === id);
         const p: any = pm.get(id) || {};
-        return { id, name: p.full_name || p.email || "—", sub: p.email, profile: mem ? ROLE[mem.role] || mem.role : "Integrante de grupo",
+        return { id, name: p.full_name || p.email || "-", sub: p.email, profile: mem ? ROLE[mem.role] || mem.role : "Integrante de grupo",
           groups: (gm.data || []).filter((x: any) => x.user_id === id).map((x: any) => x.sd_groups?.code).filter(Boolean), extra: "", active: !mem || mem.status === "ativo" };
       });
       (st.data || []).forEach((s: any) => rows.push({ id: s.user_id, name: s.full_name, sub: s.enrollment, profile: "Aluno · Solicitante", groups: [], extra: s.status, active: s.service_desk_access_active && s.status !== "trancado" }));
@@ -49,8 +49,8 @@ export const UsersAccessTab = ({ orgId }: { orgId: string }) => {
           <tr key={r.id + i} className="border-t">
             <td className="p-2">{r.name}<div className="text-xs text-muted-foreground">{r.sub}</div></td>
             <td className="p-2">{r.profile}</td>
-            <td className="p-2">{r.groups.join(", ") || "—"}</td>
-            <td className="p-2 capitalize">{r.extra || "—"}</td>
+            <td className="p-2">{r.groups.join(", ") || "-"}</td>
+            <td className="p-2 capitalize">{r.extra || "-"}</td>
             <td className="p-2"><Badge variant={r.active ? "default" : "outline"}>{r.active ? "Ativa" : "Suspensa"}</Badge></td>
           </tr>
         ))}</tbody>
@@ -71,7 +71,7 @@ export const ServicesTab = ({ orgId }: { orgId: string }) => {
         <Card key={s.id} className="rounded-xl"><CardContent className="py-3 text-sm space-y-1">
           <div className="flex flex-wrap justify-between gap-2"><span className="font-medium">{s.name}</span><Badge variant={s.is_active ? "default" : "outline"}>{s.is_active ? "Ativo" : "Inativo"}</Badge></div>
           {s.description && <p className="text-muted-foreground">{s.description}</p>}
-          <p className="text-xs">Etapas: {(s.steps || []).join(" → ") || "—"}</p>
+          <p className="text-xs">Etapas: {(s.steps || []).join(" → ") || "-"}</p>
         </CardContent></Card>
       ))}
     </div>
@@ -89,7 +89,7 @@ export const AuditTab = ({ orgId }: { orgId: string }) => {
       <tbody>
         {!data.length && <tr><td colSpan={5} className="p-3 text-muted-foreground">Nenhum evento.</td></tr>}
         {data.map((e: any) => (
-          <tr key={e.id} className="border-t"><td className="p-2 whitespace-nowrap">{fmtDT(e.created_at)}</td><td className="p-2 font-mono text-xs">{e.sd_requests?.protocol}</td><td className="p-2">{ACTION_LABEL[e.action] || e.action}</td><td className="p-2">{e.actor_name || "—"}</td><td className="p-2">{e.note || ""}</td></tr>
+          <tr key={e.id} className="border-t"><td className="p-2 whitespace-nowrap">{fmtDT(e.created_at)}</td><td className="p-2 font-mono text-xs">{e.sd_requests?.protocol}</td><td className="p-2">{ACTION_LABEL[e.action] || e.action}</td><td className="p-2">{e.actor_name || "-"}</td><td className="p-2">{e.note || ""}</td></tr>
         ))}
       </tbody>
     </table></div>

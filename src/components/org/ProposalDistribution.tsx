@@ -522,7 +522,7 @@ const ProposalDistribution = ({ editalId, orgId, minReviewers }: ProposalDistrib
                   return (
                     <tr key={p.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                       <td className="p-3 font-mono font-medium text-primary">{p.blind_code}</td>
-                      <td className="p-3 text-muted-foreground text-xs max-w-[200px] truncate">{p.cnpq_area || "—"}</td>
+                      <td className="p-3 text-muted-foreground text-xs max-w-[200px] truncate">{p.cnpq_area || "-"}</td>
                       <td className="p-3 text-center">
                         <span className={`font-bold ${validCount < minReviewers ? "text-destructive" : "text-foreground"}`}>
                           {validCount}
@@ -565,7 +565,7 @@ const ProposalDistribution = ({ editalId, orgId, minReviewers }: ProposalDistrib
             <>
               <SheetHeader>
                 <SheetTitle className="flex items-center gap-2">
-                  Atribuições — {selectedProposal.blind_code}
+                  Atribuições, {selectedProposal.blind_code}
                 </SheetTitle>
               </SheetHeader>
 
@@ -643,7 +643,7 @@ const ProposalDistribution = ({ editalId, orgId, minReviewers }: ProposalDistrib
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <UserPlus className="w-5 h-5" /> Distribuir — {assignTarget?.blind_code}
+              <UserPlus className="w-5 h-5" /> Distribuir, {assignTarget?.blind_code}
             </DialogTitle>
           </DialogHeader>
 

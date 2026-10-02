@@ -127,9 +127,9 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
 
   const info: [string, string][] = [
     ["Solicitante", r.requester_name], ["Matrícula", r.requester_enrollment], ["Tipo", r.requester_kind],
-    ["Programa", student?.sd_programs?.name || r.requester_program || "—"],
-    ...(student ? [["Nível", student.level || "—"], ["Orientador(a)", student.advisor?.full_name || "—"], ["Ingresso", fmtDate(student.entry_date)], ["Prazo vigente", fmtDate(student.current_deadline)]] as [string, string][] : []),
-    ["E-mail", r.requester_email || "—"],
+    ["Programa", student?.sd_programs?.name || r.requester_program || "-"],
+    ...(student ? [["Nível", student.level || "-"], ["Orientador(a)", student.advisor?.full_name || "-"], ["Ingresso", fmtDate(student.entry_date)], ["Prazo vigente", fmtDate(student.current_deadline)]] as [string, string][] : []),
+    ["E-mail", r.requester_email || "-"],
   ];
 
   return (
@@ -167,7 +167,7 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
 
       {!!formFields.length && (
         <Card className="rounded-xl"><CardHeader><CardTitle className="text-base">Informações do pedido</CardTitle></CardHeader><CardContent className="space-y-2">
-          {formFields.map((f) => <div key={f.key}><p className="text-xs text-muted-foreground">{f.label}</p><p className="text-sm whitespace-pre-line">{r.form_data?.[f.key] || "—"}</p></div>)}
+          {formFields.map((f) => <div key={f.key}><p className="text-xs text-muted-foreground">{f.label}</p><p className="text-sm whitespace-pre-line">{r.form_data?.[f.key] || "-"}</p></div>)}
         </CardContent></Card>
       )}
 
@@ -178,8 +178,8 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
               <p className="text-sm font-semibold">Correção #{c}</p>
               {versions.filter((v: any) => v.cycle === c).map((v: any) => (
                 <div key={v.id} className="grid sm:grid-cols-2 gap-2 text-sm">
-                  <div className="border rounded-lg p-2 bg-muted/30"><p className="text-xs text-muted-foreground">{labelOf(v.field)} — valor anterior</p><p className="whitespace-pre-line">{v.old_value || "—"}</p></div>
-                  <div className="border rounded-lg p-2"><p className="text-xs text-muted-foreground">Valor corrigido · {fmtDT(v.created_at)}</p><p className="whitespace-pre-line">{v.new_value || "—"}</p></div>
+                  <div className="border rounded-lg p-2 bg-muted/30"><p className="text-xs text-muted-foreground">{labelOf(v.field)}, valor anterior</p><p className="whitespace-pre-line">{v.old_value || "-"}</p></div>
+                  <div className="border rounded-lg p-2"><p className="text-xs text-muted-foreground">Valor corrigido · {fmtDT(v.created_at)}</p><p className="whitespace-pre-line">{v.new_value || "-"}</p></div>
                 </div>
               ))}
             </div>
@@ -201,9 +201,9 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
       {r.vpn_status && (
         <Card className="rounded-xl"><CardHeader><CardTitle className="text-base">Acesso VPN</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">
           <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div><dt className="text-xs text-muted-foreground">Liberado em</dt><dd>{r.vpn_released_at ? fmtDT(r.vpn_released_at) : "—"}</dd></div>
+            <div><dt className="text-xs text-muted-foreground">Liberado em</dt><dd>{r.vpn_released_at ? fmtDT(r.vpn_released_at) : "-"}</dd></div>
             <div><dt className="text-xs text-muted-foreground">Validade</dt><dd>{fmtDate(r.vpn_valid_until)}</dd></div>
-            {!isOwner && <><div><dt className="text-xs text-muted-foreground">Técnico</dt><dd>{r.vpn_released_by || "—"}</dd></div><div><dt className="text-xs text-muted-foreground">IP VPN</dt><dd>{r.vpn_ip || "—"}</dd></div></>}
+            {!isOwner && <><div><dt className="text-xs text-muted-foreground">Técnico</dt><dd>{r.vpn_released_by || "-"}</dd></div><div><dt className="text-xs text-muted-foreground">IP VPN</dt><dd>{r.vpn_ip || "-"}</dd></div></>}
           </dl>
           {!isOwner && r.vpn_tech_note && <p className="text-xs"><span className="text-muted-foreground">Observação técnica:</span> {r.vpn_tech_note}</p>}
           <p className="text-xs text-muted-foreground">{r.vpn_email_sent_at ? `Arquivo enviado por e-mail em ${fmtDT(r.vpn_email_sent_at)}` : "Envio por e-mail ainda não registrado"}</p>
@@ -236,7 +236,7 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
 
       <Dialog open={!!act} onOpenChange={(o) => !o && setAct(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{act && ACT_TITLE[act]} — {r.protocol}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{act && ACT_TITLE[act]}, {r.protocol}</DialogTitle></DialogHeader>
           {act === "corrigir" && (
             <div className="space-y-1"><Label>Campo(s) a corrigir</Label>
               {formFields.map((f) => <label key={f.key} className="flex items-center gap-2 text-sm"><Checkbox checked={corrFields.includes(f.key)} onCheckedChange={(v) => setCorrFields(v ? [...corrFields, f.key] : corrFields.filter((x) => x !== f.key))} />{f.label}</label>)}

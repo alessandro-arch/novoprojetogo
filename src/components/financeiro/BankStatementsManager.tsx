@@ -126,7 +126,7 @@ const BankStatementsManager = ({ executionId, userId }: Props) => {
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
                     {accounts?.map((a: any) => (
-                      <SelectItem key={a.id} value={a.id}>{a.bank_name} — {a.account_number}</SelectItem>
+                      <SelectItem key={a.id} value={a.id}>{a.bank_name}, {a.account_number}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -189,11 +189,11 @@ const BankStatementsManager = ({ executionId, userId }: Props) => {
                 {statements.map((s: any) => (
                   <TableRow key={s.id}>
                     <TableCell className="font-medium">
-                      {s.project_bank_accounts?.bank_name} — {s.project_bank_accounts?.account_number}
+                      {s.project_bank_accounts?.bank_name}, {s.project_bank_accounts?.account_number}
                     </TableCell>
                     <TableCell>
                       {s.statement_period_start && s.statement_period_end
-                        ? `${format(new Date(s.statement_period_start), "dd/MM/yyyy")} — ${format(new Date(s.statement_period_end), "dd/MM/yyyy")}`
+                        ? `${format(new Date(s.statement_period_start), "dd/MM/yyyy")}, ${format(new Date(s.statement_period_end), "dd/MM/yyyy")}`
                         : "Não informado"}
                     </TableCell>
                     <TableCell>

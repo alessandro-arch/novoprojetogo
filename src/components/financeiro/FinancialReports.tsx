@@ -95,7 +95,7 @@ const FinancialReports = ({ executionId }: Props) => {
               <span className="text-xs text-muted-foreground">Conciliação</span>
             </div>
             <p className="text-lg font-bold text-foreground">
-              {s.total > 0 ? `${Math.round((s.matched / s.total) * 100)}%` : "—"}
+              {s.total > 0 ? `${Math.round((s.matched / s.total) * 100)}%` : "-"}
             </p>
             <p className="text-xs text-muted-foreground">{s.matched}/{s.total} itens</p>
           </CardContent>

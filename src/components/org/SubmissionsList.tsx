@@ -189,7 +189,7 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <CardTitle className="text-lg">Proposta — {selectedSubmission.protocol}</CardTitle>
+              <CardTitle className="text-lg">Proposta, {selectedSubmission.protocol}</CardTitle>
               <div className="flex items-center gap-2">
                 <IntegrityBadge status={selectedSubmission.integrity_status} />
                 <Badge variant={(STATUS_LABELS[selectedSubmission.status] || STATUS_LABELS.draft).variant}>
@@ -209,11 +209,11 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-xs text-muted-foreground">Proponente</Label>
-                    <p className="text-foreground font-medium">{(profile as any)?.full_name || "—"}</p>
+                    <p className="text-foreground font-medium">{(profile as any)?.full_name || "-"}</p>
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">Email</Label>
-                    <p className="text-foreground">{(profile as any)?.email || "—"}</p>
+                    <p className="text-foreground">{(profile as any)?.email || "-"}</p>
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">Protocolo</Label>
@@ -221,7 +221,7 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">Data de submissão</Label>
-                    <p className="text-foreground">{selectedSubmission.submitted_at ? new Date(selectedSubmission.submitted_at).toLocaleString("pt-BR") : "—"}</p>
+                    <p className="text-foreground">{selectedSubmission.submitted_at ? new Date(selectedSubmission.submitted_at).toLocaleString("pt-BR") : "-"}</p>
                   </div>
                   {selectedSubmission.cnpq_area_code && (
                     <div className="col-span-2">
@@ -247,7 +247,7 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
                         questions: (s.questions || [])
                           .sort((a: any, b: any) => a.sort_order - b.sort_order)
                           .map((q: any) => {
-                            let answerDisplay = answers[q.id] || "—";
+                            let answerDisplay = answers[q.id] || "-";
                             if (Array.isArray(answerDisplay)) answerDisplay = answerDisplay.join(", ");
                             if (q.options_source === "knowledge_areas" && snapshot.knowledge_areas) {
                               const ka = snapshot.knowledge_areas.find((k: any) => k.id === answerDisplay);
@@ -262,10 +262,10 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
                       }));
                     generateProposalPdf({
                       editalTitle,
-                      proponenteName: (profile as any)?.full_name || "—",
-                      proponenteEmail: (profile as any)?.email || "—",
-                      protocol: selectedSubmission.protocol || "—",
-                      submittedAt: selectedSubmission.submitted_at ? new Date(selectedSubmission.submitted_at).toLocaleString("pt-BR") : "—",
+                      proponenteName: (profile as any)?.full_name || "-",
+                      proponenteEmail: (profile as any)?.email || "-",
+                      protocol: selectedSubmission.protocol || "-",
+                      submittedAt: selectedSubmission.submitted_at ? new Date(selectedSubmission.submitted_at).toLocaleString("pt-BR") : "-",
                       cnpqArea: selectedSubmission.cnpq_area_code,
                       submissionId: selectedSubmission.id,
                       sections,
@@ -275,12 +275,12 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
                   </Button>
                   <Button size="sm" variant="outline" className="min-h-[44px]" onClick={() => {
                     generateSubmissionReceipt({
-                      protocol: selectedSubmission.protocol || "—",
+                      protocol: selectedSubmission.protocol || "-",
                       editalTitle,
-                      proponenteName: (profile as any)?.full_name || "—",
-                      proponenteEmail: (profile as any)?.email || "—",
+                      proponenteName: (profile as any)?.full_name || "-",
+                      proponenteEmail: (profile as any)?.email || "-",
                       cnpqArea: selectedSubmission.cnpq_area_code || undefined,
-                      submittedAt: selectedSubmission.submitted_at ? new Date(selectedSubmission.submitted_at).toLocaleString("pt-BR") : "—",
+                      submittedAt: selectedSubmission.submitted_at ? new Date(selectedSubmission.submitted_at).toLocaleString("pt-BR") : "-",
                       submissionId: selectedSubmission.id,
                     });
                   }}>
@@ -344,7 +344,7 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {(section.questions || []).sort((a: any, b: any) => a.sort_order - b.sort_order).map((q: any) => {
-                        let answerDisplay = answers[q.id] || "—";
+                        let answerDisplay = answers[q.id] || "-";
                         if (Array.isArray(answerDisplay)) answerDisplay = answerDisplay.join(", ");
                         if (q.options_source === "knowledge_areas" && snapshot.knowledge_areas) {
                           const ka = snapshot.knowledge_areas.find((k: any) => k.id === answerDisplay);
@@ -432,14 +432,14 @@ const SubmissionsList = ({ editalId, editalTitle, orgId }: SubmissionsListProps)
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="flex items-center gap-4">
                       <div>
-                        <p className="font-mono text-sm font-medium text-foreground">{sub.protocol || "—"}</p>
+                        <p className="font-mono text-sm font-medium text-foreground">{sub.protocol || "-"}</p>
                         <p className="text-sm text-muted-foreground">{(profile as any)?.full_name || "Proponente"}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <IntegrityBadge status={sub.integrity_status} />
                       <span className="text-xs text-muted-foreground">
-                        {sub.submitted_at ? new Date(sub.submitted_at).toLocaleDateString("pt-BR") : "—"}
+                        {sub.submitted_at ? new Date(sub.submitted_at).toLocaleDateString("pt-BR") : "-"}
                       </span>
                       <Badge variant={st.variant}>{st.label}</Badge>
                       <Button size="icon" variant="ghost" className="min-h-[44px] min-w-[44px]">

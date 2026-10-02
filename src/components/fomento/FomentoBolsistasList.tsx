@@ -256,16 +256,16 @@ const FomentoBolsistasList = ({ onNewBolsista, onEditBolsista, onBatchImport }: 
                 ) : sorted.map((b) => (
                   <TableRow key={b.id}>
                     <TableCell className="font-medium max-w-[180px] truncate">{b.nome_bolsista}</TableCell>
-                    <TableCell className="max-w-[150px] truncate">{b.orientador || "—"}</TableCell>
-                    <TableCell><Badge variant="outline">{MODALIDADE_LABELS[b.modalidade || ""] || b.modalidade || "—"}</Badge></TableCell>
-                    <TableCell className="max-w-[120px] truncate">{b.edital || "—"}</TableCell>
-                    <TableCell>{b.cotas_total ?? "—"}</TableCell>
-                    <TableCell className="text-xs whitespace-nowrap">{formatDateBR(b.data_inicio)} — {formatDateBR(b.data_fim)}</TableCell>
-                    <TableCell className="text-right font-mono">{b.valor_mensal != null ? formatBRL(Number(b.valor_mensal)) : "—"}</TableCell>
-                    <TableCell className="text-right font-mono">{b.valor_total != null ? formatBRL(Number(b.valor_total)) : "—"}</TableCell>
+                    <TableCell className="max-w-[150px] truncate">{b.orientador || "-"}</TableCell>
+                    <TableCell><Badge variant="outline">{MODALIDADE_LABELS[b.modalidade || ""] || b.modalidade || "-"}</Badge></TableCell>
+                    <TableCell className="max-w-[120px] truncate">{b.edital || "-"}</TableCell>
+                    <TableCell>{b.cotas_total ?? "-"}</TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">{formatDateBR(b.data_inicio) } a {formatDateBR(b.data_fim)}</TableCell>
+                    <TableCell className="text-right font-mono">{b.valor_mensal != null ? formatBRL(Number(b.valor_mensal)) : "-"}</TableCell>
+                    <TableCell className="text-right font-mono">{b.valor_total != null ? formatBRL(Number(b.valor_total)) : "-"}</TableCell>
                     <TableCell>
                       <Badge variant={b.status === "ativo" ? "default" : b.status === "concluido" ? "secondary" : "destructive"}>
-                        {BOLSISTA_STATUS_LABELS[b.status || ""] || b.status || "—"}
+                        {BOLSISTA_STATUS_LABELS[b.status || ""] || b.status || "-"}
                       </Badge>
                     </TableCell>
                     <TableCell>

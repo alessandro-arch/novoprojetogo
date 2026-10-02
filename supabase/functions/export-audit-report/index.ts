@@ -172,12 +172,12 @@ tr:nth-child(even){background:#f9f9f9}
 .footer{margin-top:24px;border-top:1px solid #ccc;padding-top:6px;font-size:9px;color:#999;text-align:center}
 pre{background:#f5f5f5;padding:4px;border-radius:3px;overflow:hidden}
 </style></head><body>
-<h1>🔒 Relatório de Auditoria — ProjetoGO</h1>
+<h1>🔒 Relatório de Auditoria | ProjetoGO</h1>
 <div class="meta">
 <p><strong>Edital:</strong> ${edital.title}</p>
-<p><strong>Protocolo:</strong> ${sub.protocol || "—"}</p>
+<p><strong>Protocolo:</strong> ${sub.protocol || "-"}</p>
 <p><strong>ID Submissão:</strong> ${sub.id}</p>
-<p><strong>Submetido em:</strong> ${sub.submitted_at ? new Date(sub.submitted_at).toLocaleString("pt-BR") : "—"}</p>
+<p><strong>Submetido em:</strong> ${sub.submitted_at ? new Date(sub.submitted_at).toLocaleString("pt-BR") : "-"}</p>
 </div>
 
 <h2>Integridade Criptográfica</h2>
@@ -185,8 +185,8 @@ pre{background:#f5f5f5;padding:4px;border-radius:3px;overflow:hidden}
   <span class="badge" style="background:${integrityColor}">${sub.integrity_status || "PENDING"}</span>
 </p>
 <table>
-<tr><td style="width:30%;font-weight:bold">integrity_hash (SHA-256)</td><td style="font-family:monospace;font-size:9px">${sub.integrity_hash || "—"}</td></tr>
-<tr><td style="font-weight:bold">pdf_integrity_hash (SHA-256)</td><td style="font-family:monospace;font-size:9px">${sub.pdf_integrity_hash || "—"}</td></tr>
+<tr><td style="width:30%;font-weight:bold">integrity_hash (SHA-256)</td><td style="font-family:monospace;font-size:9px">${sub.integrity_hash || "-"}</td></tr>
+<tr><td style="font-weight:bold">pdf_integrity_hash (SHA-256)</td><td style="font-family:monospace;font-size:9px">${sub.pdf_integrity_hash || "-"}</td></tr>
 </table>
 
 <h2>Timeline de Auditoria (${(logs || []).length} registros)</h2>
@@ -197,7 +197,7 @@ ${logsRows}
 
 <div class="footer">
 <p>Exportado por: ${exporterProfile?.full_name || user.email || user.id} em ${new Date().toLocaleString("pt-BR")}</p>
-<p>Documento gerado automaticamente — ProjetoGO</p>
+<p>Documento gerado automaticamente, ProjetoGO</p>
 </div></body></html>`;
 
     // Log the export

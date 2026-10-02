@@ -133,7 +133,7 @@ const ReviewerAssignment = ({
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle className="flex items-center gap-2"><Users className="w-5 h-5" /> Atribuir Avaliadores — {proposalBlindCode}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle className="flex items-center gap-2"><Users className="w-5 h-5" /> Atribuir Avaliadores, {proposalBlindCode}</DialogTitle></DialogHeader>
         {loading ? (
           <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
         ) : (

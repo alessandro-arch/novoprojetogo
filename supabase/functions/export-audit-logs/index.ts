@@ -156,13 +156,13 @@ Deno.serve(async (req) => {
   .footer { margin-top: 20px; text-align: center; color: #999; font-size: 9px; }
 </style>
 </head><body>
-<h1>🔒 Trilha de Auditoria — ProjetoGO</h1>
+<h1>🔒 Trilha de Auditoria | ProjetoGO</h1>
 <p class="meta">Gerado em: ${new Date().toLocaleString("pt-BR")} · Total de registros: ${(logs || []).length}</p>
 <table>
 <tr><th>Data/Hora</th><th>Entidade</th><th>Ação</th><th>Papel</th><th>ID</th><th>Detalhes</th></tr>
 ${tableRows}
 </table>
-<p class="footer">Documento gerado automaticamente. Registros imutáveis — não editáveis após gravação.</p>
+<p class="footer">Documento gerado automaticamente. Registros imutáveis, não editáveis após gravação.</p>
 </body></html>`;
 
       return new Response(html, {

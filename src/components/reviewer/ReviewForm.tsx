@@ -59,7 +59,7 @@ const ProposalContentCard = ({
         </CardTitle>
         <CardDescription>
           {anonymizedData?.blind_review !== false
-            ? "Dados anonimizados para avaliação cega — sem identificação do proponente"
+            ? "Dados anonimizados para avaliação cega, sem identificação do proponente"
             : "Conteúdo da proposta para avaliação"}
         </CardDescription>
       </CardHeader>

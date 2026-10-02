@@ -440,7 +440,7 @@ const ReviewerPanel = () => {
           <div className="container mx-auto px-4 py-3 flex items-center gap-3">
             <ShieldCheck className="w-5 h-5 text-accent-foreground flex-shrink-0" />
             <div>
-              <p className="text-xs font-semibold text-accent-foreground">Avaliação Cega — Blind Review</p>
+              <p className="text-xs font-semibold text-accent-foreground">Avaliação Cega, Blind Review</p>
               <p className="text-xs text-accent-foreground/80">
                 Este processo adota avaliação cega. Qualquer tentativa de identificação do proponente viola as normas do edital.
               </p>
@@ -575,7 +575,7 @@ const ReviewerPanel = () => {
                             {/* Area */}
                             <TableCell className="hidden md:table-cell">
                               <span className="text-sm text-foreground">
-                                {a.knowledge_area || "—"}
+                                {a.knowledge_area || "-"}
                               </span>
                             </TableCell>
 

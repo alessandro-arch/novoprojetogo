@@ -801,7 +801,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
                     <div className="mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
                       <span className="font-semibold text-foreground">Concentração de financiamento: </span>
                       {concentracaoFinanciador.toFixed(0)}% dos recursos vêm de {agencyData[0].name}
-                      {concentracaoFinanciador >= 70 && " — risco de dependência de fonte única."}
+                      {concentracaoFinanciador >= 70 && ", risco de dependência de fonte única."}
                     </div>
                   )}
                 </CardContent>
@@ -854,10 +854,10 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
                   { l: "Captação média por pesquisador", v: formatBRL(captacaoMediaPesquisador) },
                   { l: "Pesquisadores com projeto ativo", v: `${pesquisadoresAtivos} de ${pesquisadores}` },
                   { l: "PPGs com captação", v: `${ppgsComCaptacao} de ${PPG_CANONICOS.length}` },
-                  { l: "Concentração — Top 3 pesquisadores", v: `${top3Concentracao.toFixed(1)}%` },
-                  { l: "Concentração — maior PPG", v: ppgTable.length ? `${ppgTable[0].share.toFixed(1)}% (${ppgTable[0].name})` : "—" },
+                  { l: "Concentração, Top 3 pesquisadores", v: `${top3Concentracao.toFixed(1)}%` },
+                  { l: "Concentração, maior PPG", v: ppgTable.length ? `${ppgTable[0].share.toFixed(1)}% (${ppgTable[0].name})` : "-" },
                   { l: "Captação sem vínculo com PPG", v: semPpg ? `${formatBRL(semPpg.value)} · ${semPpg.share.toFixed(1)}%` : "R$ 0,00" },
-                  { l: "Concentração — maior financiador", v: agencyData.length ? `${concentracaoFinanciador.toFixed(0)}% (${agencyData[0].name})` : "—" },
+                  { l: "Concentração, maior financiador", v: agencyData.length ? `${concentracaoFinanciador.toFixed(0)}% (${agencyData[0].name})` : "-" },
                 ].map((k) => (
                   <div key={k.l} className="rounded-lg border border-border p-3">
                     <p className="text-xs text-muted-foreground">{k.l}</p>
@@ -969,7 +969,7 @@ const FomentoDashboardView = ({ onEditProject }: Props) => {
                             <TableRow key={x.id}>
                               <TableCell className="font-medium max-w-[240px] truncate" title={x.titulo}>{x.titulo}</TableCell>
                               <TableCell>{x.pesquisador_principal}</TableCell>
-                              <TableCell>{x.orgao_financiador || "—"}</TableCell>
+                              <TableCell>{x.orgao_financiador || "-"}</TableCell>
                               <TableCell>{formatBRL(Number(x.valor_total))}</TableCell>
                               <TableCell>{formatDateBR(x.vigencia_fim)}</TableCell>
                               <TableCell><Badge variant={days != null && days <= 30 ? "destructive" : "secondary"}>{days}d</Badge></TableCell>

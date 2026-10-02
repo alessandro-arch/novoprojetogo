@@ -212,7 +212,7 @@ const FomentoAdmin = () => {
 
                     return (
                       <TableRow key={u.user_id}>
-                        <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
+                        <TableCell className="font-medium">{u.full_name || "-"}</TableCell>
                         <TableCell>{u.email}</TableCell>
                         <TableCell>
                           <Badge
@@ -258,7 +258,7 @@ const FomentoAdmin = () => {
                               </AlertDialog>
                             </div>
                           ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
+                            <span className="text-xs text-muted-foreground">-</span>
                           )}
                         </TableCell>
                       </TableRow>

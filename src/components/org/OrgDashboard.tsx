@@ -124,7 +124,7 @@ const OrgDashboard = ({ orgId }: { orgId: string }) => {
 
       <Card className="shadow-card">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base md:text-lg font-semibold">Submissões — Últimos 14 dias</CardTitle>
+          <CardTitle className="text-base md:text-lg font-semibold">Submissões, Últimos 14 dias</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-48 md:h-64">

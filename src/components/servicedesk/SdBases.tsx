@@ -15,7 +15,7 @@ import { StudentEditDialog } from "@/components/servicedesk/StudentEditDialog";
 const db = supabase as any;
 const sel = "h-10 rounded-md border border-input bg-background px-3 text-sm";
 
-export const fmtDate = (d?: string | null) => (d ? d.split("-").reverse().join("/") : "—");
+export const fmtDate = (d?: string | null) => (d ? d.split("-").reverse().join("/") : "-");
 
 const usePrograms = (orgId: string) =>
   useQuery({
@@ -128,8 +128,8 @@ export const StudentsTab = ({ orgId }: { orgId: string }) => {
           <tbody>
             {rows.map((s: any) => (
               <tr key={s.id} className="border-t border-border">
-                <td className="p-2">{s.enrollment}</td><td className="p-2">{s.full_name}</td><td className="p-2">{s.program?.name || "—"}</td><td className="p-2">{s.source_period || "—"}</td>
-                <td className="p-2 capitalize">{s.level}</td><td className="p-2">{s.turma || "—"}</td><td className="p-2">{fmtDate(s.entry_date)}</td><td className="p-2">{fmtDate(s.expected_end)}</td><td className="p-2">{s.advisor?.full_name || "—"}</td><td className="p-2">{s.scholarship || "—"}</td>
+                <td className="p-2">{s.enrollment}</td><td className="p-2">{s.full_name}</td><td className="p-2">{s.program?.name || "-"}</td><td className="p-2">{s.source_period || "-"}</td>
+                <td className="p-2 capitalize">{s.level}</td><td className="p-2">{s.turma || "-"}</td><td className="p-2">{fmtDate(s.entry_date)}</td><td className="p-2">{fmtDate(s.expected_end)}</td><td className="p-2">{s.advisor?.full_name || "-"}</td><td className="p-2">{s.scholarship || "-"}</td>
                 <td className="p-2">{fmtDate(s.regular_deadline)}</td><td className="p-2">{fmtDate(s.current_deadline)}</td>
                 <td className="p-2"><Badge variant={s.status === "ativo" ? "default" : "secondary"}>{s.status}</Badge>{s.absent_in_last_import && <Badge variant="destructive" className="ml-1">ausente na nova base</Badge>}</td>
                 <td className="p-2"><Badge variant={s.service_desk_access_active !== false ? "default" : "secondary"}>{s.service_desk_access_active !== false ? "Ativo" : "Desativado"}</Badge></td>
@@ -186,8 +186,8 @@ export const FacultyTab = ({ orgId }: { orgId: string }) => {
           <tbody>
             {rows.map((f: any) => (
               <tr key={f.id} className="border-t border-border">
-                <td className="p-2">{f.contract_type || "—"}</td><td className="p-2">{f.enrollment}</td><td className="p-2">{f.full_name}</td>
-                <td className="p-2"><div className="flex flex-col gap-1">{linksOf(f).map((p: any) => <span key={p.program_id}><span className="font-medium">{p.program?.sigla || p.program?.name}</span> · {p.relationship_type || "—"}</span>)}</div></td>
+                <td className="p-2">{f.contract_type || "-"}</td><td className="p-2">{f.enrollment}</td><td className="p-2">{f.full_name}</td>
+                <td className="p-2"><div className="flex flex-col gap-1">{linksOf(f).map((p: any) => <span key={p.program_id}><span className="font-medium">{p.program?.sigla || p.program?.name}</span> · {p.relationship_type || "-"}</span>)}</div></td>
                 <td className="p-2"><input type="checkbox" aria-label="Pode orientar" checked={f.can_advise} onChange={(e) => upd(f.id, { can_advise: e.target.checked })} /></td>
                 <td className="p-2"><Badge variant={f.status === "ativo" ? "default" : "secondary"}>{f.status}</Badge>{f.absent_in_last_import && <Badge variant="destructive" className="ml-1">ausente na nova base</Badge>}</td>
                 <td className="p-2 whitespace-nowrap">{f.absent_in_last_import && (<>
@@ -322,8 +322,8 @@ export const ImportTab = ({ orgId, orgLabel }: { orgId: string; orgLabel: string
           </div>
           <p className="text-xs text-muted-foreground">
             Uma planilha por programa: a comparação e as ausências consideram só o programa selecionado.{" "}
-            {base === "alunos" ? "Na base de alunos, somente a aba Ativos será importada. Colunas: QT, Status, Matrícula, Nome do Aluno, CPF, Telefone, E-mail, Turma, Nível, Início no curso, Término previsto / Data de conclusão, Orientador (a), Bolsa." : "Na base de professores, cada programa tem sua própria aba na planilha — será lida a aba do programa selecionado (ex.: PPGAC, PPGCF). Colunas: TIPO de Vínculo, Matricula, Nome, Programa e Vínculo. Professores ficam vinculados ao programa selecionado."}
-            {" "}Quem não estiver no arquivo é apenas sinalizado como ausente — ninguém é inativado automaticamente.
+            {base === "alunos" ? "Na base de alunos, somente a aba Ativos será importada. Colunas: QT, Status, Matrícula, Nome do Aluno, CPF, Telefone, E-mail, Turma, Nível, Início no curso, Término previsto / Data de conclusão, Orientador (a), Bolsa." : "Na base de professores, cada programa tem sua própria aba na planilha, será lida a aba do programa selecionado (ex.: PPGAC, PPGCF). Colunas: TIPO de Vínculo, Matricula, Nome, Programa e Vínculo. Professores ficam vinculados ao programa selecionado."}
+            {" "}Quem não estiver no arquivo é apenas sinalizado como ausente, ninguém é inativado automaticamente.
           </p>
           <Button onClick={process} disabled={busy}>{busy && !rows ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />} Validar e comparar</Button>
         </CardContent>
@@ -348,7 +348,7 @@ export const ImportTab = ({ orgId, orgLabel }: { orgId: string; orgLabel: string
                     <span className="font-medium">{r.enrollment || "(sem matrícula)"}</span>{r.line > 0 && <span className="text-muted-foreground"> · linha {r.line}</span>}
                     {r.data?.full_name && <span> · {r.data.full_name}</span>}
                     {r.message && <span className="text-muted-foreground"> · {r.message}</span>}
-                    {r.diffs?.length ? <div className="text-xs text-muted-foreground">{r.diffs.map((d) => `${d}: ${String(r.before?.[d] ?? "—")} → ${String(r.data?.[d] ?? "—")}`).join(" | ")}</div> : null}
+                    {r.diffs?.length ? <div className="text-xs text-muted-foreground">{r.diffs.map((d) => `${d}: ${String(r.before?.[d] ?? "-")} → ${String(r.data?.[d] ?? "-")}`).join(" | ")}</div> : null}
                   </div>
                 ))}
                 {!rows.some((r) => r.outcome === show) && <p className="p-3 text-muted-foreground">Nenhum registro.</p>}

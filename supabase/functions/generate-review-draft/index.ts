@@ -45,7 +45,7 @@ serve(async (req) => {
     const criteriaBlock = scores
       .map(
         (s) =>
-          `- ${s.criteriaName} (peso ${s.weight}, máx ${s.maxScore}): nota ${s.score}${s.comment ? ` — "${s.comment}"` : ""}`
+          `- ${s.criteriaName} (peso ${s.weight}, máx ${s.maxScore}): nota ${s.score}${s.comment ? `, "${s.comment}"` : ""}`
       )
       .join("\n");
 

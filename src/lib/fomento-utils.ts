@@ -6,9 +6,9 @@ export const formatBRL = (value: number | null | undefined): string => {
 
 /** Format date string or Date to DD/MM/AAAA */
 export const formatDateBR = (date: string | Date | null | undefined): string => {
-  if (!date) return "—";
+  if (!date) return "-";
   const d = typeof date === "string" ? new Date(date + (date.length === 10 ? "T12:00:00" : "")) : date;
-  if (isNaN(d.getTime())) return "—";
+  if (isNaN(d.getTime())) return "-";
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
 };
 

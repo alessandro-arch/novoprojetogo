@@ -470,13 +470,13 @@ const FomentoBatchImport = ({ onBack }: Props) => {
                           {phase === "review" ? (
                             <Input className="h-7 text-xs min-w-[120px]" value={p.pesquisador_principal}
                               onChange={e => updateField(i, "pesquisador_principal", e.target.value)} />
-                          ) : <span className="text-sm truncate">{p.pesquisador_principal || "—"}</span>}
+                          ) : <span className="text-sm truncate">{p.pesquisador_principal || "-"}</span>}
                         </TableCell>
                         <TableCell>
                           {phase === "review" ? (
                             <Input className="h-7 text-xs min-w-[150px]" value={p.titulo}
                               onChange={e => updateField(i, "titulo", e.target.value)} />
-                          ) : <span className="text-sm truncate">{p.titulo || "—"}</span>}
+                          ) : <span className="text-sm truncate">{p.titulo || "-"}</span>}
                         </TableCell>
                         {phase === "review" && (
                           <>
@@ -496,7 +496,7 @@ const FomentoBatchImport = ({ onBack }: Props) => {
                               <Select value={p.area || "none"} onValueChange={v => updateField(i, "area", v === "none" ? "" : v)}>
                                 <SelectTrigger className="h-7 text-xs min-w-[100px]"><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="none">—</SelectItem>
+                                  <SelectItem value="none">-</SelectItem>
                                   {Object.entries(AREA_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
                                 </SelectContent>
                               </Select>
@@ -545,7 +545,7 @@ const FomentoBatchImport = ({ onBack }: Props) => {
       <Dialog open={editIdx !== null} onOpenChange={() => setEditIdx(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Editar Projeto — {editProject?.fileName}</DialogTitle>
+            <DialogTitle>Editar Projeto, {editProject?.fileName}</DialogTitle>
           </DialogHeader>
           {editProject && editIdx !== null && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
@@ -578,7 +578,7 @@ const FomentoBatchImport = ({ onBack }: Props) => {
                 <Select value={editProject.area || "none"} onValueChange={v => updateField(editIdx, "area", v === "none" ? "" : v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">—</SelectItem>
+                    <SelectItem value="none">-</SelectItem>
                     {Object.entries(AREA_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -588,7 +588,7 @@ const FomentoBatchImport = ({ onBack }: Props) => {
                 <Select value={editProject.fonte || "none"} onValueChange={v => updateField(editIdx, "fonte", v === "none" ? "" : v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">—</SelectItem>
+                    <SelectItem value="none">-</SelectItem>
                     {Object.entries(FONTE_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
                   </SelectContent>
                 </Select>

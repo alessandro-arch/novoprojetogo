@@ -147,7 +147,7 @@ const AuditLogViewer = ({ orgId, entityId, entityType }: AuditLogViewerProps) =>
     if (parts.length === 2) {
       const entity = ENTITY_LABELS[parts[0]] || parts[0];
       const op = ACTION_LABELS[parts[1]] || parts[1];
-      return `${entity} — ${op}`;
+      return `${entity}, ${op}`;
     }
     return action;
   };
