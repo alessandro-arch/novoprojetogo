@@ -216,6 +216,12 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
             {r.vpn_conf_path && <Button variant="outline" onClick={downloadConf}><Download className="w-4 h-4 mr-2" />Baixar arquivo .conf</Button>}
             {!isOwner && !r.vpn_email_sent_at && <Button variant="secondary" onClick={() => sendConf(r.id)}><Send className="w-4 h-4 mr-2" />Reenviar e-mail</Button>}
           </div>
+          {isOwner && vpnInstructions && (
+            <div className="mt-3 rounded-lg border bg-muted/40 p-4">
+              <p className="text-sm font-semibold mb-2">Instruções de uso da VPN</p>
+              <div className="text-sm whitespace-pre-wrap leading-relaxed">{vpnInstructions}</div>
+            </div>
+          )}
         </CardContent></Card>
       )}
 
