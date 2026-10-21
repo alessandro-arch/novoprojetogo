@@ -121,13 +121,19 @@ const CuradoriaPage = () => {
   });
 
   const lista = useMemo(() => {
-    const rows = (listaQ.data ?? []).map((e) => ({ e, v: rodadaVigente(e.oe_rodada) }));
-    return rows.sort((a, b) => {
-      const pa = t(a.v?.prazo_fim ?? null), pb = t(b.v?.prazo_fim ?? null);
-      if (pa !== pb) return pa == null ? 1 : pb == null ? -1 : pa - pb;
-      return (t(b.e.visto_ultima_vez_em) ?? 0) - (t(a.e.visto_ultima_vez_em) ?? 0);
-    });
-  }, [listaQ.data]);
+    const agora = Date.now();
+    const rows = (listaQ.data ?? [])
+      .filter((e) => vigencia !== "vigentes" || ehVigente(e, agora))
+      .map((e) => ({ e, v: rodadaVigente(e.oe_rodada) }));
+    const prazo = (x: { v: Rodada | null }) => t(x.v?.prazo_fim ?? null);
+    const futuros = rows.filter((x) => { const p = prazo(x); return p != null && p >= agora; }).sort((a, b) => prazo(a)! - prazo(b)!);
+    const vencidos = rows.filter((x) => { const p = prazo(x); return p != null && p < agora; }).sort((a, b) => prazo(b)! - prazo(a)!);
+    const semDatas = rows.filter((x) => prazo(x) == null)
+      .sort((a, b) => (t(b.e.visto_ultima_vez_em) ?? 0) - (t(a.e.visto_ultima_vez_em) ?? 0));
+    return [...futuros, ...vencidos, ...semDatas];
+  }, [listaQ.data, vigencia]);
+
+  const vigentesHoje = useMemo(() => lista.filter((x) => ehVigente(x.e)).length, [lista]);
 
   const selecionado = lista.find((x) => x.e.id === selId)?.e ?? null;
   const anoAtual = new Date().getFullYear();
