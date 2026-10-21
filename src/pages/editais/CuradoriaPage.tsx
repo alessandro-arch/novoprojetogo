@@ -154,6 +154,9 @@ const CuradoriaPage = () => {
 
   const listaView = (
     <div className="space-y-2">
+      {!listaQ.isLoading && !listaQ.isError && (
+        <p className="text-sm text-muted-foreground">{vigentesHoje} editais vigentes hoje</p>
+      )}
       {listaQ.isLoading ? (
         Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)
       ) : listaQ.isError ? (
@@ -174,6 +177,11 @@ const CuradoriaPage = () => {
               <Badge>{e.oe_fonte?.nome ?? e.oe_fonte?.slug ?? "Fonte"}</Badge>
               {semNumero(e.numero) ? <Badge variant="outline">Sem número</Badge> : <span className="text-xs text-muted-foreground">Nº {e.numero}</span>}
               {e.situacao && <Badge variant="secondary">{SITUACOES[e.situacao] ?? e.situacao}</Badge>}
+              {(() => {
+                const dias = diasAte(v?.prazo_fim);
+                if (dias == null || dias < 0) return null;
+                return <Badge variant={dias <= 7 ? "default" : "outline"}>{dias === 0 ? "Fecha hoje" : `Faltam ${dias} dias`}</Badge>;
+              })()}
             </div>
             <p className="font-medium text-foreground text-sm line-clamp-2">{e.titulo}</p>
             <p className="text-xs text-muted-foreground mt-1">
@@ -219,6 +227,7 @@ const CuradoriaPage = () => {
         </div>
 
         <div className="flex flex-wrap gap-3">
+          {filtro("Vigência", vigencia, mudarVigencia, [["vigentes", "Vigentes hoje"]])}
           {filtro("Fonte", fonte, setFonte, (fontesQ.data ?? []).map((f) => [f.id, f.nome]))}
           {filtro("Situação", situacao, setSituacao, Object.entries(SITUACOES))}
           {filtro("Status de curadoria", status, setStatus, Object.entries(STATUS))}
