@@ -32,6 +32,7 @@ import ServiceDeskLogin from "./pages/servicedesk/ServiceDeskLogin";
 import ServiceDeskFirstAccess from "./pages/servicedesk/ServiceDeskFirstAccess";
 import VpnUvv from "./pages/VpnUvv";
 import CuradoriaPage from "./pages/editais/CuradoriaPage";
+import EditaisPage from "./pages/editais/EditaisPage";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,8 @@ const App = () => (
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/admin/*" element={<ProtectedRoute allowedRoles={["icca_admin"]}><AdminPanel /></ProtectedRoute>} />
               <Route path="/editais/curadoria" element={<ProtectedRoute allowedRoles={["icca_admin"]}><CuradoriaPage /></ProtectedRoute>} />
+              {/* TODO: controle por plano e afiliação institucional em etapa posterior */}
+              <Route path="/editais" element={<ProtectedRoute><EditaisPage /></ProtectedRoute>} />
               <Route path="/org/*" element={<ProtectedRoute allowedRoles={["org_admin", "edital_manager"]}><OrgPanel /></ProtectedRoute>} />
               <Route path="/proponente/*" element={<ProtectedRoute allowedRoles={["proponente"]}><ProponentePanel /></ProtectedRoute>} />
               <Route path="/reviewer/terms" element={<ProtectedRoute allowedRoles={["reviewer"]}><ReviewerTermsPage /></ProtectedRoute>} />
