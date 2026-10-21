@@ -43,6 +43,22 @@ export const rodadaVigente = (rodadas: Rodada[] = [], agora = Date.now()): Rodad
   return futura ?? ord[ord.length - 1];
 };
 
+/** Vigente hoje: situação aberta ou alguma rodada em andamento; descartado nunca é vigente. */
+export const ehVigente = (e: EditalRow, agora = Date.now()): boolean => {
+  if (e.status_curadoria === "descartado") return false;
+  if (e.situacao === "aberto") return true;
+  return (e.oe_rodada ?? []).some((r) => (t(r.abertura) ?? -Infinity) <= agora && (t(r.prazo_fim) ?? Infinity) >= agora);
+};
+
+/** Dias corridos até o prazo, no horário de Brasília (0 = fecha hoje). */
+export const diasAte = (prazo: string | null | undefined, agora = new Date()): number | null => {
+  if (!prazo) return null;
+  const d = new Date(prazo);
+  if (isNaN(d.getTime())) return null;
+  const fmt = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" });
+  return Math.round((new Date(fmt.format(d)).getTime() - new Date(fmt.format(agora)).getTime()) / 86400000);
+};
+
 export const SITUACOES: Record<string, string> = { aberto: "Aberto", em_julgamento: "Em julgamento", encerrado: "Encerrado", resultado: "Resultado", revogado: "Revogado" };
 export const STATUS: Record<string, string> = { rascunho: "Rascunho", em_revisao: "Em revisão", publicado: "Publicado", descartado: "Descartado" };
 const NONE = "__none__";
@@ -52,9 +68,15 @@ const CuradoriaPage = () => {
   const isMobile = useIsMobile();
   const [fonte, setFonte] = useState(NONE);
   const [situacao, setSituacao] = useState(NONE);
-  const [status, setStatus] = useState("rascunho");
+  const [vigencia, setVigencia] = useState("vigentes");
+  const [status, setStatus] = useState(NONE);
   const [ano, setAno] = useState("2026");
   const [selId, setSelId] = useState<string | null>(null);
+
+  const mudarVigencia = (v: string) => {
+    setVigencia(v);
+    setStatus(v === "vigentes" ? NONE : "rascunho");
+  };
 
   const fontesQ = useQuery({
     queryKey: ["oe-fontes"],
@@ -99,13 +121,19 @@ const CuradoriaPage = () => {
   });
 
   const lista = useMemo(() => {
-    const rows = (listaQ.data ?? []).map((e) => ({ e, v: rodadaVigente(e.oe_rodada) }));
-    return rows.sort((a, b) => {
-      const pa = t(a.v?.prazo_fim ?? null), pb = t(b.v?.prazo_fim ?? null);
-      if (pa !== pb) return pa == null ? 1 : pb == null ? -1 : pa - pb;
-      return (t(b.e.visto_ultima_vez_em) ?? 0) - (t(a.e.visto_ultima_vez_em) ?? 0);
-    });
-  }, [listaQ.data]);
+    const agora = Date.now();
+    const rows = (listaQ.data ?? [])
+      .filter((e) => vigencia !== "vigentes" || ehVigente(e, agora))
+      .map((e) => ({ e, v: rodadaVigente(e.oe_rodada) }));
+    const prazo = (x: { v: Rodada | null }) => t(x.v?.prazo_fim ?? null);
+    const futuros = rows.filter((x) => { const p = prazo(x); return p != null && p >= agora; }).sort((a, b) => prazo(a)! - prazo(b)!);
+    const vencidos = rows.filter((x) => { const p = prazo(x); return p != null && p < agora; }).sort((a, b) => prazo(b)! - prazo(a)!);
+    const semDatas = rows.filter((x) => prazo(x) == null)
+      .sort((a, b) => (t(b.e.visto_ultima_vez_em) ?? 0) - (t(a.e.visto_ultima_vez_em) ?? 0));
+    return [...futuros, ...vencidos, ...semDatas];
+  }, [listaQ.data, vigencia]);
+
+  const vigentesHoje = useMemo(() => lista.filter((x) => ehVigente(x.e)).length, [lista]);
 
   const selecionado = lista.find((x) => x.e.id === selId)?.e ?? null;
   const anoAtual = new Date().getFullYear();
@@ -126,6 +154,9 @@ const CuradoriaPage = () => {
 
   const listaView = (
     <div className="space-y-2">
+      {!listaQ.isLoading && !listaQ.isError && (
+        <p className="text-sm text-muted-foreground">{vigentesHoje} editais vigentes hoje</p>
+      )}
       {listaQ.isLoading ? (
         Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)
       ) : listaQ.isError ? (
@@ -146,6 +177,11 @@ const CuradoriaPage = () => {
               <Badge>{e.oe_fonte?.nome ?? e.oe_fonte?.slug ?? "Fonte"}</Badge>
               {semNumero(e.numero) ? <Badge variant="outline">Sem número</Badge> : <span className="text-xs text-muted-foreground">Nº {e.numero}</span>}
               {e.situacao && <Badge variant="secondary">{SITUACOES[e.situacao] ?? e.situacao}</Badge>}
+              {(() => {
+                const dias = diasAte(v?.prazo_fim);
+                if (dias == null || dias < 0) return null;
+                return <Badge variant={dias <= 7 ? "default" : "outline"}>{dias === 0 ? "Fecha hoje" : `Faltam ${dias} dias`}</Badge>;
+              })()}
             </div>
             <p className="font-medium text-foreground text-sm line-clamp-2">{e.titulo}</p>
             <p className="text-xs text-muted-foreground mt-1">
@@ -191,6 +227,7 @@ const CuradoriaPage = () => {
         </div>
 
         <div className="flex flex-wrap gap-3">
+          {filtro("Vigência", vigencia, mudarVigencia, [["vigentes", "Vigentes hoje"]])}
           {filtro("Fonte", fonte, setFonte, (fontesQ.data ?? []).map((f) => [f.id, f.nome]))}
           {filtro("Situação", situacao, setSituacao, Object.entries(SITUACOES))}
           {filtro("Status de curadoria", status, setStatus, Object.entries(STATUS))}

@@ -31,6 +31,13 @@ const CONF: Record<string, { label: string; variant: "default" | "secondary" | "
   baixa: { label: "Confiança baixa", variant: "outline" },
 };
 const DESTAQUE = ["retificacao", "retificação", "errata", "adendo"];
+const EVENTOS: Record<string, string> = {
+  novo_edital: "Novo edital", prazo_alterado: "Prazo alterado", retificacao: "Retificação", errata: "Errata",
+  adendo: "Adendo", anexo_novo: "Novo anexo", versao_atualizada: "Versão atualizada", rodada_aberta: "Rodada aberta",
+  status_mudou: "Situação alterada", resultado_preliminar: "Resultado preliminar", resultado_final: "Resultado final",
+  resultado_retificado: "Resultado retificado", resultado_sem_efeito: "Resultado sem efeito", edital_revogado: "Edital revogado",
+  prazo_de_recurso: "Prazo de recurso",
+};
 
 interface Extracao { id: string; campo: string; valor: string | null; trecho_origem: string | null; confianca: string | null; status: string; created_at: string }
 
@@ -94,6 +101,7 @@ const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
       else upd = { ...payloadCampos(), status_curadoria: "publicado", verificado_em: agora, verificado_por: user?.id };
       const { error } = await oe.from("oe_edital").update(upd).eq("id", edital.id);
       if (error) throw error;
+      let falhas = 0;
       if (acao === "publicar") {
         for (const x of extQ.data ?? []) {
           const final = x.campo === "areas"
@@ -105,13 +113,21 @@ const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
           const { error: e2 } = await oe.from("oe_extracao").update({
             status: final === extraido ? "aprovado" : "editado", revisado_por: user?.id, revisado_em: agora,
           }).eq("id", x.id);
-          if (e2) throw e2;
+          if (e2) falhas++;
         }
       }
-      return acao;
+      return { acao, falhas };
     },
-    onSuccess: (acao) => {
-      toast({ title: acao === "publicar" ? "Edital publicado" : acao === "revisao" ? "Salvo como em revisão" : "Edital descartado" });
+    onSuccess: ({ acao, falhas }) => {
+      if (acao === "publicar" && falhas > 0) {
+        toast({
+          title: "Edital publicado com ressalva",
+          description: `O edital foi publicado, mas ${falhas} ${falhas === 1 ? "extração não foi marcada" : "extrações não foram marcadas"}. Revise as extrações manualmente.`,
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: acao === "publicar" ? "Edital publicado" : acao === "revisao" ? "Salvo como em revisão" : "Edital descartado" });
+      }
       invalidar();
     },
     onError: (e: Error) => toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" }),
@@ -238,7 +254,7 @@ const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
               {(evQ.data ?? []).map((ev) => (
                 <li key={ev.id} className="text-sm">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="font-medium text-foreground">{ev.tipo}</span>
+                    <span className="font-medium text-foreground">{EVENTOS[ev.tipo] ?? ev.tipo}</span>
                     {ev.origem === "carga_inicial" && <Badge variant="outline">Carga inicial</Badge>}
                     <span className="text-xs text-muted-foreground">{fmtData(ev.ocorrido_em, true)}</span>
                   </div>
