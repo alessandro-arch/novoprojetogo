@@ -1,4 +1,5 @@
 # AGENTS
+- Operon Fomento uses the shared Supabase session with a dedicated module login and reads existing role and organization-config RLS results for admission; this keeps module entry points separate without parallel authentication or tenant models.
 - Service Desk operations: one Central de Atendimento at /servicedesk/atendimento for every responsible group (context via ?grupo=); stage type (analysis = 1st step, execution = later steps) and modules derive from service steps, never group names; legacy /servicedesk/<group code> redirects there; VPN release goes through `sd_release_vpn` + private `servicedesk` bucket path `<org>/vpn/<request>/` and `sd-notify` event `liberar_vpn`.
 
 - Service Desk tenant = `public.organizations`; every `sd_*` table carries `organization_id` and RLS uses `sd_is_member`/`sd_is_admin`/`sd_in_group` — keeps institutions isolated without a parallel tenant model.

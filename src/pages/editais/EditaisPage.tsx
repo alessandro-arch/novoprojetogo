@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Placeholder } from "@/components/servicedesk/sd-ui";
-import { ArrowLeft, ExternalLink, FileText } from "lucide-react";
+import { ArrowLeft, ExternalLink, FileText, LogOut } from "lucide-react";
 import { oe, EditalRow, Rodada, fmtData, rodadaVigente, ehVigente, diasAte, semNumero } from "./CuradoriaPage";
 
 const NONE = "__none__";
@@ -108,6 +110,22 @@ const Detalhe = ({ e }: { e: EditalRow }) => {
 const EditaisPage = () => {
   const [fonte, setFonte] = useState(NONE);
   const [sel, setSel] = useState<EditalRow | null>(null);
+  const [saindo, setSaindo] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    setSaindo(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      navigate("/editais/login", { replace: true });
+    } catch {
+      toast({ title: "Erro ao sair", description: "Não foi possível sair. Tente novamente.", variant: "destructive" });
+    } finally {
+      setSaindo(false);
+    }
+  };
 
   const fontesQ = useQuery({
     queryKey: ["oe-fontes"],
@@ -148,7 +166,10 @@ const EditaisPage = () => {
             </div>
             <h1 className="text-lg font-bold font-heading text-foreground">Operon Fomento</h1>
           </div>
-          <Link to="/"><Button variant="ghost" size="sm"><ArrowLeft className="w-4 h-4 mr-1" /> Voltar</Button></Link>
+          <div className="flex items-center gap-1">
+            <Link to="/"><Button variant="ghost" size="sm"><ArrowLeft className="w-4 h-4 mr-1" /> Voltar</Button></Link>
+            <Button variant="ghost" size="sm" onClick={handleLogout} disabled={saindo}><LogOut className="w-4 h-4 mr-1" /> Sair</Button>
+          </div>
         </div>
       </header>
 
