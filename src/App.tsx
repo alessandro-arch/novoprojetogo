@@ -31,6 +31,7 @@ import ServiceDeskPanel from "./pages/servicedesk/ServiceDeskPanel";
 import ServiceDeskLogin from "./pages/servicedesk/ServiceDeskLogin";
 import ServiceDeskFirstAccess from "./pages/servicedesk/ServiceDeskFirstAccess";
 import VpnUvv from "./pages/VpnUvv";
+import CuradoriaPage from "./pages/editais/CuradoriaPage";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,7 @@ const App = () => (
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/admin/*" element={<ProtectedRoute allowedRoles={["icca_admin"]}><AdminPanel /></ProtectedRoute>} />
+              <Route path="/editais/curadoria" element={<ProtectedRoute allowedRoles={["icca_admin"]}><CuradoriaPage /></ProtectedRoute>} />
               <Route path="/org/*" element={<ProtectedRoute allowedRoles={["org_admin", "edital_manager"]}><OrgPanel /></ProtectedRoute>} />
               <Route path="/proponente/*" element={<ProtectedRoute allowedRoles={["proponente"]}><ProponentePanel /></ProtectedRoute>} />
               <Route path="/reviewer/terms" element={<ProtectedRoute allowedRoles={["reviewer"]}><ReviewerTermsPage /></ProtectedRoute>} />
