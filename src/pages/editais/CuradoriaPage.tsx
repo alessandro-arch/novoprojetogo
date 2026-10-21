@@ -43,6 +43,22 @@ export const rodadaVigente = (rodadas: Rodada[] = [], agora = Date.now()): Rodad
   return futura ?? ord[ord.length - 1];
 };
 
+/** Vigente hoje: situação aberta ou alguma rodada em andamento; descartado nunca é vigente. */
+export const ehVigente = (e: EditalRow, agora = Date.now()): boolean => {
+  if (e.status_curadoria === "descartado") return false;
+  if (e.situacao === "aberto") return true;
+  return (e.oe_rodada ?? []).some((r) => (t(r.abertura) ?? -Infinity) <= agora && (t(r.prazo_fim) ?? Infinity) >= agora);
+};
+
+/** Dias corridos até o prazo, no horário de Brasília (0 = fecha hoje). */
+export const diasAte = (prazo: string | null | undefined, agora = new Date()): number | null => {
+  if (!prazo) return null;
+  const d = new Date(prazo);
+  if (isNaN(d.getTime())) return null;
+  const fmt = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" });
+  return Math.round((new Date(fmt.format(d)).getTime() - new Date(fmt.format(agora)).getTime()) / 86400000);
+};
+
 export const SITUACOES: Record<string, string> = { aberto: "Aberto", em_julgamento: "Em julgamento", encerrado: "Encerrado", resultado: "Resultado", revogado: "Revogado" };
 export const STATUS: Record<string, string> = { rascunho: "Rascunho", em_revisao: "Em revisão", publicado: "Publicado", descartado: "Descartado" };
 const NONE = "__none__";
@@ -52,9 +68,15 @@ const CuradoriaPage = () => {
   const isMobile = useIsMobile();
   const [fonte, setFonte] = useState(NONE);
   const [situacao, setSituacao] = useState(NONE);
-  const [status, setStatus] = useState("rascunho");
+  const [vigencia, setVigencia] = useState("vigentes");
+  const [status, setStatus] = useState(NONE);
   const [ano, setAno] = useState("2026");
   const [selId, setSelId] = useState<string | null>(null);
+
+  const mudarVigencia = (v: string) => {
+    setVigencia(v);
+    setStatus(v === "vigentes" ? NONE : "rascunho");
+  };
 
   const fontesQ = useQuery({
     queryKey: ["oe-fontes"],
