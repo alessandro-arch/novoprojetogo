@@ -1372,6 +1372,744 @@ export type Database = {
         }
         Relationships: []
       }
+      oe_coleta: {
+        Row: {
+          erro: string | null
+          eventos_gerados: number | null
+          fonte_id: string
+          id: string
+          iniciou_em: string
+          itens_vistos: number | null
+          ok: boolean | null
+          robots_status: string | null
+          terminou_em: string | null
+        }
+        Insert: {
+          erro?: string | null
+          eventos_gerados?: number | null
+          fonte_id: string
+          id?: string
+          iniciou_em?: string
+          itens_vistos?: number | null
+          ok?: boolean | null
+          robots_status?: string | null
+          terminou_em?: string | null
+        }
+        Update: {
+          erro?: string | null
+          eventos_gerados?: number | null
+          fonte_id?: string
+          id?: string
+          iniciou_em?: string
+          itens_vistos?: number | null
+          ok?: boolean | null
+          robots_status?: string | null
+          terminou_em?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oe_coleta_fonte_id_fkey"
+            columns: ["fonte_id"]
+            isOneToOne: false
+            referencedRelation: "oe_fonte"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oe_curador: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oe_curador_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oe_destinatario: {
+        Row: {
+          ativo: boolean
+          canal: string
+          confirmado_em: string | null
+          endereco: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          canal: string
+          confirmado_em?: string | null
+          endereco: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          canal?: string
+          confirmado_em?: string | null
+          endereco?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      oe_documento: {
+        Row: {
+          edital_id: string
+          formato: string
+          hash_sha256: string | null
+          id: string
+          publicado_em: string | null
+          rotulo: string
+          substituido: boolean
+          tipo: string
+          url: string
+          versao: number
+          visto_primeira_vez_em: string
+        }
+        Insert: {
+          edital_id: string
+          formato?: string
+          hash_sha256?: string | null
+          id?: string
+          publicado_em?: string | null
+          rotulo: string
+          substituido?: boolean
+          tipo: string
+          url: string
+          versao?: number
+          visto_primeira_vez_em?: string
+        }
+        Update: {
+          edital_id?: string
+          formato?: string
+          hash_sha256?: string | null
+          id?: string
+          publicado_em?: string | null
+          rotulo?: string
+          substituido?: boolean
+          tipo?: string
+          url?: string
+          versao?: number
+          visto_primeira_vez_em?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oe_documento_edital_id_fkey"
+            columns: ["edital_id"]
+            isOneToOne: false
+            referencedRelation: "oe_edital"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oe_edital: {
+        Row: {
+          ano: number
+          areas: string[]
+          categoria: string | null
+          chave_externa: string
+          contrapartida: string | null
+          created_at: string
+          embedding: string | null
+          fonte_id: string
+          id: string
+          numero: string
+          objetivo: string | null
+          orgao: string
+          publicado_em: string | null
+          quem_pode: string | null
+          recursos: string | null
+          situacao: string
+          status_curadoria: string
+          tipo: string | null
+          titulo: string
+          updated_at: string
+          url_oficial: string
+          verificado_em: string | null
+          verificado_por: string | null
+          visto_ultima_vez_em: string | null
+        }
+        Insert: {
+          ano: number
+          areas?: string[]
+          categoria?: string | null
+          chave_externa: string
+          contrapartida?: string | null
+          created_at?: string
+          embedding?: string | null
+          fonte_id: string
+          id?: string
+          numero: string
+          objetivo?: string | null
+          orgao?: string
+          publicado_em?: string | null
+          quem_pode?: string | null
+          recursos?: string | null
+          situacao?: string
+          status_curadoria?: string
+          tipo?: string | null
+          titulo: string
+          updated_at?: string
+          url_oficial: string
+          verificado_em?: string | null
+          verificado_por?: string | null
+          visto_ultima_vez_em?: string | null
+        }
+        Update: {
+          ano?: number
+          areas?: string[]
+          categoria?: string | null
+          chave_externa?: string
+          contrapartida?: string | null
+          created_at?: string
+          embedding?: string | null
+          fonte_id?: string
+          id?: string
+          numero?: string
+          objetivo?: string | null
+          orgao?: string
+          publicado_em?: string | null
+          quem_pode?: string | null
+          recursos?: string | null
+          situacao?: string
+          status_curadoria?: string
+          tipo?: string | null
+          titulo?: string
+          updated_at?: string
+          url_oficial?: string
+          verificado_em?: string | null
+          verificado_por?: string | null
+          visto_ultima_vez_em?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oe_edital_fonte_id_fkey"
+            columns: ["fonte_id"]
+            isOneToOne: false
+            referencedRelation: "oe_fonte"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oe_envio: {
+        Row: {
+          canal: string
+          created_at: string
+          destinatario_id: string
+          enviado_em: string | null
+          erro: string | null
+          evento_id: string | null
+          id: string
+          motivo: string
+          organization_id: string | null
+          status: string
+        }
+        Insert: {
+          canal: string
+          created_at?: string
+          destinatario_id: string
+          enviado_em?: string | null
+          erro?: string | null
+          evento_id?: string | null
+          id?: string
+          motivo?: string
+          organization_id?: string | null
+          status?: string
+        }
+        Update: {
+          canal?: string
+          created_at?: string
+          destinatario_id?: string
+          enviado_em?: string | null
+          erro?: string | null
+          evento_id?: string | null
+          id?: string
+          motivo?: string
+          organization_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oe_envio_destinatario_id_fkey"
+            columns: ["destinatario_id"]
+            isOneToOne: false
+            referencedRelation: "oe_destinatario"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oe_envio_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "oe_evento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oe_envio_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oe_evento: {
+        Row: {
+          chave_dedup: string
+          created_at: string
+          documento_id: string | null
+          edital_id: string
+          id: string
+          liberado: boolean
+          ocorrido_em: string
+          origem: string
+          tipo: string
+          valor_anterior: string | null
+          valor_novo: string | null
+        }
+        Insert: {
+          chave_dedup: string
+          created_at?: string
+          documento_id?: string | null
+          edital_id: string
+          id?: string
+          liberado?: boolean
+          ocorrido_em?: string
+          origem?: string
+          tipo: string
+          valor_anterior?: string | null
+          valor_novo?: string | null
+        }
+        Update: {
+          chave_dedup?: string
+          created_at?: string
+          documento_id?: string | null
+          edital_id?: string
+          id?: string
+          liberado?: boolean
+          ocorrido_em?: string
+          origem?: string
+          tipo?: string
+          valor_anterior?: string | null
+          valor_novo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oe_evento_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "oe_documento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oe_evento_edital_id_fkey"
+            columns: ["edital_id"]
+            isOneToOne: false
+            referencedRelation: "oe_edital"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oe_extracao: {
+        Row: {
+          campo: string
+          confianca: string
+          created_at: string
+          documento_id: string | null
+          edital_id: string | null
+          fonte_id: string | null
+          id: string
+          pagina: number | null
+          revisado_em: string | null
+          revisado_por: string | null
+          status: string
+          trecho_origem: string | null
+          url_origem: string | null
+          valor: string | null
+        }
+        Insert: {
+          campo: string
+          confianca: string
+          created_at?: string
+          documento_id?: string | null
+          edital_id?: string | null
+          fonte_id?: string | null
+          id?: string
+          pagina?: number | null
+          revisado_em?: string | null
+          revisado_por?: string | null
+          status?: string
+          trecho_origem?: string | null
+          url_origem?: string | null
+          valor?: string | null
+        }
+        Update: {
+          campo?: string
+          confianca?: string
+          created_at?: string
+          documento_id?: string | null
+          edital_id?: string | null
+          fonte_id?: string | null
+          id?: string
+          pagina?: number | null
+          revisado_em?: string | null
+          revisado_por?: string | null
+          status?: string
+          trecho_origem?: string | null
+          url_origem?: string | null
+          valor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oe_extracao_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "oe_documento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oe_extracao_edital_id_fkey"
+            columns: ["edital_id"]
+            isOneToOne: false
+            referencedRelation: "oe_edital"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oe_extracao_fonte_id_fkey"
+            columns: ["fonte_id"]
+            isOneToOne: false
+            referencedRelation: "oe_fonte"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oe_fonte: {
+        Row: {
+          ativa: boolean
+          created_at: string
+          falhas_seguidas: number
+          id: string
+          nome: string
+          slug: string
+          ultima_coleta_em: string | null
+          ultimo_erro: string | null
+          ultimo_ok_em: string | null
+          updated_at: string
+          url_base: string
+        }
+        Insert: {
+          ativa?: boolean
+          created_at?: string
+          falhas_seguidas?: number
+          id?: string
+          nome: string
+          slug: string
+          ultima_coleta_em?: string | null
+          ultimo_erro?: string | null
+          ultimo_ok_em?: string | null
+          updated_at?: string
+          url_base: string
+        }
+        Update: {
+          ativa?: boolean
+          created_at?: string
+          falhas_seguidas?: number
+          id?: string
+          nome?: string
+          slug?: string
+          ultima_coleta_em?: string | null
+          ultimo_erro?: string | null
+          ultimo_ok_em?: string | null
+          updated_at?: string
+          url_base?: string
+        }
+        Relationships: []
+      }
+      oe_org_config: {
+        Row: {
+          ativa: boolean
+          created_at: string
+          dominios_email: string[]
+          fontes: string[]
+          nome_exibicao: string | null
+          organization_id: string
+          remetente_email: string | null
+          telegram_canal: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativa?: boolean
+          created_at?: string
+          dominios_email?: string[]
+          fontes?: string[]
+          nome_exibicao?: string | null
+          organization_id: string
+          remetente_email?: string | null
+          telegram_canal?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativa?: boolean
+          created_at?: string
+          dominios_email?: string[]
+          fontes?: string[]
+          nome_exibicao?: string | null
+          organization_id?: string
+          remetente_email?: string | null
+          telegram_canal?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oe_org_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oe_org_edital: {
+        Row: {
+          destaque: boolean
+          edital_id: string
+          nota: string | null
+          organization_id: string
+          programas: string[]
+          updated_at: string
+        }
+        Insert: {
+          destaque?: boolean
+          edital_id: string
+          nota?: string | null
+          organization_id: string
+          programas?: string[]
+          updated_at?: string
+        }
+        Update: {
+          destaque?: boolean
+          edital_id?: string
+          nota?: string | null
+          organization_id?: string
+          programas?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oe_org_edital_edital_fk"
+            columns: ["edital_id"]
+            isOneToOne: false
+            referencedRelation: "oe_edital"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oe_org_edital_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oe_perfil: {
+        Row: {
+          areas: string[]
+          consentimento_lgpd: boolean
+          embedding: string | null
+          titulacao: string | null
+          updated_at: string
+          user_id: string
+          vinculo: string | null
+        }
+        Insert: {
+          areas?: string[]
+          consentimento_lgpd?: boolean
+          embedding?: string | null
+          titulacao?: string | null
+          updated_at?: string
+          user_id: string
+          vinculo?: string | null
+        }
+        Update: {
+          areas?: string[]
+          consentimento_lgpd?: boolean
+          embedding?: string | null
+          titulacao?: string | null
+          updated_at?: string
+          user_id?: string
+          vinculo?: string | null
+        }
+        Relationships: []
+      }
+      oe_preferencia_alerta: {
+        Row: {
+          fontes: string[]
+          lembretes_dias: number[]
+          tipos_evento: string[]
+          user_id: string
+        }
+        Insert: {
+          fontes?: string[]
+          lembretes_dias?: number[]
+          tipos_evento?: string[]
+          user_id: string
+        }
+        Update: {
+          fontes?: string[]
+          lembretes_dias?: number[]
+          tipos_evento?: string[]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      oe_rodada: {
+        Row: {
+          abertura: string | null
+          edital_id: string
+          id: string
+          observacao: string | null
+          ordem: number
+          prazo_fim: string | null
+          texto_original: string | null
+        }
+        Insert: {
+          abertura?: string | null
+          edital_id: string
+          id?: string
+          observacao?: string | null
+          ordem?: number
+          prazo_fim?: string | null
+          texto_original?: string | null
+        }
+        Update: {
+          abertura?: string | null
+          edital_id?: string
+          id?: string
+          observacao?: string | null
+          ordem?: number
+          prazo_fim?: string | null
+          texto_original?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oe_rodada_edital_id_fkey"
+            columns: ["edital_id"]
+            isOneToOne: false
+            referencedRelation: "oe_edital"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oe_seguidor_edital: {
+        Row: {
+          canal_email: boolean
+          canal_telegram: boolean
+          criado_em: string
+          edital_id: string
+          user_id: string
+        }
+        Insert: {
+          canal_email?: boolean
+          canal_telegram?: boolean
+          criado_em?: string
+          edital_id: string
+          user_id: string
+        }
+        Update: {
+          canal_email?: boolean
+          canal_telegram?: boolean
+          criado_em?: string
+          edital_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oe_seguidor_edital_edital_id_fkey"
+            columns: ["edital_id"]
+            isOneToOne: false
+            referencedRelation: "oe_edital"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oe_snapshot: {
+        Row: {
+          alterado_em: string
+          chave: string
+          fonte_id: string
+          hash_sha256: string
+          visto_em: string
+        }
+        Insert: {
+          alterado_em?: string
+          chave: string
+          fonte_id: string
+          hash_sha256: string
+          visto_em?: string
+        }
+        Update: {
+          alterado_em?: string
+          chave?: string
+          fonte_id?: string
+          hash_sha256?: string
+          visto_em?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oe_snapshot_fonte_id_fkey"
+            columns: ["fonte_id"]
+            isOneToOne: false
+            referencedRelation: "oe_fonte"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oe_vinculo_telegram: {
+        Row: {
+          created_at: string
+          expira_em: string
+          id: string
+          token_hash: string
+          usado_em: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expira_em: string
+          id?: string
+          token_hash: string
+          usado_em?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expira_em?: string
+          id?: string
+          token_hash?: string
+          usado_em?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       organization_members: {
         Row: {
           created_at: string
@@ -3328,6 +4066,14 @@ export type Database = {
         Returns: string
       }
       normalize_ppg: { Args: { _value: string }; Returns: string }
+      oe_confirmar_vinculo_telegram: {
+        Args: { p_chat_id: string; p_token: string }
+        Returns: string
+      }
+      oe_gerar_vinculo_telegram: { Args: never; Returns: string }
+      oe_is_curador: { Args: never; Returns: boolean }
+      oe_is_curador_org: { Args: { org: string }; Returns: boolean }
+      oe_membro_org: { Args: { org: string }; Returns: boolean }
       sd_advance_request: {
         Args: { _action: string; _id: string; _note: string }
         Returns: undefined
