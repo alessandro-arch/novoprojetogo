@@ -6,6 +6,7 @@ import AudienceSection from "@/components/landing/AudienceSection";
 import PublicEditaisSection from "@/components/landing/PublicEditaisSection";
 import FomentoSection from "@/components/landing/FomentoSection";
 import ServiceDeskSection from "@/components/landing/ServiceDeskSection";
+import OperonFomentoSection from "@/components/landing/OperonFomentoSection";
 import CTASection from "@/components/landing/CTASection";
 import Footer from "@/components/landing/Footer";
 
@@ -20,6 +21,7 @@ const Index = () => {
       <AudienceSection />
       <FomentoSection />
       <ServiceDeskSection />
+      <OperonFomentoSection />
       <CTASection
         title="Quer ver a plataforma em ação?"
         subtitle="Solicite uma demonstração e descubra como o ProjetoGO pode transformar a gestão de editais da sua instituição."

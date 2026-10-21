@@ -1526,6 +1526,8 @@ export type Database = {
         Row: {
           ano: number
           areas: string[]
+          arquivado_em: string | null
+          arquivado_motivo: string | null
           categoria: string | null
           chave_externa: string
           contrapartida: string | null
@@ -1552,6 +1554,8 @@ export type Database = {
         Insert: {
           ano: number
           areas?: string[]
+          arquivado_em?: string | null
+          arquivado_motivo?: string | null
           categoria?: string | null
           chave_externa: string
           contrapartida?: string | null
@@ -1578,6 +1582,8 @@ export type Database = {
         Update: {
           ano?: number
           areas?: string[]
+          arquivado_em?: string | null
+          arquivado_motivo?: string | null
           categoria?: string | null
           chave_externa?: string
           contrapartida?: string | null
