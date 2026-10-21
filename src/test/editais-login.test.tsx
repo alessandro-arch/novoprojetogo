@@ -1,4 +1,5 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act } from "react";
+import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import EditaisLogin from "@/pages/editais/EditaisLogin";
 
@@ -21,11 +22,26 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 vi.mock("@/pages/editais/CuradoriaPage", () => ({ oe: { from: mocks.config } }));
 
-const submit = () => {
-  render(<EditaisLogin />);
-  fireEvent.change(screen.getByLabelText("E-mail"), { target: { value: "teste@example.org" } });
-  fireEvent.change(screen.getByLabelText("Senha"), { target: { value: "senha-de-teste" } });
-  fireEvent.click(screen.getByRole("button", { name: "Entrar" }));
+let root: Root | undefined;
+const waitFor = async (assertion: () => void) => { assertion(); };
+const submit = async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () => root?.render(<EditaisLogin />));
+  const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+  if (!setValue) throw new Error("Input setter unavailable");
+  await act(async () => {
+    for (const [id, value] of [["email", "teste@example.org"], ["password", "senha-de-teste"]]) {
+      const input = container.querySelector(`#${id}`);
+      if (!input) throw new Error(`Missing input ${id}`);
+      setValue.call(input, value);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+  });
+  await act(async () => {
+    container.querySelector("form")?.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  });
 };
 
 beforeEach(() => {
@@ -38,19 +54,22 @@ beforeEach(() => {
   mocks.active.mockReturnValue({ limit: mocks.limit });
   mocks.limit.mockResolvedValue({ data: [], error: null });
 });
-afterEach(cleanup);
+afterEach(async () => {
+  await act(async () => root?.unmount());
+  document.body.innerHTML = "";
+});
 
 describe("Acesso ao Operon Fomento", () => {
   it("permite icca_admin sem organização ativa", async () => {
     mocks.roles.mockResolvedValue({ data: [{ role: "icca_admin" }], error: null });
-    submit();
+    await submit();
     await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith("/editais", { replace: true }));
     expect(mocks.signOut).not.toHaveBeenCalled();
   });
 
   it("permite organização ativa visível pela RLS, consultando somente uma linha", async () => {
     mocks.limit.mockResolvedValue({ data: [{ organization_id: "org-test" }], error: null });
-    submit();
+    await submit();
     await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith("/editais", { replace: true }));
     expect(mocks.config).toHaveBeenCalledWith("oe_org_config");
     expect(mocks.select).toHaveBeenCalledWith("organization_id");
@@ -60,7 +79,7 @@ describe("Acesso ao Operon Fomento", () => {
 
   it("encerra a sessão sem icca_admin nem organização ativa", async () => {
     mocks.roles.mockResolvedValue({ data: [{ role: "org_admin" }], error: null });
-    submit();
+    await submit();
     await waitFor(() => expect(mocks.signOut).toHaveBeenCalledOnce());
     expect(mocks.navigate).not.toHaveBeenCalled();
   });
@@ -68,7 +87,7 @@ describe("Acesso ao Operon Fomento", () => {
   it("não permite acesso quando ambas as verificações falham", async () => {
     mocks.roles.mockResolvedValue({ data: null, error: new Error("network") });
     mocks.limit.mockResolvedValue({ data: null, error: new Error("network") });
-    submit();
+    await submit();
     await waitFor(() => expect(mocks.signOut).toHaveBeenCalledOnce());
     expect(mocks.navigate).not.toHaveBeenCalled();
   });
