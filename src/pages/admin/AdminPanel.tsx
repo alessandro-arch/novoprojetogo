@@ -108,6 +108,9 @@ const AdminPanel = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Link to="/editais/curadoria">
+              <Button variant="ghost" size="sm"><FileText className="w-4 h-4 mr-1" /> Operon Editais</Button>
+            </Link>
             <Link to="/profile">
               <Button variant="ghost" size="sm"><UserCircle className="w-4 h-4 mr-1" /> Cadastro</Button>
             </Link>
