@@ -9,3 +9,4 @@
 - Requisito Fase 3: aluno cadastra com e-mail pessoal; professor só com e-mail do domínio da instituição (UVV @uvv.br)
 
 - [x] Operon Editais etapa 1: tela de curadoria em /editais/curadoria
+- [ ] Operon Fomento: login exclusivo, redirecionamentos e saída para /editais/login
