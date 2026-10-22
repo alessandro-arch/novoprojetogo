@@ -1,7 +1,18 @@
-import { requireCurator, ExtractionError, extractAndGenerate, generateWithFallback, callOpenRouter, RATE_MESSAGE, validateAI, fieldState, eligibleProposals, trustedPDFUrl, publicIP } from "./core.ts";
+import { requireCurator, ExtractionError, extractAndGenerate, generateWithFallback, callOpenRouter, DEFAULT_MODEL, FALLBACK_MODEL, RATE_MESSAGE, validateAI, fieldState, eligibleProposals, trustedPDFUrl, publicIP } from "./core.ts";
 const assert = (v: unknown, message = "Assertion failed") => { if (!v) throw new Error(message); };
 const source = "Pesquisa em instituições públicas. Submissões no edital.";
 const valid = JSON.stringify({ objetivo: { valor: "Pesquisa em instituições públicas.", trecho_origem: "Pesquisa em instituições públicas." } });
+Deno.test("usa DeepSeek v4.1 Flash na primeira chamada e na nova tentativa", async () => {
+  assert(DEFAULT_MODEL === "deepseek/deepseek-v4.1-flash");
+  assert(FALLBACK_MODEL === "deepseek/deepseek-v4.1-flash");
+  const calls: string[] = [];
+  const result = await generateWithFallback(source, [DEFAULT_MODEL, FALLBACK_MODEL], async model => {
+    calls.push(model);
+    return calls.length === 1 ? "invalid" : valid;
+  });
+  assert(calls.length === 2 && calls.every(model => model === "deepseek/deepseek-v4.1-flash"));
+  assert(result.modelo === "deepseek/deepseek-v4.1-flash" && Boolean(result.propostas.objetivo));
+});
 Deno.test("não curador recebe 403 antes de qualquer extração", async () => {
   let denied = false;
   try { await requireCurator("Bearer user-token", async () => true, async () => false); }
