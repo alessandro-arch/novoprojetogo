@@ -8,7 +8,31 @@ export const RATE_MESSAGE = "limite diário/por minuto da IA atingido, tente mai
 export class ExtractionError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
-export const BodySchema = z.object({ edital_id: z.string().uuid(), sobrescrever: z.boolean().optional().default(false) }).strict();
+export const BodySchema = z.object({ edital_id: z.string().uuid(), sobrescrever: z.boolean().optional().default(false),
+  etapa: z.literal("extrair_pdf").optional(), pagina: z.number().int().min(1).max(200).optional().default(1),
+}).strict();
+const PDFBatchSchema = z.object({ text: z.string(), next: z.number().int().min(1).max(200).nullable(), totalPages: z.number().int().min(1).max(200) });
+export async function collectPDFText(read: (start: number) => Promise<unknown>) {
+  const texts: string[] = [];
+  let start = 1, size = 0, totalPages: number | undefined;
+  while (true) {
+    const parsed = PDFBatchSchema.safeParse(await read(start));
+    if (!parsed.success) throw new ExtractionError(422, "PDF excede o limite de 200 páginas ou a leitura está incompleta.");
+    const batch = parsed.data;
+    if ((totalPages !== undefined && totalPages !== batch.totalPages) || start > batch.totalPages ||
+      (batch.next !== null && (batch.next <= start || batch.next > batch.totalPages)))
+      throw new ExtractionError(422, "Não foi possível concluir a leitura do PDF oficial.");
+    totalPages = batch.totalPages;
+    size += batch.text.length + (texts.length ? 1 : 0);
+    if (size > MAX_TEXT_CHARS) throw new ExtractionError(413, "Texto do PDF excede o limite de 120 mil caracteres.");
+    texts.push(batch.text);
+    if (batch.next === null) break;
+    start = batch.next;
+  }
+  const source = texts.join("\n");
+  if (!source.trim()) throw new ExtractionError(422, "PDF sem texto extraível");
+  return source;
+}
 const text = z.string().trim().min(1).max(MAX_TEXT_CHARS);
 const iso = z.string().datetime({ offset: true }).nullable();
 const round = z.object({ abertura: iso, prazo_fim: iso, resultado_em: iso }).strict().refine(r =>
@@ -75,7 +99,7 @@ export async function requireCurator(auth: string | null, claims: (token: string
 export async function extractAndGenerate(bytes: Uint8Array, extract: (bytes: Uint8Array) => Promise<string>, generate: (source: string) => Promise<Proposals>) {
   if (bytes.length > MAX_PDF_BYTES) throw new ExtractionError(413, "PDF excede o limite de 15 MB.");
   let source: string;
-  try { source = await extract(bytes); } catch { throw new ExtractionError(422, "Não foi possível extrair o texto do PDF."); }
+  try { source = await extract(bytes); } catch (e) { if (e instanceof ExtractionError) throw e; throw new ExtractionError(422, "Não foi possível extrair o texto do PDF."); }
   if (!source.trim()) throw new ExtractionError(422, "PDF sem texto extraível");
   if (source.length > MAX_TEXT_CHARS) throw new ExtractionError(413, "Texto do PDF excede o limite de 120 mil caracteres.");
   return generate(source);

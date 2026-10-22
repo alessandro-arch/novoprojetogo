@@ -1,9 +1,8 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { extractText } from "npm:unpdf@1.4.0";
 import { z } from "npm:zod@3.25.76";
 import { BodySchema, DEFAULT_MODEL, FALLBACK_MODEL, MAX_PDF_BYTES, ExtractionError, callOpenRouter,
-  requireCurator, extractAndGenerate, generateWithFallback, eligibleProposals, publicIP, trustedPDFUrl, type Proposals } from "./core.ts";
+  requireCurator, collectPDFText, generateWithFallback, eligibleProposals, publicIP, trustedPDFUrl, type Proposals } from "./core.ts";
 
 const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 async function downloadPDF(input: string): Promise<Uint8Array> {
@@ -63,9 +62,7 @@ Deno.serve(async req => {
     try { body = await req.json(); } catch { throw new ExtractionError(400, "Informe edital_id e sobrescrever em JSON."); }
     const parsed = BodySchema.safeParse(body);
     if (!parsed.success) throw new ExtractionError(400, "edital_id deve ser um UUID e sobrescrever deve ser booleano.");
-    const { edital_id, sobrescrever } = parsed.data;
-    const apiKey = Deno.env.get("OPENROUTER_API_KEY");
-    if (!apiKey) throw new ExtractionError(503, "Configure OPENROUTER_API_KEY nos segredos do projeto.");
+    const { edital_id, sobrescrever, etapa, pagina } = parsed.data;
     const [edital, document, rounds] = await Promise.all([
       client.from("oe_edital").select("resumo_tldr,objetivo,quem_pode,recursos,contrapartida,restricao_ies,requisitos_ies,abrangencia,url_oficial").eq("id", edital_id).maybeSingle(),
       client.from("oe_documento").select("url").eq("edital_id", edital_id).eq("tipo", "edital").eq("substituido", false).order("versao", { ascending: false }).order("publicado_em", { ascending: false, nullsFirst: false }).limit(1).maybeSingle(),
@@ -75,21 +72,34 @@ Deno.serve(async req => {
     if (!edital.data) throw new ExtractionError(404, "Edital não encontrado.");
     const pdfUrl = document.data?.url || edital.data.url_oficial;
     if (!pdfUrl) throw new ExtractionError(422, "Edital sem documento principal ou link oficial.");
+    if (etapa === "extrair_pdf") {
+      const { extractPDFBatch } = await import("./pdf.ts");
+      return json(await extractPDFBatch(await downloadPDF(pdfUrl), pagina));
+    }
+    const apiKey = Deno.env.get("OPENROUTER_API_KEY");
+    if (!apiKey) throw new ExtractionError(503, "Configure OPENROUTER_API_KEY nos segredos do projeto.");
     const baseUrl = Deno.env.get("OPENROUTER_BASE_URL") || "https://openrouter.ai/api/v1";
     const base = new URL(baseUrl);
     if (base.protocol !== "https:" || base.hostname !== "openrouter.ai" || base.username || base.password || (base.port && base.port !== "443")) throw new ExtractionError(503, "OPENROUTER_BASE_URL deve apontar para o OpenRouter oficial via HTTPS.");
     const models: [string, string] = [Deno.env.get("OPENROUTER_MODEL") || DEFAULT_MODEL, Deno.env.get("OPENROUTER_MODEL_FALLBACK") || FALLBACK_MODEL];
     let usedModel = models[0];
-    const proposals = await extractAndGenerate(await downloadPDF(pdfUrl), async bytes => {
-      const { text } = await extractText(bytes, { mergePages: true });
-      return text;
-    }, async source => {
+    // Self-invocations have independent CPU budgets. Every batch repeats JWT, curator and URL checks.
+    const source = await collectPDFText(async start => {
+      const response = await fetch(`${url}/functions/v1/operon-ia-extrair`, {
+        method: "POST", headers: { Authorization: authorization ?? "", apikey: anon, "Content-Type": "application/json" },
+        body: JSON.stringify({ edital_id, etapa: "extrair_pdf", pagina: start }), signal: AbortSignal.timeout(40_000),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new ExtractionError(response.status === 546 ? 422 : response.status,
+        response.status === 546 ? "Este PDF exige processamento acima do limite por página. Não foi possível concluir a leitura." :
+          typeof data.error === "string" ? data.error : "Não foi possível concluir a leitura do PDF oficial.");
+      return data;
+    });
       const generated = await generateWithFallback(source, models,
         model => callOpenRouter(source, model, baseUrl, apiKey),
         (model, status) => console.warn(JSON.stringify({ event: "operon_ia_attempt_failed", model, status })));
       usedModel = generated.modelo;
-      return generated.propostas;
-    });
+    const proposals = generated.propostas;
     let quota: { used: number; limit: number; remaining: number } | null = null;
     try {
       const response = await fetch("https://openrouter.ai/api/v1/key", { headers: { Authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(5000) });
