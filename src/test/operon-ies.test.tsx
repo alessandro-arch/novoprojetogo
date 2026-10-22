@@ -43,6 +43,8 @@ const open = async () => {
   root = createRoot(container);
   await act(async () => root?.render(<QueryClientProvider client={qc}><EditalCuradoriaDetail edital={edital} /></QueryClientProvider>));
   await waitFor(() => expect(mocks.extractFilter).toHaveBeenCalled());
+  // Wait for query data to render, not only for the request to start.
+  await waitFor(() => expect([...container.querySelectorAll("button")].some((button) => button.textContent?.trim() === "Usar valor extraído")).toBe(true));
 };
 beforeEach(() => vi.clearAllMocks());
 afterEach(async () => { await act(async () => root?.unmount()); document.body.innerHTML = ""; });
