@@ -1,7 +1,7 @@
 import { z } from "npm:zod@3.25.76";
 
 export const MAX_PDF_BYTES = 15 * 1024 * 1024;
-export const MAX_TEXT_CHARS = 120_000;
+export const MAX_TEXT_CHARS = 1_000_000;
 export const DEFAULT_MODEL = "deepseek/deepseek-v4.1-flash";
 export const FALLBACK_MODEL = "deepseek/deepseek-v4.1-flash";
 export const RATE_MESSAGE = "limite diário/por minuto da IA atingido, tente mais tarde";

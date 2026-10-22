@@ -2,7 +2,7 @@ import { getDocumentProxy } from "npm:unpdf@1.4.0";
 import { ExtractionError, MAX_TEXT_CHARS } from "./core.ts";
 
 // Each batch runs in a separate edge invocation, not another Promise in the same isolate.
-export const PDF_BATCH_PAGES = 4;
+export const PDF_BATCH_PAGES = 10;
 export async function extractPDFBatch(bytes: Uint8Array, start: number) {
   const pdf = await getDocumentProxy(bytes, { isEvalSupported: false, useSystemFonts: true });
   try {
