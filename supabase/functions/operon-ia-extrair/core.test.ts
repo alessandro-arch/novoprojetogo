@@ -1,7 +1,34 @@
-import { requireCurator, ExtractionError, extractAndGenerate, generateWithFallback, callOpenRouter, DEFAULT_MODEL, FALLBACK_MODEL, RATE_MESSAGE, validateAI, fieldState, eligibleProposals, trustedPDFUrl, publicIP } from "./core.ts";
+import { requireCurator, ExtractionError, extractAndGenerate, generateWithFallback, callOpenRouter, DEFAULT_MODEL, FALLBACK_MODEL, RATE_MESSAGE, validateAI, fieldState, eligibleProposals, trustedPDFUrl, publicIP, collectPDFText, MAX_TEXT_CHARS, BodySchema } from "./core.ts";
 const assert = (v: unknown, message = "Assertion failed") => { if (!v) throw new Error(message); };
 const source = "Pesquisa em instituições públicas. Submissões no edital.";
 const valid = JSON.stringify({ objetivo: { valor: "Pesquisa em instituições públicas.", trecho_origem: "Pesquisa em instituições públicas." } });
+Deno.test("coleta todos os lotes em ordem antes de chamar IA, sem truncar", async () => {
+  const pages: number[] = [];
+  const source = await collectPDFText(async start => { pages.push(start); return { text: `lote ${start}`, next: start === 1 ? 5 : null, totalPages: 8 }; });
+  assert(pages.join(",") === "1,5" && source === "lote 1\nlote 5");
+});
+Deno.test("lote vazio não chama IA e erro de limite não vira erro genérico", async () => {
+  let called = false;
+  for (const read of [async () => ({ text: " ", next: null, totalPages: 1 }), async () => ({ text: "x".repeat(MAX_TEXT_CHARS + 1), next: null, totalPages: 1 })]) {
+    let denied = false;
+    try { await extractAndGenerate(new Uint8Array(1), () => collectPDFText(read), async () => { called = true; return {}; }); }
+    catch (e) { denied = e instanceof ExtractionError && (e.status === 413 || e.message === "PDF sem texto extraível"); }
+    assert(denied && !called);
+  }
+});
+Deno.test("rejeita lotes repetidos, documento alterado e páginas acima do limite", async () => {
+  for (const read of [async () => ({ text: "a", next: 1, totalPages: 8 }), async () => ({ text: "a", next: null, totalPages: 201 }), async (start: number) => ({ text: "a", next: start === 1 ? 5 : null, totalPages: start === 1 ? 8 : 9 })]) {
+    let denied = false;
+    try { await collectPDFText(read); } catch (e) { denied = e instanceof ExtractionError && e.status === 422; }
+    assert(denied);
+  }
+});
+Deno.test("entrada de extração aceita só id e pagina, nunca texto ou URL arbitrários", () => {
+  const input = { edital_id: "138515d7-5e56-4932-93f8-bfde58e54462", etapa: "extrair_pdf", pagina: 1 };
+  assert(BodySchema.safeParse(input).success);
+  assert(!BodySchema.safeParse({ ...input, texto: "fonte inventada" }).success);
+  assert(!BodySchema.safeParse({ ...input, pagina: 0 }).success);
+});
 Deno.test("usa DeepSeek v4.1 Flash na primeira chamada e na nova tentativa", async () => {
   assert(DEFAULT_MODEL === "deepseek/deepseek-v4.1-flash");
   assert(FALLBACK_MODEL === "deepseek/deepseek-v4.1-flash");
