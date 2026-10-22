@@ -102,9 +102,9 @@ const EditaisLogin = () => {
               </Button>
             </form>
             <p className="mt-6 text-sm text-muted-foreground text-center">O acesso é liberado pela sua instituição. Se ainda não tem acesso, fale com o administrador da sua instituição.</p>
-            <Link to="/" className="flex items-center gap-1 text-sm text-muted-foreground mt-6 hover:text-foreground transition-colors justify-center">
-              <ArrowLeft className="w-4 h-4" /> Voltar ao início
-            </Link>
+            <Button asChild variant="outline" className="w-full mt-6 min-h-[44px]">
+              <Link to="/"><ArrowLeft className="w-4 h-4" /> Voltar para a página inicial</Link>
+            </Button>
           </div>
         </div>
       </div>

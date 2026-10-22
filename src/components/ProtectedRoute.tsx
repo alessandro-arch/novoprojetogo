@@ -36,6 +36,9 @@ const ProtectedRoute = ({ allowedRoles, children, loginPath = "/login" }: Protec
   if (allowedRoles && allowedRoles.length > 0) {
     const userRole = globalRole || membership?.role;
     if (!userRole || !allowedRoles.includes(userRole)) {
+      if (loginPath === "/editais/login") {
+        return <Navigate to="/editais" replace />;
+      }
       return <Navigate to="/dashboard" replace />;
     }
   }

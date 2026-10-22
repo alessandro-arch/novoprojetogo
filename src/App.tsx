@@ -34,6 +34,7 @@ import VpnUvv from "./pages/VpnUvv";
 import CuradoriaPage from "./pages/editais/CuradoriaPage";
 import EditaisPage from "./pages/editais/EditaisPage";
 import EditaisLogin from "./pages/editais/EditaisLogin";
+import OperonAccessGate from "./components/operon/OperonAccessGate";
 
 const queryClient = new QueryClient();
 
@@ -57,7 +58,7 @@ const App = () => (
               <Route path="/editais/login" element={<EditaisLogin />} />
               <Route path="/editais/curadoria" element={<ProtectedRoute allowedRoles={["icca_admin"]} loginPath="/editais/login"><CuradoriaPage /></ProtectedRoute>} />
               {/* TODO: controle por plano e afiliação institucional em etapa posterior */}
-              <Route path="/editais" element={<ProtectedRoute loginPath="/editais/login"><EditaisPage /></ProtectedRoute>} />
+              <Route path="/editais" element={<ProtectedRoute loginPath="/editais/login"><OperonAccessGate><EditaisPage /></OperonAccessGate></ProtectedRoute>} />
               <Route path="/org/*" element={<ProtectedRoute allowedRoles={["org_admin", "edital_manager"]}><OrgPanel /></ProtectedRoute>} />
               <Route path="/proponente/*" element={<ProtectedRoute allowedRoles={["proponente"]}><ProponentePanel /></ProtectedRoute>} />
               <Route path="/reviewer/terms" element={<ProtectedRoute allowedRoles={["reviewer"]}><ReviewerTermsPage /></ProtectedRoute>} />

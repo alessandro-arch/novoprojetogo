@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Loader2, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { passwordReturnPath } from "@/lib/password-return";
 
 interface Props {
   backTo?: string;
@@ -15,7 +16,7 @@ interface Props {
 
 const ForgotPassword = () => {
   const [searchParams] = useSearchParams();
-  const backTo = searchParams.get("back") || "/login";
+  const backTo = passwordReturnPath(searchParams.get("back"));
   const backLabel = backTo.includes("fomento") ? "Voltar ao login Fomento" : "Voltar ao login";
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,7 +29,7 @@ const ForgotPassword = () => {
 
     setLoading(true);
     const { data, error } = await supabase.functions.invoke("sd-password-reset", {
-      body: { email: email.trim(), back: backTo.includes("servicedesk") ? "sd" : "" },
+      body: { email: email.trim(), back: backTo === "/servicedesk/login" ? "sd" : backTo === "/editais/login" ? backTo : "" },
     });
     let msg: string | undefined = data?.error;
     if (error && !msg) {
