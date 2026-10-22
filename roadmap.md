@@ -1,5 +1,7 @@
 # Roadmap — Service Desk Acadêmico
 
+- [x] Operon acabamento: filtro UF removido preservando os tipos da fonte, prazo genérico sem rodadas com mensagens de situação preservadas, fontes ativas para curador sem organização e cache separado do painel; 104 testes passaram e compilação sem erros.
+
 - [x] Operon: CAPES, fontes institucionais dinâmicas por RLS, filtros de esfera/UF e prazo não divulgado; 95 testes passaram e compilação sem erros, contraste CAPES 6,23:1.
 - [ ] Operon fontes: conferir filtros com conta real em computador/celular. Bloqueio: Supabase externo sem sessão de teste disponível.
 

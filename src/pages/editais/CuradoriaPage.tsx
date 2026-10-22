@@ -19,7 +19,7 @@ import FonteBadge from "@/components/operon/FonteBadge";
 import AbrangenciaBadge, { ABRANGENCIAS, correspondeAbrangencia } from "@/components/operon/AbrangenciaBadge";
 import type { Tables } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
-import { carregarFontesOperon, correspondeFonte, mostrarFiltroUf, ufsDisponiveis, type IdentidadeFonte } from "@/lib/operon-fontes";
+import { carregarFontesCuradoria, correspondeFonte, type IdentidadeFonte } from "@/lib/operon-fontes";
 
 // Tabelas oe_* ainda não estão nos tipos gerados: cast pontual.
 export const oe = supabase as any;
@@ -71,8 +71,8 @@ export const situacaoEdital = (e: Pick<EditalRow, "situacao" | "oe_rodada">, ago
 export const ehVigente = (e: EditalRow, agora = Date.now()): boolean =>
   e.status_curadoria !== "descartado" && situacaoEdital(e, agora) === "aberto";
 
-export interface FiltrosCuradoria { vigencia: string; fonte: string; esfera?: string; uf?: string; abrangencia: string; situacao: string; ano: string }
-export const FILTROS_PADRAO: FiltrosCuradoria = { vigencia: "__none__", fonte: "__none__", esfera: "__none__", uf: "__none__", abrangencia: "__none__", situacao: "__none__", ano: "__none__" };
+export interface FiltrosCuradoria { vigencia: string; fonte: string; esfera?: string; abrangencia: string; situacao: string; ano: string }
+export const FILTROS_PADRAO: FiltrosCuradoria = { vigencia: "__none__", fonte: "__none__", esfera: "__none__", abrangencia: "__none__", situacao: "__none__", ano: "__none__" };
 export const filtrarCuradoria = (rows: EditalRow[], f: FiltrosCuradoria, agora = Date.now()) => rows.filter((e) => {
   const sit = situacaoEdital(e, agora);
   return correspondeFonte(e, f)
@@ -123,7 +123,6 @@ const CuradoriaPage = () => {
   const isMobile = useIsMobile();
   const [fonte, setFonte] = useState(NONE);
   const [esfera, setEsfera] = useState(NONE);
-  const [uf, setUf] = useState(NONE);
   const [abrangencia, setAbrangencia] = useState(NONE);
   const [situacao, setSituacao] = useState(NONE);
   const [vigencia, setVigencia] = useState(NONE);
@@ -145,8 +144,8 @@ const CuradoriaPage = () => {
   }, []);
 
   const fontesQ = useQuery({
-    queryKey: ["oe-fontes", user?.id],
-    queryFn: carregarFontesOperon,
+    queryKey: ["oe-fontes", "curadoria", user?.id],
+    queryFn: carregarFontesCuradoria,
     enabled: !!user,
   });
 
@@ -159,8 +158,8 @@ const CuradoriaPage = () => {
     },
   });
 
-  const filtros = useMemo<FiltrosCuradoria>(() => ({ vigencia, fonte, esfera, uf, abrangencia, situacao, ano }), [vigencia, fonte, esfera, uf, abrangencia, situacao, ano]);
-  const limparFiltros = () => mudar(() => { setVigencia(NONE); setFonte(NONE); setEsfera(NONE); setUf(NONE); setAbrangencia(NONE); setSituacao(NONE); setAno(NONE); setSelId(null); });
+  const filtros = useMemo<FiltrosCuradoria>(() => ({ vigencia, fonte, esfera, abrangencia, situacao, ano }), [vigencia, fonte, esfera, abrangencia, situacao, ano]);
+  const limparFiltros = () => mudar(() => { setVigencia(NONE); setFonte(NONE); setEsfera(NONE); setAbrangencia(NONE); setSituacao(NONE); setAno(NONE); setSelId(null); });
   const listaBase = useMemo(() => {
     const agora = Date.now();
     const rows = filtrarCuradoria(listaQ.data ?? [], filtros, agora)
@@ -288,7 +287,6 @@ const CuradoriaPage = () => {
           {filtro("Vigência", vigencia, setVigencia, [["vigentes", "Vigentes"], ["em_julgamento", "Em julgamento"]])}
           {filtro("Fonte", fonte, setFonte, (fontesQ.data ?? []).map((f) => [f.id, f.nome]))}
           {filtro("Esfera", esfera, setEsfera, [["estadual", "Estadual"], ["nacional", "Nacional"]], "Todas")}
-          {mostrarFiltroUf(fontesQ.data ?? []) && filtro("Estado (UF)", uf, setUf, ufsDisponiveis(fontesQ.data ?? []).map(v => [v, v]))}
           {filtro("Abrangência", abrangencia, setAbrangencia, [...ABRANGENCIAS.map(([v, l]): [string, string] => [v, l]), ["a_definir", "A definir"]], "Todas")}
           {filtro("Situação", situacao, setSituacao, Object.entries(SITUACOES))}
           {filtro("Ano", ano, setAno, anos.map((a) => [String(a), String(a)]))}

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { supabase } from "@/integrations/supabase/client";
-import { carregarFontesOperon, correspondeFonte, fontesLiberadas, mostrarFiltroUf, ufsDisponiveis, varianteFonte, type FonteOperon } from "@/lib/operon-fontes";
+import { carregarFontesCuradoria, carregarFontesOperon, correspondeFonte, fontesLiberadas, varianteFonte, type FonteOperon } from "@/lib/operon-fontes";
 import { editaisOcultos, FILTROS_PADRAO, filtrarCuradoria, type EditalRow } from "@/pages/editais/CuradoriaPage";
 import { filtrarPainel, type EditalPublicado } from "@/lib/operon-portal";
 
@@ -37,16 +37,40 @@ describe("Fontes institucionais dinâmicas", () => {
     expect(active).toHaveBeenCalledWith("ativa", true);
     expect(inIds).toHaveBeenCalledWith("id", ["ca", "rj"]);
   });
-  it("uma só UF estadual oculta o filtro; duas tornam-no disponível", () => {
-    expect(mostrarFiltroUf(fontes.slice(0, 3))).toBe(false);
-    expect(ufsDisponiveis(fontes.slice(0, 3))).toEqual(["ES"]);
-    expect(mostrarFiltroUf(fontes)).toBe(true);
-    expect(ufsDisponiveis(fontes)).toEqual(["ES", "RJ"]);
+  it("curador sem organização consulta todas as fontes ativas na curadoria", async () => {
+    const rpc = vi.spyOn(supabase, "rpc").mockResolvedValue({ data: true, error: null } as any);
+    const ativas = vi.fn(() => ({ order: async () => ({ data: fontes, error: null }) }));
+    const from = vi.spyOn(supabase, "from").mockImplementation((() => ({ select: () => ({ eq: ativas }) })) as any);
+    expect(await carregarFontesCuradoria()).toEqual(fontes);
+    expect(rpc).toHaveBeenCalledWith("oe_is_curador");
+    expect(ativas).toHaveBeenCalledWith("ativa", true);
+    expect(from).toHaveBeenCalledTimes(1);
+    expect(from).toHaveBeenCalledWith("oe_fonte");
   });
-  it("esfera e UF são da fonte, independentemente da abrangência", () => {
-    expect(correspondeFonte(rows[0], { fonte: "__none__", esfera: "estadual", uf: "ES" })).toBe(true);
+  it("usuário comum na curadoria continua limitado às fontes da organização", async () => {
+    vi.spyOn(supabase, "rpc").mockResolvedValue({ data: false, error: null } as any);
+    const inIds = vi.fn(() => ({ order: async () => ({ data: [fontes[0], fontes[2]], error: null }) }));
+    vi.spyOn(supabase, "from").mockImplementation(((table: string) => table === "oe_org_config"
+      ? { select: () => ({ eq: async () => ({ data: [{ fontes: ["es", "ca"] }], error: null }) }) }
+      : { select: () => ({ in: inIds }) }) as any);
+    expect((await carregarFontesCuradoria()).map(f => f.id)).toEqual(["es", "ca"]);
+    expect(inIds).toHaveBeenCalledWith("id", ["es", "ca"]);
+  });
+  it("painel continua institucional mesmo para um curador", async () => {
+    const rpc = vi.spyOn(supabase, "rpc");
+    vi.spyOn(supabase, "from").mockImplementation((() => ({ select: () => ({ eq: async () => ({ data: [], error: null }) }) })) as any);
+    expect(await carregarFontesOperon()).toEqual([]);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+  it("falha ao verificar curador não amplia acesso às fontes", async () => {
+    vi.spyOn(supabase, "rpc").mockResolvedValue({ data: null, error: { message: "Sem permissão" } } as any);
+    const from = vi.spyOn(supabase, "from");
+    await expect(carregarFontesCuradoria()).rejects.toMatchObject({ message: "Sem permissão" });
+    expect(from).not.toHaveBeenCalled();
+  });
+  it("esfera é da fonte, independentemente da abrangência", () => {
+    expect(correspondeFonte(rows[0], { fonte: "__none__", esfera: "estadual" })).toBe(true);
     expect(correspondeFonte(rows[2], { fonte: "__none__", esfera: "estadual" })).toBe(false);
-    expect(correspondeFonte(rows[3], { fonte: "__none__", uf: "ES" })).toBe(false);
   });
   it("painel e curadoria combinam filtros e contabilizam ocultos", () => {
     const filtros = { ...FILTROS_PADRAO, esfera: "nacional" };
@@ -55,6 +79,5 @@ describe("Fontes institucionais dinâmicas", () => {
     const painel = filtrarPainel(rows as EditalPublicado[], { ...filtros, busca: "" });
     expect(painel.abertos.map(e => e.id)).toEqual(["cn", "ca", "se"]);
     expect(filtrarCuradoria(rows, { ...filtros, fonte: "se" }).map(e => e.id)).toEqual(["se"]);
-    expect(filtrarCuradoria(rows, { ...FILTROS_PADRAO, uf: "RJ" }).map(e => e.id)).toEqual(["rj"]);
   });
 });

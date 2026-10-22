@@ -11,7 +11,7 @@ import FonteBadge from "@/components/operon/FonteBadge";
 import AbrangenciaBadge from "@/components/operon/AbrangenciaBadge";
 import SeguirEditalButton from "@/components/operon/SeguirEditalButton";
 import { ErroOperon, RodapeOperon, RestricaoIes, SituacaoEdital, PrazoTexto } from "@/components/operon/PortalEditalUI";
-import { fmtData, rodadaVigente } from "./CuradoriaPage";
+import { fmtData, rodadaVigente, situacaoEdital } from "./CuradoriaPage";
 import { carregarFicha, carregarDocumentos, carregarEventosPublicados, montarLinhaDoTempo, numeroEdital, normalizarBusca, rotuloEvento, temRestricaoIes } from "@/lib/operon-portal";
 
 export default function EditalFichaPage() {
@@ -51,7 +51,7 @@ export default function EditalFichaPage() {
           <div className="min-w-0 space-y-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{campos.filter(([titulo, valor]) => valor?.trim() || (titulo === "Da Instituição de Ensino Superior" && temRestricaoIes(e))).map(([titulo, valor]) => <Card key={titulo} className={`rounded-xl ${titulo === "Finalidade" || titulo === "Objetivo" || titulo === "Da Instituição de Ensino Superior" ? "sm:col-span-2" : ""}`}><CardHeader><CardTitle className="text-base">{titulo}</CardTitle></CardHeader><CardContent className="space-y-3">{titulo === "Da Instituição de Ensino Superior" && <RestricaoIes e={e} aviso />}<p className="whitespace-pre-line break-words text-sm text-muted-foreground">{valor}</p></CardContent></Card>)}</div>
             <section className="space-y-4" aria-labelledby="datas-titulo"><h2 id="datas-titulo" className="font-heading text-xl font-semibold">Quadro de datas</h2>
-              {!e.oe_rodada?.length ? e.oe_fonte?.slug?.toLowerCase() === "capes" ? <p className="text-sm text-muted-foreground">Prazo ainda não divulgado</p> : <><PrazoTexto e={e} /><Placeholder title="Datas ainda não disponíveis" text="Consulte o texto oficial do edital." /></> : <div className="space-y-3">{[...e.oe_rodada].sort((a, b) => a.ordem - b.ordem).map(r => {
+              {!e.oe_rodada?.length ? ["em_julgamento", "encerrado", "resultado"].includes(situacaoEdital(e, agora) ?? "") ? <PrazoTexto e={e} /> : <p className="text-sm text-muted-foreground">Prazo ainda não divulgado</p> : <div className="space-y-3">{[...e.oe_rodada].sort((a, b) => a.ordem - b.ordem).map(r => {
                 const abertura = r.abertura ? new Date(r.abertura).getTime() : null;
                 const fim = r.prazo_fim ? new Date(r.prazo_fim).getTime() : null;
                 const atual = vig?.ordem === r.ordem && (abertura != null || fim != null) && (abertura ?? -Infinity) <= agora && (fim ?? Infinity) >= agora;
