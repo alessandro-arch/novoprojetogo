@@ -1827,10 +1827,12 @@ export type Database = {
         Row: {
           ativa: boolean
           created_at: string
+          esfera: string | null
           falhas_seguidas: number
           id: string
           nome: string
           slug: string
+          uf: string | null
           ultima_coleta_em: string | null
           ultimo_erro: string | null
           ultimo_ok_em: string | null
@@ -1840,10 +1842,12 @@ export type Database = {
         Insert: {
           ativa?: boolean
           created_at?: string
+          esfera?: string | null
           falhas_seguidas?: number
           id?: string
           nome: string
           slug: string
+          uf?: string | null
           ultima_coleta_em?: string | null
           ultimo_erro?: string | null
           ultimo_ok_em?: string | null
@@ -1853,10 +1857,12 @@ export type Database = {
         Update: {
           ativa?: boolean
           created_at?: string
+          esfera?: string | null
           falhas_seguidas?: number
           id?: string
           nome?: string
           slug?: string
+          uf?: string | null
           ultima_coleta_em?: string | null
           ultimo_erro?: string | null
           ultimo_ok_em?: string | null

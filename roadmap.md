@@ -1,5 +1,8 @@
 # Roadmap — Service Desk Acadêmico
 
+- [x] Operon: CAPES, fontes institucionais dinâmicas por RLS, filtros de esfera/UF e prazo não divulgado; 95 testes passaram e compilação sem erros, contraste CAPES 6,23:1.
+- [ ] Operon fontes: conferir filtros com conta real em computador/celular. Bloqueio: Supabase externo sem sessão de teste disponível.
+
 - [x] Fase 1 — Fundação institucional (instituições, membros, grupos, configurações, painel /servicedesk)
 - [x] Fase 2 — Programas, alunos, professores (orientador = professor "pode orientar"), importação Excel versionada
 - [ ] Fase 3 — Primeiro acesso por matrícula, catálogo, workflow, termo + hash, serviço VPN CAPES

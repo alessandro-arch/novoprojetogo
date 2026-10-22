@@ -1,5 +1,6 @@
 import { oe, ehVigente, rodadaVigente, situacaoEdital, type EditalRow } from "@/pages/editais/CuradoriaPage";
 import { correspondeAbrangencia } from "@/components/operon/AbrangenciaBadge";
+import { correspondeFonte, type FiltrosFonte } from "@/lib/operon-fontes";
 
 export interface EditalPublicado extends EditalRow { verificado_em: string | null; tipo: string | null; ultimo_evento?: EventoPublicado }
 export interface EventoPublicado { id: string; edital_id: string; tipo: string; ocorrido_em: string; liberado: boolean; origem: string | null; valor_anterior: string | null; valor_novo: string | null }
@@ -27,10 +28,10 @@ export const prazoEdital = (e: EditalRow, agora = Date.now()) => {
   return prazo && new Date(prazo).getTime() >= agora ? prazo : null;
 };
 
-export function filtrarPainel(rows: EditalPublicado[], filtros: { busca: string; fonte: string; abrangencia: string }, agora = Date.now()) {
+export function filtrarPainel(rows: EditalPublicado[], filtros: FiltrosFonte & { busca: string; abrangencia: string }, agora = Date.now()) {
   const busca = normalizarBusca(filtros.busca);
   const base = rows.filter(e => e.status_curadoria === "publicado"
-    && (filtros.fonte === "__none__" || e.fonte_id === filtros.fonte)
+    && correspondeFonte(e, filtros)
     && correspondeAbrangencia(e.abrangencia, filtros.abrangencia)
     && (!busca || normalizarBusca([e.titulo, e.numero, e.categoria, ...(e.areas ?? [])].filter(Boolean).join(" ")).includes(busca)));
   const abas: Record<AbaOperon, EditalPublicado[]> = {
@@ -41,7 +42,7 @@ export function filtrarPainel(rows: EditalPublicado[], filtros: { busca: string;
   return abas;
 }
 
-const SELECT_EDITAL = "*, oe_fonte(slug,nome), oe_rodada(ordem,abertura,prazo_fim,resultado_em,texto_original)";
+const SELECT_EDITAL = "*, oe_fonte(slug,nome,esfera,uf), oe_rodada(ordem,abertura,prazo_fim,resultado_em,texto_original)";
 
 export interface MarcoEdital {
   id: string; rotulo: string; data: string; proximo: boolean;
