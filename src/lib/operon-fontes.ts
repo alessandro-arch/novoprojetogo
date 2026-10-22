@@ -7,8 +7,10 @@ export type IdentidadeFonte = Pick<FonteOperon, "slug" | "nome"> & Partial<Pick<
 export const VARIANTES_FONTE: Readonly<Record<string, NonNullable<BadgeProps["variant"]>>> = {
   cnpq: "fonteCnpq", fapes: "fonteFapes", capes: "fonteCapes",
 };
-export const varianteFonte = (slug?: string | null): NonNullable<BadgeProps["variant"]> =>
-  VARIANTES_FONTE[slug?.toLowerCase() ?? ""] ?? "fonteNeutra";
+export const varianteFonte = (slug?: string | null): NonNullable<BadgeProps["variant"]> => {
+  const chave = slug?.toLowerCase() ?? "";
+  return Object.prototype.hasOwnProperty.call(VARIANTES_FONTE, chave) ? VARIANTES_FONTE[chave] : "fonteNeutra";
+};
 
 export interface FiltrosFonte { fonte: string; esfera?: string; uf?: string }
 export const correspondeFonte = (e: { fonte_id: string; oe_fonte?: IdentidadeFonte | null }, f: FiltrosFonte) =>
