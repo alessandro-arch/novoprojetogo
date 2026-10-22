@@ -17,7 +17,8 @@ import { Placeholder } from "@/components/servicedesk/sd-ui";
 import FonteBadge from "@/components/operon/FonteBadge";
 import AbrangenciaBadge, { ABRANGENCIAS } from "@/components/operon/AbrangenciaBadge";
 import { ErroOperon, RodapeOperon, RestricaoIes, SituacaoEdital, PrazoTexto } from "@/components/operon/PortalEditalUI";
-import { oe, fmtData } from "./CuradoriaPage";
+import { fmtData } from "./CuradoriaPage";
+import { carregarFontesOperon, mostrarFiltroUf, ufsDisponiveis } from "@/lib/operon-fontes";
 import { logoutOperon } from "@/lib/operon-access";
 import { ABAS_OPERON, carregarPainel, carregarSeguidos, filtrarPainel, numeroEdital, rotuloEvento, type AbaOperon, type EditalPublicado } from "@/lib/operon-portal";
 
@@ -32,6 +33,8 @@ const IdentidadeEdital = ({ e, seguindo }: { e: EditalPublicado; seguindo: boole
 
 export default function EditaisPage() {
   const [fonte, setFonte] = useState(NONE);
+  const [esfera, setEsfera] = useState(NONE);
+  const [uf, setUf] = useState(NONE);
   const [abrangencia, setAbrangencia] = useState(NONE);
   const [busca, setBusca] = useState("");
   const [aba, setAba] = useState<AbaOperon>("abertos");
@@ -40,15 +43,14 @@ export default function EditaisPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const listaQ = useQuery({ queryKey: ["oe-portal-painel", user?.id], queryFn: carregarPainel });
-  const fontesQ = useQuery({ queryKey: ["oe-fontes"], queryFn: async () => {
-    const { data, error } = await oe.from("oe_fonte").select("id,slug,nome").order("nome");
-    if (error) throw error;
-    return (data ?? []) as { id: string; slug: string; nome: string }[];
-  } });
+  const fontesQ = useQuery({ queryKey: ["oe-fontes", user?.id], queryFn: carregarFontesOperon, enabled: !!user });
   const seguidosQ = useQuery({ queryKey: ["oe-seguidos", user?.id], enabled: !!user, queryFn: () => carregarSeguidos(user?.id ?? "") });
   const seguidos = new Set((seguidosQ.data ?? []).map(e => e.edital_id));
-  const abas = useMemo(() => filtrarPainel(listaQ.data ?? [], { busca, fonte, abrangencia }), [listaQ.data, busca, fonte, abrangencia]);
+  const abas = useMemo(() => filtrarPainel(listaQ.data ?? [], { busca, fonte, esfera, uf, abrangencia }), [listaQ.data, busca, fonte, esfera, uf, abrangencia]);
   const lista = abas[aba];
+  const semFiltros = filtrarPainel(listaQ.data ?? [], { busca: "", fonte: NONE, abrangencia: NONE });
+  const ocultos = semFiltros[aba].length - lista.length;
+  const limparFiltros = () => { setBusca(""); setFonte(NONE); setEsfera(NONE); setUf(NONE); setAbrangencia(NONE); };
   const handleLogout = async () => {
     setSaindo(true);
     try { await logoutOperon(navigate); }
@@ -63,15 +65,18 @@ export default function EditaisPage() {
       </div>
     </header>
     <main className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-      <div className="space-y-2"><h2 className="text-2xl md:text-3xl font-bold font-heading">Chamadas de fomento ligadas ao seu perfil</h2><p className="text-muted-foreground">Acompanhe editais da FAPES e do CNPq, com avisos de prazo, retificações, errata e resultados.</p><p className="text-sm text-muted-foreground">Resumos feitos pela curadoria. Confirme no texto oficial do edital.</p></div>
+      <div className="space-y-2"><h2 className="text-2xl md:text-3xl font-bold font-heading">Chamadas de fomento ligadas ao seu perfil</h2><p className="text-muted-foreground">Acompanhe editais das agências de fomento, com avisos de prazo, retificações, errata e resultados.</p><p className="text-sm text-muted-foreground">Resumos feitos pela curadoria. Confirme no texto oficial do edital.</p></div>
       <div className="relative max-w-2xl"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input aria-label="Buscar editais" placeholder="Buscar por título, número, categoria ou área" className="pl-9" value={busca} onChange={e => setBusca(e.target.value)} /></div>
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-4">
         <Tabs value={aba} onValueChange={v => { if (ABAS_OPERON.some(([k]) => k === v)) setAba(v as AbaOperon); }} className="w-full sm:w-auto"><TabsList className="w-full sm:w-auto h-auto min-h-11 flex-wrap gap-1">{ABAS_OPERON.map(([k, titulo]) => <TabsTrigger key={k} value={k} className="gap-2 min-h-10">{titulo}<span className="text-xs tabular-nums">{listaQ.isLoading ? "…" : abas[k].length}</span></TabsTrigger>)}</TabsList></Tabs>
-        <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-3 w-full sm:w-auto">
-          <div className="space-y-1 sm:w-44"><Label htmlFor="fonte">Fonte</Label><Select value={fonte} onValueChange={setFonte}><SelectTrigger id="fonte"><SelectValue /></SelectTrigger><SelectContent><SelectItem value={NONE}>Todas as fontes</SelectItem>{(fontesQ.data ?? []).map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}</SelectContent></Select></div>
+        <div className="grid grid-cols-1 min-[400px]:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
+          <div className="space-y-1"><Label htmlFor="fonte">Fonte</Label><Select value={fonte} onValueChange={setFonte}><SelectTrigger id="fonte"><SelectValue /></SelectTrigger><SelectContent><SelectItem value={NONE}>Todas as fontes</SelectItem>{(fontesQ.data ?? []).map(f => <SelectItem key={f.id} value={f.id}><FonteBadge slug={f.slug} nome={f.nome} /></SelectItem>)}</SelectContent></Select></div>
+          <div className="space-y-1"><Label htmlFor="esfera">Esfera</Label><Select value={esfera} onValueChange={setEsfera}><SelectTrigger id="esfera"><SelectValue /></SelectTrigger><SelectContent><SelectItem value={NONE}>Todas</SelectItem><SelectItem value="estadual">Estadual</SelectItem><SelectItem value="nacional">Nacional</SelectItem></SelectContent></Select></div>
+          {mostrarFiltroUf(fontesQ.data ?? []) && <div className="space-y-1"><Label htmlFor="uf">Estado (UF)</Label><Select value={uf} onValueChange={setUf}><SelectTrigger id="uf"><SelectValue /></SelectTrigger><SelectContent><SelectItem value={NONE}>Todos</SelectItem>{ufsDisponiveis(fontesQ.data ?? []).map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select></div>}
           <div className="space-y-1 sm:w-44"><Label htmlFor="abrangencia">Abrangência</Label><Select value={abrangencia} onValueChange={setAbrangencia}><SelectTrigger id="abrangencia"><SelectValue /></SelectTrigger><SelectContent><SelectItem value={NONE}>Todas</SelectItem>{ABRANGENCIAS.map(([v, label]) => <SelectItem key={v} value={v}>{label}</SelectItem>)}</SelectContent></Select></div>
         </div>
       </div>
+      {!listaQ.isLoading && !listaQ.isError && ocultos > 0 && <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground"><span>{ocultos === 1 ? "1 edital oculto pelos filtros" : `${ocultos} editais ocultos pelos filtros`}</span><Button variant="outline" size="sm" onClick={limparFiltros}>Limpar filtros</Button></div>}
       {fontesQ.isError && <ErroOperon retry={() => fontesQ.refetch()} />}
       {seguidosQ.isError && <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground"><p>Não foi possível consultar seus editais seguidos.</p><Button variant="outline" size="sm" onClick={() => seguidosQ.refetch()}>Tentar novamente</Button></div>}
       {listaQ.isLoading ? <div className="space-y-3">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)}</div> : listaQ.isError ? <ErroOperon retry={() => listaQ.refetch()} /> : !lista.length ? <Placeholder title="Nenhum edital encontrado" text="Não há editais publicados nesta aba com os filtros selecionados." /> : <>
