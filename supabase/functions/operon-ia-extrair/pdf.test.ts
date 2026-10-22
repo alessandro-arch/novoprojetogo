@@ -15,12 +15,12 @@ function fixture(count: number, blank = false) {
   return new TextEncoder().encode(pdf);
 }
 
-Deno.test("PDF real: lote limitado a quatro páginas, mantém texto final e PDF vazio", async () => {
-  const bytes = fixture(6);
+Deno.test("PDF real: lote limitado a dez páginas, mantém texto final e PDF vazio", async () => {
+  const bytes = fixture(12);
   const first = await extractPDFBatch(bytes.slice(), 1);
-  if (first.next !== 5 || first.totalPages !== 6 || !first.text.includes("Pagina 4") || first.text.includes("Pagina 5")) throw new Error("Lote incorreto");
-  const last = await extractPDFBatch(bytes.slice(), 5);
-  if (last.next !== null || !last.text.includes("Pagina 6")) throw new Error("Texto final ausente");
+  if (first.next !== 11 || first.totalPages !== 12 || !first.text.includes("Pagina 10") || first.text.includes("Pagina 11")) throw new Error("Lote incorreto");
+  const last = await extractPDFBatch(bytes.slice(), 11);
+  if (last.next !== null || !last.text.includes("Pagina 12")) throw new Error("Texto final ausente");
   const empty = await extractPDFBatch(fixture(1, true), 1);
   if (empty.text.trim()) throw new Error("Texto inventado em PDF vazio");
 });
