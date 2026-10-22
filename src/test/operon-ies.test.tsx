@@ -15,7 +15,7 @@ vi.mock("@/pages/editais/CuradoriaPage", () => ({
     }) }),
     update: (payload: unknown) => ({ eq: async () => { (table === "oe_edital" ? mocks.update : mocks.extractUpdate)(payload); return { error: null }; } }),
   }) },
-  fmtData: () => "", rodadaVigente: () => null, SITUACOES: {}, semNumero: () => false,
+  fmtData: () => "", rodadaVigente: () => null, situacaoEdital: (e: { situacao: string | null }) => e.situacao, SITUACOES: {}, semNumero: () => false,
   exigeConfirmacaoSemRodadas: (situacao: string, rodadas: unknown[]) => situacao === "aberto" && rodadas.length === 0,
 }));
 
