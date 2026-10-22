@@ -11,7 +11,11 @@ const fontes: FonteOperon[] = [
   { id: "rj", slug: "faperj", nome: "FAPERJ", esfera: "estadual", uf: "RJ" },
   { id: "se", slug: "serrapilheira", nome: "Instituto Serrapilheira", esfera: "nacional", uf: null },
 ];
-const rows = fontes.map(f => ({ id: f.id, fonte_id: f.id, oe_fonte: f, status_curadoria: "publicado", situacao: "aberto", oe_rodada: [], abrangencia: "internacional" })) as EditalRow[];
+const rows: EditalRow[] = fontes.map(f => ({
+  id: f.id, fonte_id: f.id, oe_fonte: f, status_curadoria: "publicado", situacao: "aberto", oe_rodada: [], abrangencia: "internacional",
+  numero: null, ano: null, titulo: f.nome, categoria: null, url_oficial: null, visto_ultima_vez_em: null,
+  objetivo: null, recursos: null, quem_pode: null, contrapartida: null, areas: null, requisitos_ies: null, restricao_ies: null,
+}));
 beforeEach(() => vi.restoreAllMocks());
 describe("Fontes institucionais dinâmicas", () => {
   it("fonte desconhecida ou ausente usa variante neutra", () => {
