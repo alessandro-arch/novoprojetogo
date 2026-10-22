@@ -12,7 +12,7 @@ import AbrangenciaBadge from "@/components/operon/AbrangenciaBadge";
 import SeguirEditalButton from "@/components/operon/SeguirEditalButton";
 import { ErroOperon, RodapeOperon, RestricaoIes, SituacaoEdital, PrazoTexto } from "@/components/operon/PortalEditalUI";
 import { fmtData, rodadaVigente } from "./CuradoriaPage";
-import { carregarFicha, carregarDocumentos, carregarEventosPublicados, numeroEdital, normalizarBusca, rotuloEvento, temRestricaoIes } from "@/lib/operon-portal";
+import { carregarFicha, carregarDocumentos, carregarEventosPublicados, montarLinhaDoTempo, numeroEdital, normalizarBusca, rotuloEvento, temRestricaoIes } from "@/lib/operon-portal";
 
 export default function EditalFichaPage() {
   const { id } = useParams();
@@ -22,6 +22,7 @@ export default function EditalFichaPage() {
   const docsQ = useQuery({ queryKey: ["oe-portal-docs", user?.id, id], enabled: !!e, queryFn: () => carregarDocumentos(id ?? "") });
   const eventosQ = useQuery({ queryKey: ["oe-portal-eventos", user?.id, id], enabled: !!e, queryFn: () => carregarEventosPublicados(id) });
   const agora = Date.now();
+  const linhaDoTempo = e ? montarLinhaDoTempo(e, eventosQ.data, docsQ.data, agora) : [];
   const vig = rodadaVigente(e?.oe_rodada, agora);
   const campos: [string, string | null | undefined][] = e ? [
     [e.oe_fonte?.slug?.toLowerCase() === "fapes" ? "Finalidade" : "Objetivo", e.objetivo],
@@ -35,6 +36,10 @@ export default function EditalFichaPage() {
         <header className="space-y-4 pb-6 border-b border-border">
           <div className="flex flex-wrap gap-2 items-center"><FonteBadge slug={e.oe_fonte?.slug} nome={e.oe_fonte?.nome} /><AbrangenciaBadge abrangencia={e.abrangencia} /><SituacaoEdital e={e} /></div>
           <h1 className="text-2xl md:text-3xl font-bold font-heading break-words">{e.titulo}</h1>
+          {e.resumo_tldr?.trim() && <section aria-labelledby="resumo-titulo" className="border-l-2 border-primary pl-4 space-y-2">
+            <h2 id="resumo-titulo" className="text-sm font-semibold">Em resumo</h2>
+            <p className="whitespace-pre-line break-words text-sm text-muted-foreground">{e.resumo_tldr}</p>
+          </section>}
           <p className="text-sm text-muted-foreground">{numeroEdital(e)} · {e.verificado_em ? `Conferido pela curadoria em ${fmtData(e.verificado_em)}` : "Conferência não informada"}</p>
           {e.verificado_em && <Badge variant="outline" className="gap-1"><CheckCircle2 className="h-3 w-3" />Conferido pela curadoria</Badge>}
           <RestricaoIes e={e} aviso />
@@ -63,7 +68,16 @@ export default function EditalFichaPage() {
             </section>
           </div>
           <aside className="min-w-0 lg:border-l lg:border-border lg:pl-6 space-y-4" aria-labelledby="eventos-titulo"><h2 id="eventos-titulo" className="font-heading text-xl font-semibold">Linha do tempo</h2>
-            {eventosQ.isLoading ? <Skeleton className="h-48 rounded-xl" /> : eventosQ.isError ? <ErroOperon retry={() => eventosQ.refetch()} /> : !eventosQ.data?.length ? <p className="text-sm text-muted-foreground">Nenhum evento registrado ainda.</p> : <ol className="border-l border-border pl-4 space-y-6">{eventosQ.data.map(ev => <li key={ev.id} className="space-y-2 text-sm"><p className="font-semibold">{rotuloEvento(ev.tipo)}</p><p className="text-xs text-muted-foreground">{fmtData(ev.ocorrido_em, true)}</p>{ev.origem === "carga_inicial" && <Badge variant="outline">Carga inicial</Badge>}{(ev.valor_anterior != null || ev.valor_novo != null) && <p className="whitespace-pre-line break-words text-xs text-muted-foreground">{ev.valor_anterior ?? "Não informado"} → {ev.valor_novo ?? "Não informado"}</p>}</li>)}</ol>}
+            {(eventosQ.isLoading || docsQ.isLoading) && <Skeleton className="h-24 rounded-xl" />}
+            {eventosQ.isError && <ErroOperon retry={() => eventosQ.refetch()} />}
+            {docsQ.isError && <ErroOperon retry={() => docsQ.refetch()} />}
+            {linhaDoTempo.length > 0 ? <ol className="border-l border-border pl-4 space-y-6">{linhaDoTempo.map(marco => <li key={marco.id} className="space-y-2 text-sm">
+              <p className="font-semibold">{marco.rotulo}</p>
+              <p className="text-xs text-muted-foreground">{fmtData(marco.data, true)}</p>
+              <Badge variant="outline" className="gap-1">{!marco.proximo && <CheckCircle2 className="h-3 w-3" />}{marco.proximo ? "Próximo" : "Concluído"}</Badge>
+              {marco.origem === "carga_inicial" && <Badge variant="outline">Carga inicial</Badge>}
+              {(marco.valor_anterior != null || marco.valor_novo != null) && <p className="whitespace-pre-line break-words text-xs text-muted-foreground">{marco.valor_anterior ?? "Não informado"} → {marco.valor_novo ?? "Não informado"}</p>}
+            </li>)}</ol> : !eventosQ.isLoading && !docsQ.isLoading && !eventosQ.isError && !docsQ.isError && <p className="text-sm text-muted-foreground">Nenhum evento registrado ainda.</p>}
           </aside>
         </div>
       </>}

@@ -78,9 +78,11 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
     Object.fromEntries(CAMPOS.map((c) => [c.key, toText(edital, c.key)])) as Record<Campo, string>);
   const [restricaoIes, setRestricaoIes] = useState(edital.restricao_ies ?? "__none__");
   const [abrangencia, setAbrangencia] = useState(edital.abrangencia ?? "__none__");
+  const [resumo, setResumo] = useState(edital.resumo_tldr ?? "");
+  const [resumoSalvo, setResumoSalvo] = useState((edital.resumo_tldr ?? "").trim());
   const [confirmarPublicacao, setConfirmarPublicacao] = useState(false);
   const [estado, setEstado] = useState(edital);
-  const assinatura = JSON.stringify({ form, restricaoIes, abrangencia });
+  const assinatura = JSON.stringify({ form, restricaoIes, abrangencia, resumo });
   const [salvo, setSalvo] = useState(assinatura);
   const dirty = assinatura !== salvo;
   useEffect(() => { setEstado(edital); }, [edital]);
@@ -113,7 +115,9 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
   (extQ.data ?? []).forEach((x) => { if (!extPorCampo[x.campo]) extPorCampo[x.campo] = x; });
 
   const norm = (s: string | null | undefined) => (s ?? "").trim();
-  const payloadCampos = () => ({
+  const payloadCampos = (agora = new Date().toISOString()) => ({
+    resumo_tldr: norm(resumo) || null,
+    ...(norm(resumo) !== resumoSalvo ? { resumo_tldr_atualizado_em: agora } : {}),
     objetivo: norm(form.objetivo) || null,
     recursos: norm(form.recursos) || null,
     quem_pode: norm(form.quem_pode) || null,
@@ -143,7 +147,7 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
     },
     mutationFn: async (acao: AcaoCuradoria) => {
       const agora = new Date().toISOString();
-      const campos = acao === "descartar" || acao === "despublicar" ? {} : payloadCampos();
+      const campos = acao === "descartar" || acao === "despublicar" ? {} : payloadCampos(agora);
       const upd = { ...campos, ...transicaoCuradoria(acao, agora, user?.id) };
       const { error } = await oe.from("oe_edital").update(upd).eq("id", edital.id);
       if (error) throw error;
@@ -169,7 +173,10 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
     onSuccess: ({ acao, falhas, upd }, _variavel, contexto) => {
       if (contexto) {
         setEstado({ ...contexto.atualizado, ...upd });
-        if (acao !== "descartar" && acao !== "despublicar") setSalvo(contexto.assinatura);
+        if (acao !== "descartar" && acao !== "despublicar") {
+          setSalvo(contexto.assinatura);
+          setResumoSalvo(upd.resumo_tldr ?? "");
+        }
       }
       if ((acao === "publicar" || acao === "salvar_publicado") && falhas > 0) {
         toast({
@@ -224,6 +231,14 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
       <Card className="rounded-xl">
         <CardHeader><CardTitle className="text-base">Cartão público</CardTitle></CardHeader>
         <CardContent className="space-y-5"><fieldset disabled={mut.isPending} className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="resumo-tldr">Em resumo (TL;DR)</Label>
+            <Textarea id="resumo-tldr" rows={4} value={resumo} onChange={(event) => setResumo(event.target.value)} aria-describedby="resumo-tldr-dica resumo-tldr-contador" />
+            <div className="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
+              <p id="resumo-tldr-dica">3 a 4 frases, linguagem científica: objeto, público elegível, aporte, prazo, restrição de IES</p>
+              <span id="resumo-tldr-contador" className="tabular-nums">{Array.from(resumo).length} caracteres</span>
+            </div>
+          </div>
           {extQ.isError && <p className="text-xs text-destructive">Não foi possível carregar os valores extraídos.</p>}
           {CAMPOS.map(({ key, label }) => {
             const x = extPorCampo[key];
