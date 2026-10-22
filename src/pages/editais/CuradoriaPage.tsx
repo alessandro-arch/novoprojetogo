@@ -14,6 +14,7 @@ import { logoutOperon } from "@/lib/operon-access";
 import { useToast } from "@/hooks/use-toast";
 import EditalCuradoriaDetail from "@/components/operon/EditalCuradoriaDetail";
 import FonteBadge from "@/components/operon/FonteBadge";
+import AbrangenciaBadge, { ABRANGENCIAS, correspondeAbrangencia } from "@/components/operon/AbrangenciaBadge";
 
 // Tabelas oe_* ainda não estão nos tipos gerados: cast pontual.
 export const oe = supabase as any;
@@ -24,6 +25,7 @@ export interface EditalRow {
   situacao: string | null; status_curadoria: string; url_oficial: string | null; visto_ultima_vez_em: string | null;
   objetivo: string | null; recursos: string | null; quem_pode: string | null; contrapartida: string | null; areas: string[] | null;
   requisitos_ies: string | null; restricao_ies: string | null;
+  abrangencia?: string | null;
   oe_fonte?: { slug: string; nome: string } | null; oe_rodada?: Rodada[];
 }
 
@@ -88,6 +90,7 @@ const CuradoriaPage = () => {
   };
   const isMobile = useIsMobile();
   const [fonte, setFonte] = useState(NONE);
+  const [abrangencia, setAbrangencia] = useState(NONE);
   const [situacao, setSituacao] = useState(NONE);
   const [vigencia, setVigencia] = useState("vigentes");
   const [status, setStatus] = useState(NONE);
@@ -120,7 +123,7 @@ const CuradoriaPage = () => {
     queryKey: ["oe-editais", fonte, situacao, status, ano],
     queryFn: async () => {
       const { data, error } = await aplicar(
-        oe.from("oe_edital").select("id, fonte_id, numero, ano, titulo, categoria, situacao, status_curadoria, url_oficial, visto_ultima_vez_em, objetivo, recursos, quem_pode, requisitos_ies, restricao_ies, contrapartida, areas, oe_fonte(slug, nome), oe_rodada(id, ordem, abertura, prazo_fim)"),
+        oe.from("oe_edital").select("id, fonte_id, numero, ano, titulo, categoria, situacao, status_curadoria, url_oficial, visto_ultima_vez_em, objetivo, recursos, quem_pode, requisitos_ies, restricao_ies, abrangencia, contrapartida, areas, oe_fonte(slug, nome), oe_rodada(id, ordem, abertura, prazo_fim)"),
         true,
       ).limit(1000);
       if (error) throw error;
@@ -144,6 +147,7 @@ const CuradoriaPage = () => {
   const lista = useMemo(() => {
     const agora = Date.now();
     const rows = (listaQ.data ?? [])
+      .filter((e) => correspondeAbrangencia(e.abrangencia, abrangencia))
       .filter((e) => vigencia === "vigentes" ? ehVigente(e, agora) : vigencia === "em_julgamento" ? e.situacao === "em_julgamento" : true)
       .map((e) => ({ e, v: rodadaVigente(e.oe_rodada) }));
     const prazo = (x: { v: Rodada | null }) => t(x.v?.prazo_fim ?? null);
@@ -152,7 +156,7 @@ const CuradoriaPage = () => {
     const semDatas = rows.filter((x) => prazo(x) == null)
       .sort((a, b) => (t(b.e.visto_ultima_vez_em) ?? 0) - (t(a.e.visto_ultima_vez_em) ?? 0));
     return [...futuros, ...vencidos, ...semDatas];
-  }, [listaQ.data, vigencia]);
+  }, [listaQ.data, vigencia, abrangencia]);
 
   const vigentesHoje = useMemo(() => lista.filter((x) => ehVigente(x.e)).length, [lista]);
 
@@ -160,13 +164,13 @@ const CuradoriaPage = () => {
   const anoAtual = new Date().getFullYear();
   const anos = Array.from(new Set([anoAtual + 1, anoAtual, 2026, anoAtual - 1, anoAtual - 2])).sort((a, b) => b - a);
 
-  const filtro = (label: string, value: string, set: (v: string) => void, opts: [string, string][]) => (
+  const filtro = (label: string, value: string, set: (v: string) => void, opts: [string, string][], todos = "Todos") => (
     <div className="space-y-1 min-w-[140px] flex-1">
       <Label className="text-xs">{label}</Label>
       <Select value={value} onValueChange={(v) => { set(v); setSelId(null); }}>
         <SelectTrigger><SelectValue /></SelectTrigger>
         <SelectContent>
-          <SelectItem value={NONE}>Todos</SelectItem>
+          <SelectItem value={NONE}>{todos}</SelectItem>
           {opts.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
         </SelectContent>
       </Select>
@@ -196,6 +200,7 @@ const CuradoriaPage = () => {
           >
             <div className="flex flex-wrap items-center gap-1.5 mb-1">
               <FonteBadge slug={e.oe_fonte?.slug} nome={e.oe_fonte?.nome} />
+              <AbrangenciaBadge abrangencia={e.abrangencia} curadoria />
               {semNumero(e.numero) ? <Badge variant="outline">Sem número</Badge> : <span className="text-xs text-muted-foreground">Nº {e.numero}</span>}
               {e.situacao && <Badge variant="secondary">{SITUACOES[e.situacao] ?? e.situacao}</Badge>}
               {!v && e.situacao === "aberto" && <Badge variant="destructive">Prazo a confirmar</Badge>}
@@ -254,6 +259,7 @@ const CuradoriaPage = () => {
         <div className="flex flex-wrap gap-3">
           {filtro("Vigência", vigencia, mudarVigencia, [["vigentes", "Vigentes"], ["em_julgamento", "Em julgamento"]])}
           {filtro("Fonte", fonte, setFonte, (fontesQ.data ?? []).map((f) => [f.id, f.nome]))}
+          {filtro("Abrangência", abrangencia, setAbrangencia, [...ABRANGENCIAS.map(([v, l]): [string, string] => [v, l]), ["a_definir", "A definir"]], "Todas")}
           {filtro("Situação", situacao, setSituacao, Object.entries(SITUACOES))}
           {filtro("Status de curadoria", status, setStatus, Object.entries(STATUS))}
           {filtro("Ano", ano, setAno, anos.map((a) => [String(a), String(a)]))}

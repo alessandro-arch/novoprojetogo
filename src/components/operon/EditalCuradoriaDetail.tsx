@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ExternalLink, Download, Loader2 } from "lucide-react";
 import { oe, fmtData, rodadaVigente, SITUACOES, semNumero, exigeConfirmacaoSemRodadas, type EditalRow, type Rodada } from "@/pages/editais/CuradoriaPage";
 import FonteBadge from "@/components/operon/FonteBadge";
+import AbrangenciaBadge, { ABRANGENCIAS } from "@/components/operon/AbrangenciaBadge";
 
 type Campo = "objetivo" | "recursos" | "quem_pode" | "requisitos_ies" | "contrapartida" | "areas";
 const CAMPOS: { key: Campo; label: string }[] = [
@@ -72,6 +73,7 @@ const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
   const [form, setForm] = useState<Record<Campo, string>>(() =>
     Object.fromEntries(CAMPOS.map((c) => [c.key, toText(edital, c.key)])) as Record<Campo, string>);
   const [restricaoIes, setRestricaoIes] = useState(edital.restricao_ies ?? "__none__");
+  const [abrangencia, setAbrangencia] = useState(edital.abrangencia ?? "__none__");
   const [confirmarPublicacao, setConfirmarPublicacao] = useState(false);
 
   const rodadasQ = useLista<Rodada>("oe-rodadas", edital.id, "oe_rodada", "ordem", true);
@@ -91,6 +93,7 @@ const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
     quem_pode: norm(form.quem_pode) || null,
     requisitos_ies: norm(form.requisitos_ies) || null,
     restricao_ies: restricaoIes === "__none__" ? null : restricaoIes,
+    abrangencia: abrangencia === "__none__" ? null : abrangencia,
     contrapartida: norm(form.contrapartida) || null,
     areas: form.areas.split(",").map((s) => s.trim()).filter(Boolean),
   });
@@ -149,6 +152,7 @@ const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
         <CardContent className="py-5 space-y-2">
           <div className="flex flex-wrap items-center gap-1.5">
             <FonteBadge slug={edital.oe_fonte?.slug} nome={edital.oe_fonte?.nome} />
+            <AbrangenciaBadge abrangencia={abrangencia === "__none__" ? null : abrangencia} curadoria />
             {semNumero(edital.numero) ? <Badge variant="outline">Sem número</Badge> : <Badge variant="outline">Nº {edital.numero}</Badge>}
             {edital.categoria && <Badge variant="secondary">{edital.categoria}</Badge>}
             {edital.situacao && <Badge variant="secondary">{SITUACOES[edital.situacao] ?? edital.situacao}</Badge>}
@@ -205,6 +209,16 @@ const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
                 <SelectItem value="somente_publicas">Somente IES públicas</SelectItem>
                 <SelectItem value="outra">Outra restrição</SelectItem>
                 <SelectItem value="nao_informado">Edital não trata do tema</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="abrangencia">Abrangência</Label>
+            <Select value={abrangencia} onValueChange={setAbrangencia}>
+              <SelectTrigger id="abrangencia"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {ABRANGENCIAS.map(([valor, label]) => <SelectItem key={valor} value={valor}>{label}</SelectItem>)}
+                <SelectItem value="__none__">A definir</SelectItem>
               </SelectContent>
             </Select>
           </div>
