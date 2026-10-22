@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Placeholder } from "@/components/servicedesk/sd-ui";
-import { diasAte, fmtData, SITUACOES, type EditalRow } from "@/pages/editais/CuradoriaPage";
+import { diasAte, fmtData, SITUACOES, situacaoEdital, type EditalRow } from "@/pages/editais/CuradoriaPage";
 import { prazoEdital, temRestricaoIes } from "@/lib/operon-portal";
 
 export const RodapeOperon = () => <footer className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground">Informações resumidas com fins de divulgação. Confirme sempre no texto oficial do edital.</footer>;
@@ -11,5 +11,5 @@ export const PrazoBadge = ({ e }: { e: EditalRow }) => {
   const dias = diasAte(prazoEdital(e));
   return dias == null || dias < 0 ? null : <Badge variant={dias <= 7 ? "default" : "outline"}>{dias === 0 ? "Fecha hoje" : `Faltam ${dias} dias`}</Badge>;
 };
-export const SituacaoEdital = ({ e }: { e: EditalRow }) => <div className="flex flex-wrap gap-1.5"><Badge variant="secondary">{SITUACOES[e.situacao ?? ""] ?? "Situação a confirmar"}</Badge><PrazoBadge e={e} /></div>;
-export const PrazoTexto = ({ e }: { e: EditalRow }) => <span className="text-sm text-muted-foreground">{e.situacao === "em_julgamento" ? "Inscrições encerradas, acompanhe o resultado" : e.situacao === "resultado" ? "Resultados divulgados" : prazoEdital(e) ? fmtData(prazoEdital(e), true) : "Prazo a confirmar"}</span>;
+export const SituacaoEdital = ({ e }: { e: EditalRow }) => <div className="flex flex-wrap gap-1.5"><Badge variant="secondary">{SITUACOES[situacaoEdital(e) ?? ""] ?? "Situação a confirmar"}</Badge><PrazoBadge e={e} /></div>;
+export const PrazoTexto = ({ e }: { e: EditalRow }) => <span className="text-sm text-muted-foreground">{situacaoEdital(e) === "em_julgamento" ? "Inscrições encerradas, acompanhe o resultado" : ["resultado", "encerrado"].includes(situacaoEdital(e) ?? "") ? "Resultados divulgados" : prazoEdital(e) ? fmtData(prazoEdital(e), true) : "Prazo a confirmar"}</span>;

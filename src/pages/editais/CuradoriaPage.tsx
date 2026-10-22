@@ -53,16 +53,36 @@ export const rodadaVigente = (rodadas: Rodada[] = [], agora = Date.now()): Rodad
   return futura ?? ord[ord.length - 1];
 };
 
-/** Aberto ou com rodada em andamento/futura; datas ausentes não comprovam vigência. */
-export const ehVigente = (e: EditalRow, agora = Date.now()): boolean => {
-  if (e.status_curadoria === "descartado") return false;
-  if (e.situacao === "aberto") return true;
-  return (e.oe_rodada ?? []).some((r) => {
-    const abertura = t(r.abertura);
-    const fim = t(r.prazo_fim);
-    return (fim != null && fim >= agora && (abertura ?? -Infinity) <= agora)
-      || (abertura != null && abertura > agora && (fim == null || fim >= abertura));
-  });
+/** Situação calculada pelas rodadas; sem datas de rodada, usa a situação gravada. Revogação gravada prevalece. */
+export const situacaoEdital = (e: Pick<EditalRow, "situacao" | "oe_rodada">, agora = Date.now()): string | null => {
+  if (e.situacao === "revogado") return e.situacao;
+  const rodadas = (e.oe_rodada ?? []).filter((r) => t(r.abertura) != null || t(r.prazo_fim) != null || t(r.resultado_em ?? null) != null);
+  if (!rodadas.length) return e.situacao;
+  if (rodadas.some((r) => (t(r.prazo_fim) ?? -Infinity) >= agora || (t(r.abertura) ?? -Infinity) > agora)) return "aberto";
+  if (rodadas.some((r) => t(r.prazo_fim) != null && (t(r.resultado_em ?? null) ?? Infinity) > agora)) return "em_julgamento";
+  const resultados = rodadas.map((r) => t(r.resultado_em ?? null));
+  if (resultados.some((x) => x != null) && resultados.every((x) => x == null || x <= agora)) return "encerrado";
+  return e.situacao;
+};
+
+/** Vigente = situação derivada aberta (rodada em andamento ou futura). */
+export const ehVigente = (e: EditalRow, agora = Date.now()): boolean =>
+  e.status_curadoria !== "descartado" && situacaoEdital(e, agora) === "aberto";
+
+export interface FiltrosCuradoria { vigencia: string; fonte: string; abrangencia: string; situacao: string; ano: string }
+export const FILTROS_PADRAO: FiltrosCuradoria = { vigencia: "__none__", fonte: "__none__", abrangencia: "__none__", situacao: "__none__", ano: "__none__" };
+export const filtrarCuradoria = (rows: EditalRow[], f: FiltrosCuradoria, agora = Date.now()) => rows.filter((e) => {
+  const sit = situacaoEdital(e, agora);
+  return (f.fonte === "__none__" || e.fonte_id === f.fonte)
+    && (f.ano === "__none__" || e.ano === Number(f.ano))
+    && correspondeAbrangencia(e.abrangencia, f.abrangencia)
+    && (f.situacao === "__none__" || sit === f.situacao)
+    && (f.vigencia === "vigentes" ? ehVigente(e, agora) : f.vigencia === "em_julgamento" ? sit === "em_julgamento" : true);
+});
+/** Quantos editais da aba atual ficam escondidos pelos filtros. */
+export const editaisOcultos = (rows: EditalRow[], f: FiltrosCuradoria, status: string, agora = Date.now()) => {
+  const daAba = rows.filter((e) => status === "__none__" || e.status_curadoria === status);
+  return daAba.length - filtrarCuradoria(daAba, f, agora).length;
 };
 
 export const exigeConfirmacaoSemRodadas = (situacao: string | null, rodadas: Rodada[]): boolean =>
@@ -101,9 +121,9 @@ const CuradoriaPage = () => {
   const [fonte, setFonte] = useState(NONE);
   const [abrangencia, setAbrangencia] = useState(NONE);
   const [situacao, setSituacao] = useState(NONE);
-  const [vigencia, setVigencia] = useState("vigentes");
+  const [vigencia, setVigencia] = useState(NONE);
   const [status, setStatus] = useState(NONE);
-  const [ano, setAno] = useState("2026");
+  const [ano, setAno] = useState(NONE);
   const [selId, setSelId] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -128,31 +148,20 @@ const CuradoriaPage = () => {
     },
   });
 
-  const aplicar = (q: any, comStatus: boolean) => {
-    if (comStatus && status !== NONE) q = q.eq("status_curadoria", status);
-    if (situacao !== NONE) q = q.eq("situacao", situacao);
-    if (fonte !== NONE) q = q.eq("fonte_id", fonte);
-    if (ano !== NONE) q = q.eq("ano", Number(ano));
-    return q;
-  };
-
   const listaQ = useQuery({
-    queryKey: ["oe-editais", fonte, situacao, ano],
+    queryKey: ["oe-editais"],
     queryFn: async () => {
-      const { data, error } = await aplicar(
-        oe.from("oe_edital").select("id, fonte_id, numero, ano, titulo, categoria, situacao, status_curadoria, url_oficial, visto_ultima_vez_em, verificado_em, verificado_por, publicado_em, resumo_tldr, resumo_tldr_atualizado_em, objetivo, recursos, quem_pode, requisitos_ies, restricao_ies, abrangencia, contrapartida, areas, oe_fonte(slug, nome), oe_rodada(id, ordem, abertura, prazo_fim, resultado_em)"),
-        false,
-      ).limit(1000);
+      const { data, error } = await oe.from("oe_edital").select("id, fonte_id, numero, ano, titulo, categoria, situacao, status_curadoria, url_oficial, visto_ultima_vez_em, verificado_em, verificado_por, publicado_em, resumo_tldr, resumo_tldr_atualizado_em, objetivo, recursos, quem_pode, requisitos_ies, restricao_ies, abrangencia, contrapartida, areas, oe_fonte(slug, nome), oe_rodada(id, ordem, abertura, prazo_fim, resultado_em)").limit(1000);
       if (error) throw error;
       return data as EditalRow[];
     },
   });
 
+  const filtros = useMemo<FiltrosCuradoria>(() => ({ vigencia, fonte, abrangencia, situacao, ano }), [vigencia, fonte, abrangencia, situacao, ano]);
+  const limparFiltros = () => mudar(() => { setVigencia(NONE); setFonte(NONE); setAbrangencia(NONE); setSituacao(NONE); setAno(NONE); setSelId(null); });
   const listaBase = useMemo(() => {
     const agora = Date.now();
-    const rows = (listaQ.data ?? [])
-      .filter((e) => correspondeAbrangencia(e.abrangencia, abrangencia))
-      .filter((e) => vigencia === "vigentes" ? ehVigente(e, agora) : vigencia === "em_julgamento" ? e.situacao === "em_julgamento" : true)
+    const rows = filtrarCuradoria(listaQ.data ?? [], filtros, agora)
       .map((e) => ({ e, v: rodadaVigente(e.oe_rodada) }));
     const prazo = (x: { v: Rodada | null }) => t(x.v?.prazo_fim ?? null);
     const futuros = rows.filter((x) => { const p = prazo(x); return p != null && p >= agora; }).sort((a, b) => (prazo(a) ?? 0) - (prazo(b) ?? 0));
@@ -160,7 +169,8 @@ const CuradoriaPage = () => {
     const semDatas = rows.filter((x) => prazo(x) == null)
       .sort((a, b) => (t(b.e.visto_ultima_vez_em) ?? 0) - (t(a.e.visto_ultima_vez_em) ?? 0));
     return [...futuros, ...vencidos, ...semDatas];
-  }, [listaQ.data, vigencia, abrangencia]);
+  }, [listaQ.data, filtros]);
+  const ocultos = useMemo(() => editaisOcultos(listaQ.data ?? [], filtros, status), [listaQ.data, filtros, status]);
 
   const lista = useMemo(() => listaBase.filter(({ e }) => status === NONE || e.status_curadoria === status), [listaBase, status]);
   const contagens = Object.fromEntries(Object.keys(STATUS).map((s) => [s, listaBase.filter(({ e }) => e.status_curadoria === s).length]));
@@ -211,8 +221,8 @@ const CuradoriaPage = () => {
               <FonteBadge slug={e.oe_fonte?.slug} nome={e.oe_fonte?.nome} />
               <AbrangenciaBadge abrangencia={e.abrangencia} curadoria />
               {semNumero(e.numero) ? <Badge variant="outline">Sem número</Badge> : <span className="text-xs text-muted-foreground">Nº {e.numero}</span>}
-              {e.situacao && <Badge variant="secondary">{SITUACOES[e.situacao] ?? e.situacao}</Badge>}
-              {!v && e.situacao === "aberto" && <Badge variant="destructive">Prazo a confirmar</Badge>}
+              {situacaoEdital(e) && <Badge variant="secondary">{SITUACOES[situacaoEdital(e) ?? ""] ?? situacaoEdital(e)}</Badge>}
+              {!v && situacaoEdital(e) === "aberto" && <Badge variant="destructive">Prazo a confirmar</Badge>}
               {(() => {
                 const dias = diasAte(v?.prazo_fim);
                 if (dias == null || dias < 0) return null;
@@ -222,7 +232,7 @@ const CuradoriaPage = () => {
             {e.status_curadoria === "publicado" && e.verificado_em && <p className="text-xs text-success mb-1">Publicado em {fmtData(e.verificado_em, true)}</p>}
             <p className="font-medium text-foreground text-sm line-clamp-2">{e.titulo}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              {e.categoria ?? "Sem categoria"} · {!v && e.situacao === "em_julgamento" ? "Inscrições encerradas, acompanhe o resultado" : `Prazo: ${v ? fmtData(v.prazo_fim) : e.situacao === "aberto" ? "A confirmar" : "Datas ainda não extraídas"}`}
+              {e.categoria ?? "Sem categoria"} · {!v && situacaoEdital(e) === "em_julgamento" ? "Inscrições encerradas, acompanhe o resultado" : `Prazo: ${v ? fmtData(v.prazo_fim) : situacaoEdital(e) === "aberto" ? "A confirmar" : "Datas ainda não extraídas"}`}
             </p>
           </Button>
         ))
@@ -265,6 +275,12 @@ const CuradoriaPage = () => {
             ))}
           </TabsList>
         </Tabs>
+        {!listaQ.isLoading && !listaQ.isError && ocultos > 0 && (
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <span>{ocultos === 1 ? "1 edital oculto pelos filtros" : `${ocultos} editais ocultos pelos filtros`}</span>
+            <Button variant="outline" size="sm" disabled={saving} onClick={limparFiltros}>Limpar filtros</Button>
+          </div>
+        )}
 
         <div className="flex flex-wrap gap-3">
           {filtro("Vigência", vigencia, setVigencia, [["vigentes", "Vigentes"], ["em_julgamento", "Em julgamento"]])}

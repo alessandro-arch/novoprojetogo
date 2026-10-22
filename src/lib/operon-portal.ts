@@ -1,4 +1,4 @@
-import { oe, ehVigente, rodadaVigente, type EditalRow } from "@/pages/editais/CuradoriaPage";
+import { oe, ehVigente, rodadaVigente, situacaoEdital, type EditalRow } from "@/pages/editais/CuradoriaPage";
 import { correspondeAbrangencia } from "@/components/operon/AbrangenciaBadge";
 
 export interface EditalPublicado extends EditalRow { verificado_em: string | null; tipo: string | null; ultimo_evento?: EventoPublicado }
@@ -21,7 +21,7 @@ export const normalizarBusca = (texto: string) => texto.normalize("NFD").replace
 export const numeroEdital = (e: EditalRow) => !e.numero || e.numero.trim().toLowerCase().replace(/\s/g, "") === "s/n" ? "Sem número" : `${e.numero}${e.ano ? `/${e.ano}` : ""}`;
 export const temRestricaoIes = (e: EditalRow) => ["exclui_privadas_com_fins_lucrativos", "somente_publicas"].includes(e.restricao_ies ?? "");
 export const prazoEdital = (e: EditalRow, agora = Date.now()) => {
-  if (e.situacao === "em_julgamento" || e.situacao === "resultado") return null;
+  if (situacaoEdital(e, agora) !== "aberto") return null;
   const rodada = rodadaVigente(e.oe_rodada, agora);
   const prazo = rodada?.prazo_fim;
   return prazo && new Date(prazo).getTime() >= agora ? prazo : null;
@@ -35,8 +35,8 @@ export function filtrarPainel(rows: EditalPublicado[], filtros: { busca: string;
     && (!busca || normalizarBusca([e.titulo, e.numero, e.categoria, ...(e.areas ?? [])].filter(Boolean).join(" ")).includes(busca)));
   const abas: Record<AbaOperon, EditalPublicado[]> = {
     abertos: base.filter(e => ehVigente(e, agora)).sort((a, b) => (prazoEdital(a, agora) ? new Date(prazoEdital(a, agora) ?? "").getTime() : Infinity) - (prazoEdital(b, agora) ? new Date(prazoEdital(b, agora) ?? "").getTime() : Infinity)),
-    em_julgamento: base.filter(e => e.situacao === "em_julgamento"),
-    resultados: base.filter(e => e.situacao === "resultado"),
+    em_julgamento: base.filter(e => situacaoEdital(e, agora) === "em_julgamento"),
+    resultados: base.filter(e => ["resultado", "encerrado"].includes(situacaoEdital(e, agora) ?? "")),
   };
   return abas;
 }

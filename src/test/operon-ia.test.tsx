@@ -13,7 +13,7 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: mocks.rpc, f
 }) } }));
 vi.mock("@/pages/editais/CuradoriaPage", () => ({
   oe: { from: () => ({ select: () => ({ eq: () => ({ order: async () => ({ data: [], error: null }), in: () => ({ order: async () => ({ data: [], error: null }) }) }) }), update: (v: unknown) => ({ eq: async () => { mocks.update(v); return { error: null }; } }) }) },
-  fmtData: () => "", rodadaVigente: () => null, SITUACOES: {}, semNumero: () => false, exigeConfirmacaoSemRodadas: () => false,
+  fmtData: () => "", rodadaVigente: () => null, situacaoEdital: (e: { situacao: string | null }) => e.situacao, SITUACOES: {}, semNumero: () => false, exigeConfirmacaoSemRodadas: () => false,
 }));
 const edital = { id: "edital", fonte_id: "fonte", numero: "1", ano: 2026, titulo: "Edital", categoria: null, situacao: "aberto", status_curadoria: "rascunho", url_oficial: null, visto_ultima_vez_em: null, objetivo: "Original.", recursos: null, quem_pode: null, contrapartida: null, areas: [], requisitos_ies: null, restricao_ies: null };
 let root: Root | undefined;
