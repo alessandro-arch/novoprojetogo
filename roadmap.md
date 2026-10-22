@@ -13,4 +13,5 @@
 - [x] Operon: campos e restrições para IES, saída exclusiva e recuperação com retorno ao módulo (17 testes e caminhos públicos conferidos; fluxo com conta real não disponível neste projeto)
 - [x] Operon: selos por fonte, filtros vigentes/julgamento e confirmação de publicação sem rodadas (26 testes passaram; conferência com conta real indisponível)
 - [x] Operon: abrangência nos filtros, cartões e edição da curadoria (35 testes passaram; gravação real aguarda coluna e sessão de teste)
-- [ ] Operon portal etapa 1: painel com busca/abas, ficha publicada, eventos liberados e seguir/deixar de seguir, com testes.
+- [x] Operon portal etapa 1: painel com busca/abas, ficha publicada, eventos liberados e seguir/deixar de seguir; 55 testes passaram, compilação sem erros e rotas exigem login Operon.
+- [ ] Operon portal: conferir apresentação em computador/celular e seguir/deixar de seguir com conta real. Bloqueio: Supabase externo sem sessão de teste disponível.
