@@ -56,6 +56,10 @@
     --info-foreground: 0 0% 100%;
     --info-light: 215 60% 95%;
     --danger-light: 0 60% 95%;
+    /* Fixed agency badge colors, without changing the platform palette. */
+    --fonte-cnpq: 221 83% 53%;
+    --fonte-fapes: 330 81% 60%;
+    --fonte-foreground: 0 0% 100%;
 
     /* Custom tokens */
     --gradient-primary: linear-gradient(135deg, hsl(215, 65%, 30%), hsl(215, 55%, 42%));

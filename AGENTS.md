@@ -1,4 +1,5 @@
 # AGENTS
+- Operon source badges use FonteBadge and dedicated global color tokens with Badge variants; this keeps agency identity consistent without changing platform theme roles.
 - Operon Fomento uses the shared Supabase session with a dedicated module login and reads existing role and organization-config RLS results for admission; this keeps module entry points separate without parallel authentication or tenant models.
 - Operon protected entry uses an RLS-backed admission gate and navigates to its login before sign-out; recovery return paths are allowlisted and carried by the existing email sender, preventing cross-module redirects without new authentication infrastructure.
 - Service Desk operations: one Central de Atendimento at /servicedesk/atendimento for every responsible group (context via ?grupo=); stage type (analysis = 1st step, execution = later steps) and modules derive from service steps, never group names; legacy /servicedesk/<group code> redirects there; VPN release goes through `sd_release_vpn` + private `servicedesk` bucket path `<org>/vpn/<request>/` and `sd-notify` event `liberar_vpn`.
