@@ -11,3 +11,4 @@
 - [x] Operon Editais etapa 1: tela de curadoria em /editais/curadoria
 - [x] Operon Fomento: login exclusivo, redirecionamentos e saída para /editais/login
 - [x] Operon: campos e restrições para IES, saída exclusiva e recuperação com retorno ao módulo (17 testes e caminhos públicos conferidos; fluxo com conta real não disponível neste projeto)
+- [x] Operon: selos por fonte, filtros vigentes/julgamento e confirmação de publicação sem rodadas (26 testes passaram; conferência com conta real indisponível)

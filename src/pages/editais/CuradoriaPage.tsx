@@ -13,6 +13,7 @@ import { ArrowLeft, FileText, LogOut } from "lucide-react";
 import { logoutOperon } from "@/lib/operon-access";
 import { useToast } from "@/hooks/use-toast";
 import EditalCuradoriaDetail from "@/components/operon/EditalCuradoriaDetail";
+import FonteBadge from "@/components/operon/FonteBadge";
 
 // Tabelas oe_* ainda não estão nos tipos gerados: cast pontual.
 export const oe = supabase as any;
@@ -42,16 +43,24 @@ export const rodadaVigente = (rodadas: Rodada[] = [], agora = Date.now()): Rodad
   const andamento = ord.find((r) => (t(r.abertura) ?? -Infinity) <= agora && (t(r.prazo_fim) ?? Infinity) >= agora);
   if (andamento) return andamento;
   const futura = ord.filter((r) => (t(r.abertura) ?? t(r.prazo_fim) ?? 0) > agora)
-    .sort((a, b) => (t(a.abertura) ?? t(a.prazo_fim)!) - (t(b.abertura) ?? t(b.prazo_fim)!))[0];
+    .sort((a, b) => (t(a.abertura) ?? t(a.prazo_fim) ?? 0) - (t(b.abertura) ?? t(b.prazo_fim) ?? 0))[0];
   return futura ?? ord[ord.length - 1];
 };
 
-/** Vigente hoje: situação aberta ou alguma rodada em andamento; descartado nunca é vigente. */
+/** Aberto ou com rodada em andamento/futura; datas ausentes não comprovam vigência. */
 export const ehVigente = (e: EditalRow, agora = Date.now()): boolean => {
   if (e.status_curadoria === "descartado") return false;
   if (e.situacao === "aberto") return true;
-  return (e.oe_rodada ?? []).some((r) => (t(r.abertura) ?? -Infinity) <= agora && (t(r.prazo_fim) ?? Infinity) >= agora);
+  return (e.oe_rodada ?? []).some((r) => {
+    const abertura = t(r.abertura);
+    const fim = t(r.prazo_fim);
+    return (fim != null && fim >= agora && (abertura ?? -Infinity) <= agora)
+      || (abertura != null && abertura > agora && (fim == null || fim >= abertura));
+  });
 };
+
+export const exigeConfirmacaoSemRodadas = (situacao: string | null, rodadas: Rodada[]): boolean =>
+  situacao === "aberto" && rodadas.length === 0;
 
 /** Dias corridos até o prazo, no horário de Brasília (0 = fecha hoje). */
 export const diasAte = (prazo: string | null | undefined, agora = new Date()): number | null => {
@@ -87,7 +96,7 @@ const CuradoriaPage = () => {
 
   const mudarVigencia = (v: string) => {
     setVigencia(v);
-    setStatus(v === "vigentes" ? NONE : "rascunho");
+    setStatus(v === NONE ? "rascunho" : NONE);
   };
 
   const fontesQ = useQuery({
@@ -135,11 +144,11 @@ const CuradoriaPage = () => {
   const lista = useMemo(() => {
     const agora = Date.now();
     const rows = (listaQ.data ?? [])
-      .filter((e) => vigencia !== "vigentes" || ehVigente(e, agora))
+      .filter((e) => vigencia === "vigentes" ? ehVigente(e, agora) : vigencia === "em_julgamento" ? e.situacao === "em_julgamento" : true)
       .map((e) => ({ e, v: rodadaVigente(e.oe_rodada) }));
     const prazo = (x: { v: Rodada | null }) => t(x.v?.prazo_fim ?? null);
-    const futuros = rows.filter((x) => { const p = prazo(x); return p != null && p >= agora; }).sort((a, b) => prazo(a)! - prazo(b)!);
-    const vencidos = rows.filter((x) => { const p = prazo(x); return p != null && p < agora; }).sort((a, b) => prazo(b)! - prazo(a)!);
+    const futuros = rows.filter((x) => { const p = prazo(x); return p != null && p >= agora; }).sort((a, b) => (prazo(a) ?? 0) - (prazo(b) ?? 0));
+    const vencidos = rows.filter((x) => { const p = prazo(x); return p != null && p < agora; }).sort((a, b) => (prazo(b) ?? 0) - (prazo(a) ?? 0));
     const semDatas = rows.filter((x) => prazo(x) == null)
       .sort((a, b) => (t(b.e.visto_ultima_vez_em) ?? 0) - (t(a.e.visto_ultima_vez_em) ?? 0));
     return [...futuros, ...vencidos, ...semDatas];
@@ -167,7 +176,7 @@ const CuradoriaPage = () => {
   const listaView = (
     <div className="space-y-2">
       {!listaQ.isLoading && !listaQ.isError && (
-        <p className="text-sm text-muted-foreground">{vigentesHoje} editais vigentes hoje</p>
+        <p className="text-sm text-muted-foreground">{vigencia === "em_julgamento" ? `${lista.length} editais em julgamento` : `${vigentesHoje} editais vigentes`}</p>
       )}
       {listaQ.isLoading ? (
         Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)
@@ -186,9 +195,10 @@ const CuradoriaPage = () => {
             className={`w-full text-left bg-card rounded-xl border p-4 transition-shadow hover:shadow-card ${selId === e.id ? "border-primary" : "border-border"}`}
           >
             <div className="flex flex-wrap items-center gap-1.5 mb-1">
-              <Badge>{e.oe_fonte?.nome ?? e.oe_fonte?.slug ?? "Fonte"}</Badge>
+              <FonteBadge slug={e.oe_fonte?.slug} nome={e.oe_fonte?.nome} />
               {semNumero(e.numero) ? <Badge variant="outline">Sem número</Badge> : <span className="text-xs text-muted-foreground">Nº {e.numero}</span>}
               {e.situacao && <Badge variant="secondary">{SITUACOES[e.situacao] ?? e.situacao}</Badge>}
+              {!v && e.situacao === "aberto" && <Badge variant="destructive">Prazo a confirmar</Badge>}
               {(() => {
                 const dias = diasAte(v?.prazo_fim);
                 if (dias == null || dias < 0) return null;
@@ -197,7 +207,7 @@ const CuradoriaPage = () => {
             </div>
             <p className="font-medium text-foreground text-sm line-clamp-2">{e.titulo}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              {e.categoria ?? "Sem categoria"} · Prazo: {v ? fmtData(v.prazo_fim) : "Datas ainda não extraídas"}
+              {e.categoria ?? "Sem categoria"} · {!v && e.situacao === "em_julgamento" ? "Inscrições encerradas, acompanhe o resultado" : `Prazo: ${v ? fmtData(v.prazo_fim) : e.situacao === "aberto" ? "A confirmar" : "Datas ainda não extraídas"}`}
             </p>
           </button>
         ))
@@ -235,14 +245,14 @@ const CuradoriaPage = () => {
           {contQ.isLoading ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)
             : contQ.isError ? <div className="col-span-3 space-y-2"><Placeholder title="Não foi possível carregar os contadores" text={(contQ.error as Error)?.message ?? ""} /><Button variant="outline" size="sm" onClick={() => contQ.refetch()}>Tentar novamente</Button></div>
             : (<>
-              <KpiCard label="Rascunhos" value={contQ.data!.rascunho} />
-              <KpiCard label="Em revisão" value={contQ.data!.em_revisao} />
-              <KpiCard label="Publicados" value={contQ.data!.publicado} />
+              <KpiCard label="Rascunhos" value={contQ.data?.rascunho ?? 0} />
+              <KpiCard label="Em revisão" value={contQ.data?.em_revisao ?? 0} />
+              <KpiCard label="Publicados" value={contQ.data?.publicado ?? 0} />
             </>)}
         </div>
 
         <div className="flex flex-wrap gap-3">
-          {filtro("Vigência", vigencia, mudarVigencia, [["vigentes", "Vigentes hoje"]])}
+          {filtro("Vigência", vigencia, mudarVigencia, [["vigentes", "Vigentes"], ["em_julgamento", "Em julgamento"]])}
           {filtro("Fonte", fonte, setFonte, (fontesQ.data ?? []).map((f) => [f.id, f.nome]))}
           {filtro("Situação", situacao, setSituacao, Object.entries(SITUACOES))}
           {filtro("Status de curadoria", status, setStatus, Object.entries(STATUS))}

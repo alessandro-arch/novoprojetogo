@@ -16,7 +16,8 @@ import { Placeholder } from "@/components/servicedesk/sd-ui";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { ExternalLink, Download, Loader2 } from "lucide-react";
-import { oe, fmtData, rodadaVigente, SITUACOES, semNumero, type EditalRow, type Rodada } from "@/pages/editais/CuradoriaPage";
+import { oe, fmtData, rodadaVigente, SITUACOES, semNumero, exigeConfirmacaoSemRodadas, type EditalRow, type Rodada } from "@/pages/editais/CuradoriaPage";
+import FonteBadge from "@/components/operon/FonteBadge";
 
 type Campo = "objetivo" | "recursos" | "quem_pode" | "requisitos_ies" | "contrapartida" | "areas";
 const CAMPOS: { key: Campo; label: string }[] = [
@@ -71,6 +72,7 @@ const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
   const [form, setForm] = useState<Record<Campo, string>>(() =>
     Object.fromEntries(CAMPOS.map((c) => [c.key, toText(edital, c.key)])) as Record<Campo, string>);
   const [restricaoIes, setRestricaoIes] = useState(edital.restricao_ies ?? "__none__");
+  const [confirmarPublicacao, setConfirmarPublicacao] = useState(false);
 
   const rodadasQ = useLista<Rodada>("oe-rodadas", edital.id, "oe_rodada", "ordem", true);
   const docsQ = useLista<any>("oe-docs", edital.id, "oe_documento", "publicado_em", false);
@@ -146,7 +148,7 @@ const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
       <Card className="rounded-xl">
         <CardContent className="py-5 space-y-2">
           <div className="flex flex-wrap items-center gap-1.5">
-            <Badge>{edital.oe_fonte?.nome ?? edital.oe_fonte?.slug}</Badge>
+            <FonteBadge slug={edital.oe_fonte?.slug} nome={edital.oe_fonte?.nome} />
             {semNumero(edital.numero) ? <Badge variant="outline">Sem número</Badge> : <Badge variant="outline">Nº {edital.numero}</Badge>}
             {edital.categoria && <Badge variant="secondary">{edital.categoria}</Badge>}
             {edital.situacao && <Badge variant="secondary">{SITUACOES[edital.situacao] ?? edital.situacao}</Badge>}
@@ -290,9 +292,24 @@ const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
       </Card>
 
       <div className="flex flex-wrap gap-2 sticky bottom-0 bg-background py-3">
-        <Button disabled={mut.isPending} onClick={() => mut.mutate("publicar")}>
+        <Button disabled={mut.isPending || rodadasQ.isLoading || rodadasQ.isError} onClick={() => {
+          if (exigeConfirmacaoSemRodadas(edital.situacao, rodadasQ.data ?? [])) setConfirmarPublicacao(true);
+          else mut.mutate("publicar");
+        }}>
           {mut.isPending && mut.variables === "publicar" && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Aprovar e publicar
         </Button>
+        <AlertDialog open={confirmarPublicacao} onOpenChange={setConfirmarPublicacao}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Publicar sem datas de inscrição?</AlertDialogTitle>
+              <AlertDialogDescription>Este edital está sem datas de inscrição. Publicar mesmo assim?</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => mut.mutate("publicar")}>Publicar mesmo assim</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         <Button variant="outline" disabled={mut.isPending} onClick={() => mut.mutate("revisao")}>
           {mut.isPending && mut.variables === "revisao" && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Salvar como em revisão
         </Button>

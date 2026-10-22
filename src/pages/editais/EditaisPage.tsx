@@ -12,6 +12,7 @@ import { Placeholder } from "@/components/servicedesk/sd-ui";
 import { ArrowLeft, ExternalLink, FileText, LogOut } from "lucide-react";
 import { oe, EditalRow, Rodada, fmtData, rodadaVigente, ehVigente, diasAte, semNumero } from "./CuradoriaPage";
 import { logoutOperon } from "@/lib/operon-access";
+import FonteBadge from "@/components/operon/FonteBadge";
 
 const NONE = "__none__";
 const DESTAQUE = ["retificacao", "retificação", "errata", "adendo"];
@@ -53,6 +54,7 @@ const Detalhe = ({ e }: { e: EditalRow }) => {
 
   return (
     <div className="space-y-5">
+      <FonteBadge slug={e.oe_fonte?.slug} nome={e.oe_fonte?.nome} />
       <AvisoIes e={e} />
       {e.url_oficial && (
         <a href={e.url_oficial} target="_blank" rel="noopener noreferrer">
@@ -113,6 +115,7 @@ const Detalhe = ({ e }: { e: EditalRow }) => {
 
 const EditaisPage = () => {
   const [fonte, setFonte] = useState(NONE);
+  const [vigencia, setVigencia] = useState("vigentes");
   const [sel, setSel] = useState<EditalRow | null>(null);
   const [saindo, setSaindo] = useState(false);
   const navigate = useNavigate();
@@ -153,10 +156,10 @@ const EditaisPage = () => {
 
   const lista = useMemo(() => {
     const agora = Date.now();
-    return (listaQ.data ?? []).filter((e) => ehVigente(e, agora))
+    return (listaQ.data ?? []).filter((e) => vigencia === "em_julgamento" ? e.situacao === "em_julgamento" : ehVigente(e, agora))
       .map((e) => ({ e, v: rodadaVigente(e.oe_rodada) }))
       .sort((a, b) => (tm(a.v?.prazo_fim ?? null) ?? Infinity) - (tm(b.v?.prazo_fim ?? null) ?? Infinity));
-  }, [listaQ.data]);
+  }, [listaQ.data, vigencia]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -177,10 +180,21 @@ const EditaisPage = () => {
 
       <main className="container mx-auto px-4 py-6 space-y-6 max-w-4xl">
         <div>
-          <h2 className="text-2xl font-bold font-heading text-foreground">Editais vigentes</h2>
+          <h2 className="text-2xl font-bold font-heading text-foreground">{vigencia === "em_julgamento" ? "Editais em julgamento" : "Editais vigentes"}</h2>
           <p className="text-sm text-muted-foreground">Resumos feitos pela curadoria. Confirme no texto oficial do edital.</p>
         </div>
 
+        <div className="flex flex-wrap gap-3">
+        <div className="space-y-1 w-full sm:w-56">
+          <Label className="text-xs">Vigência</Label>
+          <Select value={vigencia} onValueChange={(value) => { setVigencia(value); setSel(null); }}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="vigentes">Vigentes</SelectItem>
+              <SelectItem value="em_julgamento">Em julgamento</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <div className="space-y-1 w-full sm:w-56">
           <Label className="text-xs">Fonte</Label>
           <Select value={fonte} onValueChange={setFonte}>
@@ -191,28 +205,30 @@ const EditaisPage = () => {
             </SelectContent>
           </Select>
         </div>
+        </div>
 
         {listaQ.isLoading ? (
           <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}</div>
         ) : listaQ.isError ? (
           <Erro msg={(listaQ.error as Error)?.message ?? ""} retry={() => listaQ.refetch()} />
         ) : lista.length === 0 ? (
-          <Placeholder title="Nenhum edital vigente" text="Nenhum edital vigente publicado ainda. Os editais aparecem aqui depois da conferência da curadoria." />
+          <Placeholder title={vigencia === "em_julgamento" ? "Nenhum edital em julgamento" : "Nenhum edital vigente"} text={vigencia === "em_julgamento" ? "Nenhum edital em julgamento publicado ainda." : "Nenhum edital vigente publicado ainda. Os editais aparecem aqui depois da conferência da curadoria."} />
         ) : (
           <div className="space-y-3">
             {lista.map(({ e, v }) => (
               <button key={e.id} onClick={() => setSel(e)}
                 className="w-full text-left bg-card rounded-xl border border-border p-4 hover:border-primary transition-colors">
                 <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <Badge variant="secondary">{e.oe_fonte?.nome ?? "Fonte"}</Badge>
+                  <FonteBadge slug={e.oe_fonte?.slug} nome={e.oe_fonte?.nome} />
                   {semNumero(e.numero) ? <Badge variant="outline">Sem número</Badge>
                     : <span className="text-xs text-muted-foreground">{e.numero}{e.ano ? `/${e.ano}` : ""}</span>}
-                  <PrazoBadge prazo={v?.prazo_fim} />
+                  {vigencia === "em_julgamento" || (!v && e.situacao === "em_julgamento") ? <Badge variant="secondary">Em julgamento</Badge> : <PrazoBadge prazo={v?.prazo_fim} />}
+                  {!v && e.situacao === "aberto" && vigencia !== "em_julgamento" && <Badge variant="destructive">Prazo a confirmar</Badge>}
                 </div>
                 <p className="font-medium text-foreground text-sm">{e.titulo}</p>
                 <AvisoIes e={e} />
                 <p className="text-xs text-muted-foreground mt-1">
-                  {e.categoria ?? "Sem categoria"} · Prazo: {v ? fmtData(v.prazo_fim, true) : "Datas ainda não extraídas"}
+                  {e.categoria ?? "Sem categoria"} · {vigencia === "em_julgamento" || (!v && e.situacao === "em_julgamento") ? "Inscrições encerradas, acompanhe o resultado" : `Prazo: ${v ? fmtData(v.prazo_fim, true) : e.situacao === "aberto" ? "A confirmar" : "Datas ainda não extraídas"}`}
                 </p>
               </button>
             ))}

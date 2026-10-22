@@ -4,18 +4,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import EditalCuradoriaDetail from "@/components/operon/EditalCuradoriaDetail";
 
-const mocks = vi.hoisted(() => ({ update: vi.fn(), extractUpdate: vi.fn(), extractFilter: vi.fn(), toast: vi.fn() }));
+const mocks = vi.hoisted(() => ({ update: vi.fn(), extractUpdate: vi.fn(), extractFilter: vi.fn(), toast: vi.fn(), semRodadas: false }));
 vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ user: { id: "curador1" } }) }));
 vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: mocks.toast }) }));
 vi.mock("@/pages/editais/CuradoriaPage", () => ({
   oe: { from: (table: string) => ({
     select: () => ({ eq: () => ({
       in: (campo: string, fields: string[]) => { mocks.extractFilter(campo, fields); return { order: async () => ({ data: [{ id: "ext1", campo: "requisitos_ies", valor: "Valor extraído", status: "pendente" }], error: null }) }; },
-      order: async () => ({ data: [], error: null }),
+      order: async () => ({ data: table === "oe_rodada" && !mocks.semRodadas ? [{ ordem: 1, abertura: null, prazo_fim: "2026-12-31T23:59:59Z" }] : [], error: null }),
     }) }),
     update: (payload: unknown) => ({ eq: async () => { (table === "oe_edital" ? mocks.update : mocks.extractUpdate)(payload); return { error: null }; } }),
   }) },
   fmtData: () => "", rodadaVigente: () => null, SITUACOES: {}, semNumero: () => false,
+  exigeConfirmacaoSemRodadas: (situacao: string, rodadas: unknown[]) => situacao === "aberto" && rodadas.length === 0,
 }));
 
 const edital = {
@@ -46,10 +47,21 @@ const open = async () => {
   // Wait for query data to render, not only for the request to start.
   await waitFor(() => expect([...container.querySelectorAll("button")].some((button) => button.textContent?.trim() === "Usar valor extraído")).toBe(true));
 };
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => { vi.clearAllMocks(); mocks.semRodadas = false; });
 afterEach(async () => { await act(async () => root?.unmount()); document.body.innerHTML = ""; });
 
 describe("Persistência dos requisitos de IES", () => {
+  it("não publica aberto sem rodadas até confirmação explícita", async () => {
+    mocks.semRodadas = true;
+    await open();
+    await click("Aprovar e publicar");
+    expect(mocks.update).not.toHaveBeenCalled();
+    await click("Cancelar");
+    expect(mocks.update).not.toHaveBeenCalled();
+    await click("Aprovar e publicar");
+    await click("Publicar mesmo assim");
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({ status_curadoria: "publicado" })));
+  });
   it("inclui requisitos_ies na leitura das extrações", async () => {
     await open();
     expect(mocks.extractFilter).toHaveBeenCalledWith("campo", expect.arrayContaining(["requisitos_ies"]));
