@@ -1,4 +1,4 @@
-import { requireCurator, ExtractionError, extractAndGenerate, generateWithFallback, validateAI, fieldState, eligibleProposals, trustedPDFUrl, publicIP } from "./core.ts";
+import { requireCurator, ExtractionError, extractAndGenerate, generateWithFallback, callOpenRouter, RATE_MESSAGE, validateAI, fieldState, eligibleProposals, trustedPDFUrl, publicIP } from "./core.ts";
 const assert = (v: unknown, message = "Assertion failed") => { if (!v) throw new Error(message); };
 const source = "Pesquisa em instituições públicas. Submissões no edital.";
 const valid = JSON.stringify({ objetivo: { valor: "Pesquisa em instituições públicas.", trecho_origem: "Pesquisa em instituições públicas." } });
@@ -54,4 +54,51 @@ Deno.test("URLs internas e externas não oficiais são bloqueadas", () => {
   }
   assert(trustedPDFUrl("https://fapes.es.gov.br/a.pdf").hostname === "fapes.es.gov.br");
   assert(!publicIP("10.0.0.1") && !publicIP("169.254.169.254") && !publicIP("::1") && !publicIP("::ffff:127.0.0.1"));
+});
+Deno.test("desativa raciocínio para obter JSON completo dentro do prazo", async () => {
+  let body: Record<string, unknown> = {};
+  const content = await callOpenRouter(source, "fallback", "https://openrouter.ai/api/v1/", "test-only", async (input, init) => {
+    assert(input === "https://openrouter.ai/api/v1/chat/completions");
+    body = JSON.parse(String(init?.body));
+    return Response.json({ choices: [{ message: { content: valid }, finish_reason: "stop" }] });
+  });
+  assert((body.reasoning as { enabled: boolean }).enabled === false);
+  assert(body.temperature === 0.1 && body.max_tokens === 16000 && content === valid);
+});
+Deno.test("modelo gratuito indisponível usa reserva e retorna sugestões validadas", async () => {
+  const calls: string[] = [], failures: number[] = [];
+  const result = await generateWithFallback(source, ["free", "fallback"], model => callOpenRouter(source, model, "https://openrouter.ai/api/v1", "test-only", async () => {
+    calls.push(model);
+    return model === "free" ? Response.json({ error: "private provider payload" }, { status: 404 }) : Response.json({ choices: [{ message: { content: valid }, finish_reason: "stop" }] });
+  }), (_model, status) => failures.push(status));
+  assert(calls.join(",") === "free,fallback" && failures.join(",") === "503");
+  assert(result.modelo === "fallback" && result.propostas.objetivo?.valor === "Pesquisa em instituições públicas.");
+});
+Deno.test("timeout recebe mensagem específica e não erro 502 genérico", async () => {
+  let failed = false;
+  try { await callOpenRouter(source, "fallback", "https://openrouter.ai/api/v1", "test-only", async () => { throw new DOMException("timeout", "TimeoutError"); }); }
+  catch (e) { failed = e instanceof ExtractionError && e.status === 504 && e.message.includes("tempo de resposta"); }
+  assert(failed);
+});
+Deno.test("limite 429 não é ocultado pela indisponibilidade do reserva", async () => {
+  let failed = false;
+  try { await generateWithFallback(source, ["free", "fallback"], model => callOpenRouter(source, model, "https://openrouter.ai/api/v1", "test-only", async () => Response.json({}, { status: model === "free" ? 429 : 404 }))); }
+  catch (e) { failed = e instanceof ExtractionError && e.status === 429 && e.message === RATE_MESSAGE; }
+  assert(failed);
+});
+Deno.test("respostas truncadas, malformadas e vazias são rejeitadas", async () => {
+  for (const payload of ["invalid", { choices: [] }, { choices: [{ message: { content: " " } }] }, { choices: [{ message: { content: valid }, finish_reason: "length" }] }]) {
+    let failed = false;
+    try { await callOpenRouter(source, "fallback", "https://openrouter.ai/api/v1", "test-only", async () => typeof payload === "string" ? new Response(payload) : Response.json(payload)); }
+    catch (e) { failed = e instanceof ExtractionError && e.status === 422; }
+    assert(failed);
+  }
+});
+Deno.test("falhas de autorização e saldo não revelam resposta do provedor", async () => {
+  for (const status of [401, 403, 402]) {
+    let failed = false;
+    try { await callOpenRouter(source, "fallback", "https://openrouter.ai/api/v1", "test-only", async () => Response.json({ error: "private payload" }, { status })); }
+    catch (e) { failed = e instanceof ExtractionError && e.status === 503 && !e.message.includes("private payload"); }
+    assert(failed);
+  }
 });
