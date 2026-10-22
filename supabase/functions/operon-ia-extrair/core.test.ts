@@ -19,6 +19,22 @@ Deno.test("não curador recebe 403 antes de qualquer extração", async () => {
   catch (e) { denied = e instanceof ExtractionError && e.status === 403; }
   assert(denied);
 });
+Deno.test("TLDR sintetizado aceita evidência literal separada até 300 caracteres", () => {
+  const summary = "A chamada apoia pesquisa. Instituições públicas podem participar. As submissões seguem o edital.";
+  const result = validateAI(JSON.stringify({ resumo_tldr: { valor: summary, trecho_origem: "Pesquisa em instituições públicas." } }), source);
+  assert(result.resumo_tldr?.valor === summary && result.resumo_tldr.trecho_origem === "Pesquisa em instituições públicas.");
+  assert(eligibleProposals(result, { resumo_tldr: null }, false).resumo_tldr?.valor === summary);
+  assert(!eligibleProposals(result, { resumo_tldr: "Resumo curado completo." }, false).resumo_tldr);
+  assert(eligibleProposals(result, { resumo_tldr: "Resumo curado completo." }, true).resumo_tldr?.valor === summary);
+});
+Deno.test("TLDR sem evidência literal ou com evidência longa continua rejeitado", () => {
+  for (const excerpt of ["Síntese inventada.", "x".repeat(301)]) {
+    let failed = false;
+    try { validateAI(JSON.stringify({ resumo_tldr: { valor: "Resumo científico.", trecho_origem: excerpt } }), source); }
+    catch (e) { failed = e instanceof ExtractionError && e.status === 422; }
+    assert(failed);
+  }
+});
 Deno.test("JWT inválido recebe 401 sem consultar permissão", async () => {
   let queried = false, denied = false;
   try { await requireCurator("Bearer invalid", async () => false, async () => { queried = true; return true; }); }
@@ -75,6 +91,9 @@ Deno.test("desativa raciocínio para obter JSON completo dentro do prazo", async
   });
   assert((body.reasoning as { enabled: boolean }).enabled === false);
   assert(body.temperature === 0.1 && body.max_tokens === 16000 && content === valid);
+  const format = body.response_format as { type: string; json_schema: { strict: boolean; schema: { properties: { resumo_tldr: { properties: { trecho_origem: { maxLength: number } } } } } } };
+  assert(format.type === "json_schema" && format.json_schema.strict === true);
+  assert(format.json_schema.schema.properties.resumo_tldr.properties.trecho_origem.maxLength === 300);
 });
 Deno.test("modelo gratuito indisponível usa reserva e retorna sugestões validadas", async () => {
   const calls: string[] = [], failures: number[] = [];
