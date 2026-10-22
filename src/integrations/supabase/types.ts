@@ -1524,6 +1524,7 @@ export type Database = {
       }
       oe_edital: {
         Row: {
+          abrangencia: string | null
           ano: number
           areas: string[]
           arquivado_em: string | null
@@ -1541,6 +1542,8 @@ export type Database = {
           publicado_em: string | null
           quem_pode: string | null
           recursos: string | null
+          requisitos_ies: string | null
+          restricao_ies: string | null
           situacao: string
           status_curadoria: string
           tipo: string | null
@@ -1552,6 +1555,7 @@ export type Database = {
           visto_ultima_vez_em: string | null
         }
         Insert: {
+          abrangencia?: string | null
           ano: number
           areas?: string[]
           arquivado_em?: string | null
@@ -1569,6 +1573,8 @@ export type Database = {
           publicado_em?: string | null
           quem_pode?: string | null
           recursos?: string | null
+          requisitos_ies?: string | null
+          restricao_ies?: string | null
           situacao?: string
           status_curadoria?: string
           tipo?: string | null
@@ -1580,6 +1586,7 @@ export type Database = {
           visto_ultima_vez_em?: string | null
         }
         Update: {
+          abrangencia?: string | null
           ano?: number
           areas?: string[]
           arquivado_em?: string | null
@@ -1597,6 +1604,8 @@ export type Database = {
           publicado_em?: string | null
           quem_pode?: string | null
           recursos?: string | null
+          requisitos_ies?: string | null
+          restricao_ies?: string | null
           situacao?: string
           status_curadoria?: string
           tipo?: string | null
