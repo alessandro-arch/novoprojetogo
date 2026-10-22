@@ -22,3 +22,4 @@
 - [ ] Operon IA: apresentação autenticada em computador/celular e gravação confirmada de rodadas. Bloqueio: Supabase externo sem sessão de teste disponível; extração com PDF oficial e chamadas reais OpenRouter verificadas diretamente, sem gravação.
 - [ ] Operon curadoria: conferir publicação/despublicação com conta real e apresentação em computador/celular. Bloqueio: Supabase externo sem sessão autenticada disponível para teste.
 - [x] Operon IA: erro 502 reproduzido como timeout do reserva; raciocínio desativado, erros específicos e diagnóstico seguro, correção instalada; PDF oficial retornou sugestões validadas em 19 segundos, sem gravação; 80 testes Vitest e 15 Deno passaram.
+- [x] Operon IA: DeepSeek v4.1 Flash substitui Nemotron nas duas tentativas; função instalada, 16 testes Deno passaram e PDF oficial retornou sugestões validadas em 14 segundos sem gravação.
