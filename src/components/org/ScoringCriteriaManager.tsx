@@ -77,8 +77,9 @@ const ScoringCriteriaManager = ({ editalId }: { editalId: string }) => {
     }
   };
 
-  const handleUpdate = async (id: string, field: string, value: any) => {
-    await supabase.from("scoring_criteria").update({ [field]: value }).eq("id", id);
+  const handleUpdate = async <K extends keyof Omit<Criteria, "id">>(id: string, field: K, value: Criteria[K]) => {
+    const changes: Partial<Omit<Criteria, "id">> = { [field]: value };
+    await supabase.from("scoring_criteria").update(changes).eq("id", id);
     setCriteria(prev => prev.map(c => c.id === id ? { ...c, [field]: value } : c));
   };
 
