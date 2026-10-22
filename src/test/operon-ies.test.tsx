@@ -37,12 +37,12 @@ const click = async (label: string) => {
   if (!button) throw new Error(`Button not found: ${label}`);
   await act(async () => button.click());
 };
-const open = async () => {
+const open = async (abrangencia: string | null = null) => {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
-  await act(async () => root?.render(<QueryClientProvider client={qc}><EditalCuradoriaDetail edital={edital} /></QueryClientProvider>));
+  await act(async () => root?.render(<QueryClientProvider client={qc}><EditalCuradoriaDetail edital={{ ...edital, abrangencia }} /></QueryClientProvider>));
   await waitFor(() => expect(mocks.extractFilter).toHaveBeenCalled());
   // Wait for query data to render, not only for the request to start.
   await waitFor(() => expect([...container.querySelectorAll("button")].some((button) => button.textContent?.trim() === "Usar valor extraído")).toBe(true));
@@ -51,6 +51,13 @@ beforeEach(() => { vi.clearAllMocks(); mocks.semRodadas = false; });
 afterEach(async () => { await act(async () => root?.unmount()); document.body.innerHTML = ""; });
 
 describe("Persistência dos requisitos de IES", () => {
+  it.each(["estadual", "nacional", "internacional", null])("grava abrangência %s em revisão e publicação", async (abrangencia) => {
+    await open(abrangencia);
+    await click("Salvar como em revisão");
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({ abrangencia, status_curadoria: "em_revisao" })));
+    await click("Aprovar e publicar");
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({ abrangencia, status_curadoria: "publicado" })));
+  });
   it("não publica aberto sem rodadas até confirmação explícita", async () => {
     mocks.semRodadas = true;
     await open();
