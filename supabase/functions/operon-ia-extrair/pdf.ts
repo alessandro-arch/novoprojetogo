@@ -6,6 +6,7 @@ export const PDF_BATCH_PAGES = 4;
 export async function extractPDFBatch(bytes: Uint8Array, start: number) {
   const pdf = await getDocumentProxy(bytes, { isEvalSupported: false, useSystemFonts: true });
   try {
+    if (pdf.numPages > 200) throw new ExtractionError(413, "PDF excede o limite de 200 páginas.");
     if (start > pdf.numPages) throw new ExtractionError(400, "Página do PDF inválida.");
     const end = Math.min(start + PDF_BATCH_PAGES - 1, pdf.numPages);
     const texts: string[] = [];
