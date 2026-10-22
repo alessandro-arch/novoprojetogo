@@ -16,4 +16,5 @@
 - [x] Operon portal etapa 1: painel com busca/abas, ficha publicada, eventos liberados e seguir/deixar de seguir; 55 testes passaram, compilação sem erros e rotas exigem login Operon.
 - [ ] Operon portal: conferir apresentação em computador/celular e seguir/deixar de seguir com conta real. Bloqueio: Supabase externo sem sessão de teste disponível.
 - [x] Operon curadoria: status e abas com contagem, publicação visível com rollback, despublicação confirmada e aviso de alterações não salvas; 66 testes passaram, compilação sem erros, portal preservado.
+- [x] Operon ficha/curadoria: tipos locais vinculados aos campos gerados da migração 006, TL;DR editável e público, linha do tempo derivada e textos completos; 76 testes passaram e compilação sem erros, sem alterar acessos ou outras telas.
 - [ ] Operon curadoria: conferir publicação/despublicação com conta real e apresentação em computador/celular. Bloqueio: Supabase externo sem sessão autenticada disponível para teste.

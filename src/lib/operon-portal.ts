@@ -41,7 +41,40 @@ export function filtrarPainel(rows: EditalPublicado[], filtros: { busca: string;
   return abas;
 }
 
-const SELECT_EDITAL = "*, oe_fonte(slug,nome), oe_rodada(ordem,abertura,prazo_fim,texto_original)";
+const SELECT_EDITAL = "*, oe_fonte(slug,nome), oe_rodada(ordem,abertura,prazo_fim,resultado_em,texto_original)";
+
+export interface MarcoEdital {
+  id: string; rotulo: string; data: string; proximo: boolean;
+  origem?: string | null; valor_anterior?: string | null; valor_novo?: string | null;
+}
+
+/** Datas válidas, eventos liberados e deduplicação por instante e rótulo. */
+export function montarLinhaDoTempo(edital: EditalRow, eventos: EventoPublicado[] = [], documentos: DocumentoPublicado[] = [], agora = Date.now()): MarcoEdital[] {
+  const marcos: MarcoEdital[] = [];
+  const adicionar = (id: string, rotulo: string, data?: string | null, evento?: EventoPublicado) => {
+    if (!data || !Number.isFinite(new Date(data).getTime())) return;
+    marcos.push({ id, rotulo, data, proximo: new Date(data).getTime() > agora,
+      origem: evento?.origem, valor_anterior: evento?.valor_anterior, valor_novo: evento?.valor_novo });
+  };
+  eventos.filter(evento => evento.liberado === true).forEach(evento => adicionar(`evento-${evento.id}`, rotuloEvento(evento.tipo), evento.ocorrido_em, evento));
+  (edital.oe_rodada ?? []).forEach((rodada, index) => {
+    adicionar(`rodada-${index}-abertura`, "Abertura das propostas", rodada.abertura);
+    adicionar(`rodada-${index}-prazo`, "Prazo de submissão", rodada.prazo_fim);
+    adicionar(`rodada-${index}-resultado`, "Resultado", rodada.resultado_em);
+  });
+  const tipos: Record<string, string> = { errata: "Errata", retificacao: "Retificação", resultado: "Resultado", edital: "Edital" };
+  documentos.forEach(documento => {
+    const tipo = normalizarBusca(documento.tipo ?? "");
+    adicionar(`documento-${documento.id}`, tipos[tipo] ?? rotuloEvento(tipo || "Documento"), documento.publicado_em);
+  });
+  adicionar(`edital-${edital.id}`, "Publicação do edital", edital.publicado_em);
+  const unicos = new Map<string, MarcoEdital>();
+  marcos.forEach(marco => {
+    const chave = `${new Date(marco.data).getTime()}|${normalizarBusca(marco.rotulo)}`;
+    if (!unicos.has(chave)) unicos.set(chave, marco);
+  });
+  return [...unicos.values()].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+}
 export async function carregarEventosPublicados(id?: string, ids?: string[]): Promise<EventoPublicado[]> {
   if (ids?.length === 0) return [];
   let q = oe.from("oe_evento").select("id,edital_id,tipo,ocorrido_em,liberado,origem,valor_anterior,valor_novo").eq("liberado", true);

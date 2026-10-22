@@ -1544,6 +1544,8 @@ export type Database = {
           recursos: string | null
           requisitos_ies: string | null
           restricao_ies: string | null
+          resumo_tldr: string | null
+          resumo_tldr_atualizado_em: string | null
           situacao: string
           status_curadoria: string
           tipo: string | null
@@ -1575,6 +1577,8 @@ export type Database = {
           recursos?: string | null
           requisitos_ies?: string | null
           restricao_ies?: string | null
+          resumo_tldr?: string | null
+          resumo_tldr_atualizado_em?: string | null
           situacao?: string
           status_curadoria?: string
           tipo?: string | null
@@ -1606,6 +1610,8 @@ export type Database = {
           recursos?: string | null
           requisitos_ies?: string | null
           restricao_ies?: string | null
+          resumo_tldr?: string | null
+          resumo_tldr_atualizado_em?: string | null
           situacao?: string
           status_curadoria?: string
           tipo?: string | null
@@ -2004,6 +2010,7 @@ export type Database = {
           observacao: string | null
           ordem: number
           prazo_fim: string | null
+          resultado_em: string | null
           texto_original: string | null
         }
         Insert: {
@@ -2013,6 +2020,7 @@ export type Database = {
           observacao?: string | null
           ordem?: number
           prazo_fim?: string | null
+          resultado_em?: string | null
           texto_original?: string | null
         }
         Update: {
@@ -2022,6 +2030,7 @@ export type Database = {
           observacao?: string | null
           ordem?: number
           prazo_fim?: string | null
+          resultado_em?: string | null
           texto_original?: string | null
         }
         Relationships: [

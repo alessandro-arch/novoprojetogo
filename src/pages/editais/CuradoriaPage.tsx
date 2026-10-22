@@ -17,12 +17,13 @@ import { useToast } from "@/hooks/use-toast";
 import EditalCuradoriaDetail from "@/components/operon/EditalCuradoriaDetail";
 import FonteBadge from "@/components/operon/FonteBadge";
 import AbrangenciaBadge, { ABRANGENCIAS, correspondeAbrangencia } from "@/components/operon/AbrangenciaBadge";
+import type { Tables } from "@/integrations/supabase/types";
 
 // Tabelas oe_* ainda não estão nos tipos gerados: cast pontual.
 export const oe = supabase as any;
 
-export interface Rodada { id?: string; ordem: number; abertura: string | null; prazo_fim: string | null; texto_original?: string | null }
-export interface EditalRow {
+export interface Rodada extends Partial<Pick<Tables<"oe_rodada">, "resultado_em">> { id?: string; ordem: number; abertura: string | null; prazo_fim: string | null; texto_original?: string | null }
+export interface EditalRow extends Partial<Pick<Tables<"oe_edital">, "resumo_tldr" | "resumo_tldr_atualizado_em" | "publicado_em">> {
   id: string; fonte_id: string; numero: string | null; ano: number | null; titulo: string; categoria: string | null;
   situacao: string | null; status_curadoria: string; url_oficial: string | null; visto_ultima_vez_em: string | null;
   objetivo: string | null; recursos: string | null; quem_pode: string | null; contrapartida: string | null; areas: string[] | null;
@@ -139,7 +140,7 @@ const CuradoriaPage = () => {
     queryKey: ["oe-editais", fonte, situacao, ano],
     queryFn: async () => {
       const { data, error } = await aplicar(
-        oe.from("oe_edital").select("id, fonte_id, numero, ano, titulo, categoria, situacao, status_curadoria, url_oficial, visto_ultima_vez_em, verificado_em, verificado_por, objetivo, recursos, quem_pode, requisitos_ies, restricao_ies, abrangencia, contrapartida, areas, oe_fonte(slug, nome), oe_rodada(id, ordem, abertura, prazo_fim)"),
+        oe.from("oe_edital").select("id, fonte_id, numero, ano, titulo, categoria, situacao, status_curadoria, url_oficial, visto_ultima_vez_em, verificado_em, verificado_por, publicado_em, resumo_tldr, resumo_tldr_atualizado_em, objetivo, recursos, quem_pode, requisitos_ies, restricao_ies, abrangencia, contrapartida, areas, oe_fonte(slug, nome), oe_rodada(id, ordem, abertura, prazo_fim, resultado_em)"),
         false,
       ).limit(1000);
       if (error) throw error;

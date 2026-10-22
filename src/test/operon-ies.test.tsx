@@ -51,6 +51,27 @@ beforeEach(() => { vi.clearAllMocks(); mocks.semRodadas = false; });
 afterEach(async () => { await act(async () => root?.unmount()); document.body.innerHTML = ""; });
 
 describe("Persistência dos requisitos de IES", () => {
+  it("salva o TL;DR em revisão, publica e atualiza o resumo publicado sem despublicar", async () => {
+    await open();
+    const textarea = document.getElementById("resumo-tldr");
+    const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set;
+    if (!(textarea instanceof HTMLTextAreaElement) || !setter) throw new Error("Missing TL;DR");
+    const editar = async (valor: string) => act(async () => { setter.call(textarea, valor); textarea.dispatchEvent(new Event("input", { bubbles: true })); });
+    const resumo = "Pesquisa científica.\nPúblico elegível e aporte.";
+    await editar(resumo);
+    await click("Salvar como em revisão");
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({ resumo_tldr: resumo, resumo_tldr_atualizado_em: expect.any(String), status_curadoria: "em_revisao" })));
+    await click("Aprovar e publicar");
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({ resumo_tldr: resumo, status_curadoria: "publicado" })));
+    await waitFor(() => expect([...document.querySelectorAll("button")].some(b => b.textContent?.trim() === "Publicado ✓")).toBe(true));
+    await editar("Novo resumo científico.");
+    await click("Salvar alterações publicadas");
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({ resumo_tldr: "Novo resumo científico.", resumo_tldr_atualizado_em: expect.any(String), status_curadoria: "publicado" })));
+    await waitFor(() => expect([...document.querySelectorAll("button")].some(b => b.textContent?.trim() === "Publicado ✓")).toBe(true));
+    await editar("");
+    await click("Salvar alterações publicadas");
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({ resumo_tldr: null, status_curadoria: "publicado" })));
+  });
   it.each(["estadual", "nacional", "internacional", null])("grava abrangência %s em revisão e publicação", async (abrangencia) => {
     await open(abrangencia);
     await click("Salvar como em revisão");
