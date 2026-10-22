@@ -59,6 +59,7 @@
     /* Fixed agency badge colors, without changing the platform palette. */
     --fonte-cnpq: 221 83% 53%;
     --fonte-fapes: 330 81% 60%;
+    --fonte-capes: 174 70% 25%;
     --fonte-foreground: 0 0% 100%;
 
     /* Custom tokens */

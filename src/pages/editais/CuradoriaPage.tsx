@@ -18,6 +18,8 @@ import EditalCuradoriaDetail from "@/components/operon/EditalCuradoriaDetail";
 import FonteBadge from "@/components/operon/FonteBadge";
 import AbrangenciaBadge, { ABRANGENCIAS, correspondeAbrangencia } from "@/components/operon/AbrangenciaBadge";
 import type { Tables } from "@/integrations/supabase/types";
+import { useAuth } from "@/contexts/AuthContext";
+import { carregarFontesOperon, correspondeFonte, mostrarFiltroUf, ufsDisponiveis, type IdentidadeFonte } from "@/lib/operon-fontes";
 
 // Tabelas oe_* ainda não estão nos tipos gerados: cast pontual.
 export const oe = supabase as any;
@@ -30,7 +32,7 @@ export interface EditalRow extends Partial<Pick<Tables<"oe_edital">, "resumo_tld
   requisitos_ies: string | null; restricao_ies: string | null;
   abrangencia?: string | null;
   verificado_em?: string | null; verificado_por?: string | null;
-  oe_fonte?: { slug: string; nome: string } | null; oe_rodada?: Rodada[];
+  oe_fonte?: IdentidadeFonte | null; oe_rodada?: Rodada[];
 }
 
 export const fmtData = (v: string | null | undefined, hora = false) => {
@@ -69,11 +71,11 @@ export const situacaoEdital = (e: Pick<EditalRow, "situacao" | "oe_rodada">, ago
 export const ehVigente = (e: EditalRow, agora = Date.now()): boolean =>
   e.status_curadoria !== "descartado" && situacaoEdital(e, agora) === "aberto";
 
-export interface FiltrosCuradoria { vigencia: string; fonte: string; abrangencia: string; situacao: string; ano: string }
-export const FILTROS_PADRAO: FiltrosCuradoria = { vigencia: "__none__", fonte: "__none__", abrangencia: "__none__", situacao: "__none__", ano: "__none__" };
+export interface FiltrosCuradoria { vigencia: string; fonte: string; esfera?: string; uf?: string; abrangencia: string; situacao: string; ano: string }
+export const FILTROS_PADRAO: FiltrosCuradoria = { vigencia: "__none__", fonte: "__none__", esfera: "__none__", uf: "__none__", abrangencia: "__none__", situacao: "__none__", ano: "__none__" };
 export const filtrarCuradoria = (rows: EditalRow[], f: FiltrosCuradoria, agora = Date.now()) => rows.filter((e) => {
   const sit = situacaoEdital(e, agora);
-  return (f.fonte === "__none__" || e.fonte_id === f.fonte)
+  return correspondeFonte(e, f)
     && (f.ano === "__none__" || e.ano === Number(f.ano))
     && correspondeAbrangencia(e.abrangencia, f.abrangencia)
     && (f.situacao === "__none__" || sit === f.situacao)
@@ -108,6 +110,7 @@ export const StatusCuradoriaBadge = ({ status }: { status: string }) => (
 export const semNumero = (n: string | null) => !n || n.trim().toLowerCase().replace(/\s/g, "") === "s/n";
 
 const CuradoriaPage = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [saindo, setSaindo] = useState(false);
@@ -119,6 +122,8 @@ const CuradoriaPage = () => {
   };
   const isMobile = useIsMobile();
   const [fonte, setFonte] = useState(NONE);
+  const [esfera, setEsfera] = useState(NONE);
+  const [uf, setUf] = useState(NONE);
   const [abrangencia, setAbrangencia] = useState(NONE);
   const [situacao, setSituacao] = useState(NONE);
   const [vigencia, setVigencia] = useState(NONE);
@@ -140,25 +145,22 @@ const CuradoriaPage = () => {
   }, []);
 
   const fontesQ = useQuery({
-    queryKey: ["oe-fontes"],
-    queryFn: async () => {
-      const { data, error } = await oe.from("oe_fonte").select("id, slug, nome").order("nome");
-      if (error) throw error;
-      return data as { id: string; slug: string; nome: string }[];
-    },
+    queryKey: ["oe-fontes", user?.id],
+    queryFn: carregarFontesOperon,
+    enabled: !!user,
   });
 
   const listaQ = useQuery({
     queryKey: ["oe-editais"],
     queryFn: async () => {
-      const { data, error } = await oe.from("oe_edital").select("id, fonte_id, numero, ano, titulo, categoria, situacao, status_curadoria, url_oficial, visto_ultima_vez_em, verificado_em, verificado_por, publicado_em, resumo_tldr, resumo_tldr_atualizado_em, objetivo, recursos, quem_pode, requisitos_ies, restricao_ies, abrangencia, contrapartida, areas, oe_fonte(slug, nome), oe_rodada(id, ordem, abertura, prazo_fim, resultado_em)").limit(1000);
+      const { data, error } = await oe.from("oe_edital").select("id, fonte_id, numero, ano, titulo, categoria, situacao, status_curadoria, url_oficial, visto_ultima_vez_em, verificado_em, verificado_por, publicado_em, resumo_tldr, resumo_tldr_atualizado_em, objetivo, recursos, quem_pode, requisitos_ies, restricao_ies, abrangencia, contrapartida, areas, oe_fonte(slug, nome, esfera, uf), oe_rodada(id, ordem, abertura, prazo_fim, resultado_em)").limit(1000);
       if (error) throw error;
       return data as EditalRow[];
     },
   });
 
-  const filtros = useMemo<FiltrosCuradoria>(() => ({ vigencia, fonte, abrangencia, situacao, ano }), [vigencia, fonte, abrangencia, situacao, ano]);
-  const limparFiltros = () => mudar(() => { setVigencia(NONE); setFonte(NONE); setAbrangencia(NONE); setSituacao(NONE); setAno(NONE); setSelId(null); });
+  const filtros = useMemo<FiltrosCuradoria>(() => ({ vigencia, fonte, esfera, uf, abrangencia, situacao, ano }), [vigencia, fonte, esfera, uf, abrangencia, situacao, ano]);
+  const limparFiltros = () => mudar(() => { setVigencia(NONE); setFonte(NONE); setEsfera(NONE); setUf(NONE); setAbrangencia(NONE); setSituacao(NONE); setAno(NONE); setSelId(null); });
   const listaBase = useMemo(() => {
     const agora = Date.now();
     const rows = filtrarCuradoria(listaQ.data ?? [], filtros, agora)
@@ -187,7 +189,7 @@ const CuradoriaPage = () => {
         <SelectTrigger><SelectValue /></SelectTrigger>
         <SelectContent>
           <SelectItem value={NONE}>{todos}</SelectItem>
-          {opts.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
+          {opts.map(([v, l]) => <SelectItem key={v} value={v}>{label === "Fonte" ? <FonteBadge slug={fontesQ.data?.find(f => f.id === v)?.slug} nome={l} /> : l}</SelectItem>)}
         </SelectContent>
       </Select>
     </div>
@@ -285,6 +287,8 @@ const CuradoriaPage = () => {
         <div className="flex flex-wrap gap-3">
           {filtro("Vigência", vigencia, setVigencia, [["vigentes", "Vigentes"], ["em_julgamento", "Em julgamento"]])}
           {filtro("Fonte", fonte, setFonte, (fontesQ.data ?? []).map((f) => [f.id, f.nome]))}
+          {filtro("Esfera", esfera, setEsfera, [["estadual", "Estadual"], ["nacional", "Nacional"]], "Todas")}
+          {mostrarFiltroUf(fontesQ.data ?? []) && filtro("Estado (UF)", uf, setUf, ufsDisponiveis(fontesQ.data ?? []).map(v => [v, v]))}
           {filtro("Abrangência", abrangencia, setAbrangencia, [...ABRANGENCIAS.map(([v, l]): [string, string] => [v, l]), ["a_definir", "A definir"]], "Todas")}
           {filtro("Situação", situacao, setSituacao, Object.entries(SITUACOES))}
           {filtro("Ano", ano, setAno, anos.map((a) => [String(a), String(a)]))}

@@ -13,6 +13,8 @@ const badgeVariants = cva(
         destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         fonteCnpq: "border-transparent bg-[hsl(var(--fonte-cnpq))] text-[hsl(var(--fonte-foreground))] hover:bg-[hsl(var(--fonte-cnpq))]",
         fonteFapes: "border-transparent bg-[hsl(var(--fonte-fapes))] text-[hsl(var(--fonte-foreground))] hover:bg-[hsl(var(--fonte-fapes))]",
+        fonteCapes: "border-transparent bg-[hsl(var(--fonte-capes))] text-[hsl(var(--fonte-foreground))]",
+        fonteNeutra: "border-border bg-muted text-foreground",
         outline: "text-foreground",
       },
     },
