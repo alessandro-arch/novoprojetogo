@@ -13,6 +13,7 @@ import { ArrowLeft, ExternalLink, FileText, LogOut } from "lucide-react";
 import { oe, EditalRow, Rodada, fmtData, rodadaVigente, ehVigente, diasAte, semNumero } from "./CuradoriaPage";
 import { logoutOperon } from "@/lib/operon-access";
 import FonteBadge from "@/components/operon/FonteBadge";
+import AbrangenciaBadge, { ABRANGENCIAS, correspondeAbrangencia } from "@/components/operon/AbrangenciaBadge";
 
 const NONE = "__none__";
 const DESTAQUE = ["retificacao", "retificação", "errata", "adendo"];
@@ -54,7 +55,10 @@ const Detalhe = ({ e }: { e: EditalRow }) => {
 
   return (
     <div className="space-y-5">
-      <FonteBadge slug={e.oe_fonte?.slug} nome={e.oe_fonte?.nome} />
+      <div className="flex flex-wrap items-center gap-2">
+        <FonteBadge slug={e.oe_fonte?.slug} nome={e.oe_fonte?.nome} />
+        <AbrangenciaBadge abrangencia={e.abrangencia} />
+      </div>
       <AvisoIes e={e} />
       {e.url_oficial && (
         <a href={e.url_oficial} target="_blank" rel="noopener noreferrer">
@@ -115,6 +119,7 @@ const Detalhe = ({ e }: { e: EditalRow }) => {
 
 const EditaisPage = () => {
   const [fonte, setFonte] = useState(NONE);
+  const [abrangencia, setAbrangencia] = useState(NONE);
   const [vigencia, setVigencia] = useState("vigentes");
   const [sel, setSel] = useState<EditalRow | null>(null);
   const [saindo, setSaindo] = useState(false);
@@ -157,9 +162,10 @@ const EditaisPage = () => {
   const lista = useMemo(() => {
     const agora = Date.now();
     return (listaQ.data ?? []).filter((e) => vigencia === "em_julgamento" ? e.situacao === "em_julgamento" : ehVigente(e, agora))
+      .filter((e) => correspondeAbrangencia(e.abrangencia, abrangencia))
       .map((e) => ({ e, v: rodadaVigente(e.oe_rodada) }))
       .sort((a, b) => (tm(a.v?.prazo_fim ?? null) ?? Infinity) - (tm(b.v?.prazo_fim ?? null) ?? Infinity));
-  }, [listaQ.data, vigencia]);
+  }, [listaQ.data, vigencia, abrangencia]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -205,6 +211,16 @@ const EditaisPage = () => {
             </SelectContent>
           </Select>
         </div>
+        <div className="space-y-1 w-full sm:w-56">
+          <Label className="text-xs">Abrangência</Label>
+          <Select value={abrangencia} onValueChange={(value) => { setAbrangencia(value); setSel(null); }}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NONE}>Todas</SelectItem>
+              {ABRANGENCIAS.map(([valor, label]) => <SelectItem key={valor} value={valor}>{label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
         </div>
 
         {listaQ.isLoading ? (
@@ -220,6 +236,7 @@ const EditaisPage = () => {
                 className="w-full text-left bg-card rounded-xl border border-border p-4 hover:border-primary transition-colors">
                 <div className="flex flex-wrap items-center gap-2 mb-2">
                   <FonteBadge slug={e.oe_fonte?.slug} nome={e.oe_fonte?.nome} />
+                  <AbrangenciaBadge abrangencia={e.abrangencia} />
                   {semNumero(e.numero) ? <Badge variant="outline">Sem número</Badge>
                     : <span className="text-xs text-muted-foreground">{e.numero}{e.ano ? `/${e.ano}` : ""}</span>}
                   {vigencia === "em_julgamento" || (!v && e.situacao === "em_julgamento") ? <Badge variant="secondary">Em julgamento</Badge> : <PrazoBadge prazo={v?.prazo_fim} />}
