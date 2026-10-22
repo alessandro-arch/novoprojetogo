@@ -159,3 +159,10 @@ Deno.test("falhas de autorização e saldo não revelam resposta do provedor", a
     assert(failed);
   }
 });
+Deno.test("tempo esgotado não repete o documento inteiro no modelo reserva", async () => {
+  let calls = 0;
+  let failed = false;
+  try { await generateWithFallback("texto", ["a", "b"], () => { calls++; return Promise.reject(new ExtractionError(504, "tempo de resposta")); }); }
+  catch (e) { failed = e instanceof ExtractionError && e.status === 504; }
+  if (!failed || calls !== 1) throw new Error("Repetiu após tempo esgotado");
+});
