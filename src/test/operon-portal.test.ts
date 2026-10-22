@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { oe } from "@/pages/editais/CuradoriaPage";
-import { alterarSeguimento, carregarEventosPublicados, carregarFicha, carregarSeguidor, carregarSeguidos, filtrarPainel, type EditalPublicado } from "@/lib/operon-portal";
+import { alterarSeguimento, carregarEventosPublicados, carregarFicha, carregarSeguidor, carregarSeguidos, filtrarPainel, montarLinhaDoTempo, type EditalPublicado, type EventoPublicado, type DocumentoPublicado } from "@/lib/operon-portal";
 
 const agora = new Date("2026-10-22T12:00:00Z").getTime();
 const edital: EditalPublicado = {
@@ -11,6 +11,33 @@ const edital: EditalPublicado = {
   verificado_em: null, tipo: null, abrangencia: "nacional",
 };
 const filtros = { busca: "", fonte: "__none__", abrangencia: "__none__" };
+
+describe("Linha do tempo derivada", () => {
+  const evento: EventoPublicado = { id: "ev", edital_id: "edital", tipo: "errata", ocorrido_em: "2026-10-20T12:00:00Z", liberado: true, origem: "carga_inicial", valor_anterior: "Antes", valor_novo: "Depois" };
+  const documento: DocumentoPublicado = { id: "doc", tipo: "retificacao", publicado_em: "2026-10-21T12:00:00Z", rotulo: null, url: "", versao: null, substituido: false };
+  it("combina publicação, rodadas, documentos e eventos liberados em ordem de data", () => {
+    const marcos = montarLinhaDoTempo({ ...edital, publicado_em: "2026-10-01T12:00:00Z", oe_rodada: [{ ordem: 1, abertura: "2026-10-02T12:00:00Z", prazo_fim: "2026-10-25T12:00:00Z", resultado_em: "2026-11-01T12:00:00Z" }] }, [evento, { ...evento, id: "privado", liberado: false, tipo: "segredo" }], [documento], agora);
+    expect(marcos.map(m => m.rotulo)).toEqual(["Resultado", "Prazo de submissão", "Retificação", "Errata", "Abertura das propostas", "Publicação do edital"]);
+    expect(marcos.map(m => m.proximo)).toEqual([true, true, false, false, false, false]);
+    expect(marcos.find(m => m.rotulo === "Errata")).toMatchObject({ origem: "carga_inicial", valor_anterior: "Antes", valor_novo: "Depois" });
+  });
+  it("remove mesma data e mesmo rótulo, preservando detalhes do evento", () => {
+    const marcos = montarLinhaDoTempo(edital, [evento], [{ ...documento, tipo: "ERRATA", publicado_em: "2026-10-20T09:00:00-03:00" }], agora);
+    expect(marcos).toHaveLength(1);
+    expect(marcos[0].valor_novo).toBe("Depois");
+  });
+  it("mantém rótulos diferentes na mesma data e a mesma ocorrência em datas distintas", () => {
+    const marcos = montarLinhaDoTempo(edital, [evento, { ...evento, id: "ev2", ocorrido_em: "2026-10-21T12:00:00Z" }], [{ ...documento, publicado_em: evento.ocorrido_em }], agora);
+    expect(marcos).toHaveLength(3);
+  });
+  it("não fica vazia sem oe_evento se há data de publicação ou rodada", () => {
+    expect(montarLinhaDoTempo({ ...edital, publicado_em: "2026-10-01T12:00:00Z" })).toHaveLength(1);
+    expect(montarLinhaDoTempo({ ...edital, oe_rodada: [{ ordem: 1, abertura: null, prazo_fim: null, resultado_em: "2026-11-01T12:00:00Z" }] })).toHaveLength(1);
+  });
+  it("fica vazia somente sem datas válidas e ignora eventos não liberados", () => {
+    expect(montarLinhaDoTempo(edital, [{ ...evento, liberado: false }], [{ ...documento, publicado_em: "inválida" }], agora)).toEqual([]);
+  });
+});
 
 describe("Busca e abas do portal", () => {
   it.each(["INOVACAO", "saude", "01", "CIENTIFICA", "farmaceuticas"])("busca título, número, categoria e áreas sem acento ou caixa: %s", busca => {
