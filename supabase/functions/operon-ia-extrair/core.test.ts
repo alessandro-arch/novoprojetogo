@@ -59,7 +59,7 @@ Deno.test("desativa raciocínio para obter JSON completo dentro do prazo", async
   let body: Record<string, unknown> = {};
   const content = await callOpenRouter(source, "fallback", "https://openrouter.ai/api/v1/", "test-only", async (input, init) => {
     assert(input === "https://openrouter.ai/api/v1/chat/completions");
-    body = JSON.parse(String(init?.body));
+    body = JSON.parse(String(init && "body" in init ? init.body : undefined));
     return Response.json({ choices: [{ message: { content: valid }, finish_reason: "stop" }] });
   });
   assert((body.reasoning as { enabled: boolean }).enabled === false);
