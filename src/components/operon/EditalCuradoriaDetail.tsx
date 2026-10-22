@@ -16,7 +16,7 @@ import { Placeholder } from "@/components/servicedesk/sd-ui";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Check, ExternalLink, Download, Loader2 } from "lucide-react";
-import { oe, fmtData, rodadaVigente, SITUACOES, semNumero, exigeConfirmacaoSemRodadas, type EditalRow, type Rodada } from "@/pages/editais/CuradoriaPage";
+import { oe, fmtData, rodadaVigente, SITUACOES, situacaoEdital, semNumero, exigeConfirmacaoSemRodadas, type EditalRow, type Rodada } from "@/pages/editais/CuradoriaPage";
 import { supabase } from "@/integrations/supabase/client";
 import { atualizarEditalNaLista, transicaoCuradoria, type AcaoCuradoria } from "@/lib/operon-curadoria-state";
 import FonteBadge from "@/components/operon/FonteBadge";
@@ -272,7 +272,7 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
             <AbrangenciaBadge abrangencia={abrangencia === "__none__" ? null : abrangencia} curadoria />
             {semNumero(edital.numero) ? <Badge variant="outline">Sem número</Badge> : <Badge variant="outline">Nº {edital.numero}</Badge>}
             {edital.categoria && <Badge variant="secondary">{edital.categoria}</Badge>}
-            {edital.situacao && <Badge variant="secondary">{SITUACOES[edital.situacao] ?? edital.situacao}</Badge>}
+            {situacaoEdital(edital) && <Badge variant="secondary">{SITUACOES[situacaoEdital(edital) ?? ""] ?? situacaoEdital(edital)}</Badge>}
           </div>
           <h3 className="text-lg font-bold font-heading text-foreground">{edital.titulo}</h3>
           {edital.url_oficial && (
