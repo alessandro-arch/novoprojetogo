@@ -12,15 +12,11 @@ export const varianteFonte = (slug?: string | null): NonNullable<BadgeProps["var
   return Object.prototype.hasOwnProperty.call(VARIANTES_FONTE, chave) ? VARIANTES_FONTE[chave] : "fonteNeutra";
 };
 
-export interface FiltrosFonte { fonte: string; esfera?: string; uf?: string }
+export interface FiltrosFonte { fonte: string; esfera?: string }
 export const correspondeFonte = (e: { fonte_id: string; oe_fonte?: IdentidadeFonte | null }, f: FiltrosFonte) =>
   (f.fonte === "__none__" || e.fonte_id === f.fonte)
-  && (!f.esfera || f.esfera === "__none__" || e.oe_fonte?.esfera === f.esfera)
-  && (!f.uf || f.uf === "__none__" || (e.oe_fonte?.esfera === "estadual" && e.oe_fonte.uf === f.uf));
+  && (!f.esfera || f.esfera === "__none__" || e.oe_fonte?.esfera === f.esfera);
 
-export const ufsDisponiveis = (fontes: FonteOperon[]) =>
-  [...new Set(fontes.filter(f => f.esfera === "estadual").map(f => f.uf).filter((uf): uf is string => !!uf))].sort();
-export const mostrarFiltroUf = (fontes: FonteOperon[]) => ufsDisponiveis(fontes).length > 1;
 export const fontesLiberadas = (fontes: FonteOperon[], configs: { fontes: string[] }[]) => {
   const ids = new Set(configs.flatMap(c => c.fontes));
   return fontes.filter(f => ids.has(f.id));
@@ -35,4 +31,14 @@ export async function carregarFontesOperon(): Promise<FonteOperon[]> {
   const { data, error } = await supabase.from("oe_fonte").select("id,slug,nome,esfera,uf").in("id", ids).order("nome");
   if (error) throw error;
   return fontesLiberadas(data ?? [], configs ?? []);
+}
+
+/** Exclusivo da curadoria; a autorização vem da função do banco com a sessão atual. */
+export async function carregarFontesCuradoria(): Promise<FonteOperon[]> {
+  const { data: curador, error: acessoError } = await supabase.rpc("oe_is_curador");
+  if (acessoError) throw acessoError;
+  if (curador !== true) return carregarFontesOperon();
+  const { data, error } = await supabase.from("oe_fonte").select("id,slug,nome,esfera,uf").eq("ativa", true).order("nome");
+  if (error) throw error;
+  return data ?? [];
 }
