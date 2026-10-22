@@ -17,6 +17,7 @@
 - [ ] Operon portal: conferir apresentação em computador/celular e seguir/deixar de seguir com conta real. Bloqueio: Supabase externo sem sessão de teste disponível.
 - [x] Operon curadoria: status e abas com contagem, publicação visível com rollback, despublicação confirmada e aviso de alterações não salvas; 66 testes passaram, compilação sem erros, portal preservado.
 - [x] Operon ficha/curadoria: tipos locais vinculados aos campos gerados da migração 006, TL;DR editável e público, linha do tempo derivada e textos completos; 76 testes passaram e compilação sem erros, sem alterar acessos ou outras telas.
-- [ ] Operon IA de curadoria: extração PDF, OpenRouter, sugestões revisáveis e confirmação das rodadas. Bloqueio inicial: configurar OPENROUTER_API_KEY no formulário seguro de segredos.
-- [ ] Operon IA: testes de permissão, PDF sem texto, fallback, campos cortados e confirmação antes de gravar; verificar fluxo autenticado quando houver sessão disponível.
+- [x] Operon IA de curadoria: extração PDF, OpenRouter, sugestões revisáveis e confirmação das rodadas; OPENROUTER_API_KEY salvo pelo formulário seguro e função instalada.
+- [x] Operon IA: 80 testes da suíte e 9 testes Deno passaram, validação Deno sem erros e função instalada bloqueia JWT inválido com 401; sem alterações em login, rotas ou portal.
+- [ ] Operon IA: geração real, apresentação autenticada em computador/celular e gravação confirmada de rodadas. Bloqueio: Supabase externo sem sessão de teste disponível; chamadas OpenRouter não exercitadas com conta real.
 - [ ] Operon curadoria: conferir publicação/despublicação com conta real e apresentação em computador/celular. Bloqueio: Supabase externo sem sessão autenticada disponível para teste.
