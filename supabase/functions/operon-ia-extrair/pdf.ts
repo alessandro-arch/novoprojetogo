@@ -17,7 +17,7 @@ export async function extractPDFBatch(bytes: Uint8Array, start: number) {
         const content = await page.getTextContent();
         const text = content.items.map(item => "str" in item ? item.str + (item.hasEOL ? "\n" : "") : "").join("");
         size += text.length + 1;
-        if (size > MAX_TEXT_CHARS) throw new ExtractionError(413, "Texto do PDF excede o limite de 120 mil caracteres.");
+        if (size > MAX_TEXT_CHARS) throw new ExtractionError(413, "Texto do PDF excede o limite de 600 mil caracteres.");
         texts.push(text);
       } finally { page.cleanup(); }
     }
