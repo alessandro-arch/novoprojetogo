@@ -1,4 +1,5 @@
 # AGENTS
+- Operon curation fetches status-independent lists and derives combined-filter tab counts from the same cache; optimistic status transitions snapshot and restore that cache so publication keeps selection visible without changing the public portal.
 - Operon user portal uses a published-only query layer with explicit released-event filtering and user-scoped following; this prevents exposure of pending events and keeps notification delivery outside the frontend.
 - Operon geographic scope uses AbrangenciaBadge and shared scope options/matching for both views; this keeps curator and published filters consistent without schema changes.
 - Operon source badges use FonteBadge and dedicated global color tokens with Badge variants; this keeps agency identity consistent without changing platform theme roles.

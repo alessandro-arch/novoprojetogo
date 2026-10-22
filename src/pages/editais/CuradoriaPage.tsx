@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,9 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { KpiCard, Placeholder } from "@/components/servicedesk/sd-ui";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Placeholder } from "@/components/servicedesk/sd-ui";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ArrowLeft, FileText, LogOut } from "lucide-react";
+import { ArrowLeft, Check, FileText, LogOut } from "lucide-react";
 import { logoutOperon } from "@/lib/operon-access";
 import { useToast } from "@/hooks/use-toast";
 import EditalCuradoriaDetail from "@/components/operon/EditalCuradoriaDetail";
@@ -26,6 +28,7 @@ export interface EditalRow {
   objetivo: string | null; recursos: string | null; quem_pode: string | null; contrapartida: string | null; areas: string[] | null;
   requisitos_ies: string | null; restricao_ies: string | null;
   abrangencia?: string | null;
+  verificado_em?: string | null; verificado_por?: string | null;
   oe_fonte?: { slug: string; nome: string } | null; oe_rodada?: Rodada[];
 }
 
@@ -76,6 +79,11 @@ export const diasAte = (prazo: string | null | undefined, agora = new Date()): n
 export const SITUACOES: Record<string, string> = { aberto: "Aberto", em_julgamento: "Em julgamento", encerrado: "Encerrado", resultado: "Resultado", revogado: "Revogado" };
 export const STATUS: Record<string, string> = { rascunho: "Rascunho", em_revisao: "Em revisão", publicado: "Publicado", descartado: "Descartado" };
 const NONE = "__none__";
+export const StatusCuradoriaBadge = ({ status }: { status: string }) => (
+  <Badge variant="outline" className={status === "publicado" ? "border-success/30 bg-success-light text-success" : status === "em_revisao" ? "border-warning/30 bg-warning-light text-warning-foreground" : "border-border bg-muted text-muted-foreground"}>
+    {status === "publicado" && <Check className="mr-1 h-3 w-3" />}{STATUS[status] ?? status}
+  </Badge>
+);
 export const semNumero = (n: string | null) => !n || n.trim().toLowerCase().replace(/\s/g, "") === "s/n";
 
 const CuradoriaPage = () => {
@@ -96,11 +104,19 @@ const CuradoriaPage = () => {
   const [status, setStatus] = useState(NONE);
   const [ano, setAno] = useState("2026");
   const [selId, setSelId] = useState<string | null>(null);
-
-  const mudarVigencia = (v: string) => {
-    setVigencia(v);
-    setStatus(v === NONE ? "rascunho" : NONE);
+  const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [trocaPendente, setTrocaPendente] = useState<(() => void) | null>(null);
+  const mudar = (acao: () => void) => {
+    if (saving) return;
+    if (dirty) setTrocaPendente(() => acao);
+    else acao();
   };
+  const acompanharAlteracoes = useCallback((valor: boolean) => setDirty(valor), []);
+  const acompanharGravacao = useCallback((valor: boolean) => setSaving(valor), []);
+  const manterVisivel = useCallback((novoStatus: string) => {
+    setStatus((atual) => atual !== NONE && atual !== novoStatus ? NONE : atual);
+  }, []);
 
   const fontesQ = useQuery({
     queryKey: ["oe-fontes"],
@@ -120,31 +136,18 @@ const CuradoriaPage = () => {
   };
 
   const listaQ = useQuery({
-    queryKey: ["oe-editais", fonte, situacao, status, ano],
+    queryKey: ["oe-editais", fonte, situacao, ano],
     queryFn: async () => {
       const { data, error } = await aplicar(
-        oe.from("oe_edital").select("id, fonte_id, numero, ano, titulo, categoria, situacao, status_curadoria, url_oficial, visto_ultima_vez_em, objetivo, recursos, quem_pode, requisitos_ies, restricao_ies, abrangencia, contrapartida, areas, oe_fonte(slug, nome), oe_rodada(id, ordem, abertura, prazo_fim)"),
-        true,
+        oe.from("oe_edital").select("id, fonte_id, numero, ano, titulo, categoria, situacao, status_curadoria, url_oficial, visto_ultima_vez_em, verificado_em, verificado_por, objetivo, recursos, quem_pode, requisitos_ies, restricao_ies, abrangencia, contrapartida, areas, oe_fonte(slug, nome), oe_rodada(id, ordem, abertura, prazo_fim)"),
+        false,
       ).limit(1000);
       if (error) throw error;
       return data as EditalRow[];
     },
   });
 
-  const contQ = useQuery({
-    queryKey: ["oe-contadores", fonte, situacao, ano],
-    queryFn: async () => {
-      const r: Record<string, number> = {};
-      for (const s of ["rascunho", "em_revisao", "publicado"]) {
-        const { count, error } = await aplicar(oe.from("oe_edital").select("id", { count: "exact", head: true }), false).eq("status_curadoria", s);
-        if (error) throw error;
-        r[s] = count ?? 0;
-      }
-      return r;
-    },
-  });
-
-  const lista = useMemo(() => {
+  const listaBase = useMemo(() => {
     const agora = Date.now();
     const rows = (listaQ.data ?? [])
       .filter((e) => correspondeAbrangencia(e.abrangencia, abrangencia))
@@ -158,16 +161,18 @@ const CuradoriaPage = () => {
     return [...futuros, ...vencidos, ...semDatas];
   }, [listaQ.data, vigencia, abrangencia]);
 
+  const lista = useMemo(() => listaBase.filter(({ e }) => status === NONE || e.status_curadoria === status), [listaBase, status]);
+  const contagens = Object.fromEntries(Object.keys(STATUS).map((s) => [s, listaBase.filter(({ e }) => e.status_curadoria === s).length]));
   const vigentesHoje = useMemo(() => lista.filter((x) => ehVigente(x.e)).length, [lista]);
 
-  const selecionado = lista.find((x) => x.e.id === selId)?.e ?? null;
+  const selecionado = listaQ.data?.find((e) => e.id === selId) ?? null;
   const anoAtual = new Date().getFullYear();
   const anos = Array.from(new Set([anoAtual + 1, anoAtual, 2026, anoAtual - 1, anoAtual - 2])).sort((a, b) => b - a);
 
   const filtro = (label: string, value: string, set: (v: string) => void, opts: [string, string][], todos = "Todos") => (
     <div className="space-y-1 min-w-[140px] flex-1">
       <Label className="text-xs">{label}</Label>
-      <Select value={value} onValueChange={(v) => { set(v); setSelId(null); }}>
+      <Select value={value} disabled={saving} onValueChange={(v) => mudar(() => { set(v); setSelId(null); })}>
         <SelectTrigger><SelectValue /></SelectTrigger>
         <SelectContent>
           <SelectItem value={NONE}>{todos}</SelectItem>
@@ -193,12 +198,15 @@ const CuradoriaPage = () => {
         <Placeholder title="Nenhum edital com esses filtros" text="Ajuste fonte, situação, status ou ano." />
       ) : (
         lista.map(({ e, v }) => (
-          <button
+          <Button
+            variant="ghost"
             key={e.id}
-            onClick={() => setSelId(e.id)}
-            className={`w-full text-left bg-card rounded-xl border p-4 transition-shadow hover:shadow-card ${selId === e.id ? "border-primary" : "border-border"}`}
+            disabled={saving}
+            onClick={() => { if (selId !== e.id) mudar(() => setSelId(e.id)); }}
+            className={`h-auto block whitespace-normal w-full text-left bg-card rounded-xl border p-4 transition-shadow hover:shadow-card ${selId === e.id ? "border-primary" : "border-border"}`}
           >
             <div className="flex flex-wrap items-center gap-1.5 mb-1">
+              <StatusCuradoriaBadge status={e.status_curadoria} />
               <FonteBadge slug={e.oe_fonte?.slug} nome={e.oe_fonte?.nome} />
               <AbrangenciaBadge abrangencia={e.abrangencia} curadoria />
               {semNumero(e.numero) ? <Badge variant="outline">Sem número</Badge> : <span className="text-xs text-muted-foreground">Nº {e.numero}</span>}
@@ -210,11 +218,12 @@ const CuradoriaPage = () => {
                 return <Badge variant={dias <= 7 ? "default" : "outline"}>{dias === 0 ? "Fecha hoje" : `Faltam ${dias} dias`}</Badge>;
               })()}
             </div>
+            {e.status_curadoria === "publicado" && e.verificado_em && <p className="text-xs text-success mb-1">Publicado em {fmtData(e.verificado_em, true)}</p>}
             <p className="font-medium text-foreground text-sm line-clamp-2">{e.titulo}</p>
             <p className="text-xs text-muted-foreground mt-1">
               {e.categoria ?? "Sem categoria"} · {!v && e.situacao === "em_julgamento" ? "Inscrições encerradas, acompanhe o resultado" : `Prazo: ${v ? fmtData(v.prazo_fim) : e.situacao === "aberto" ? "A confirmar" : "Datas ainda não extraídas"}`}
             </p>
-          </button>
+          </Button>
         ))
       )}
     </div>
@@ -246,22 +255,21 @@ const CuradoriaPage = () => {
           <p className="text-sm text-muted-foreground">Resumos feitos pela curadoria. Confirme no texto oficial do edital.</p>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
-          {contQ.isLoading ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)
-            : contQ.isError ? <div className="col-span-3 space-y-2"><Placeholder title="Não foi possível carregar os contadores" text={(contQ.error as Error)?.message ?? ""} /><Button variant="outline" size="sm" onClick={() => contQ.refetch()}>Tentar novamente</Button></div>
-            : (<>
-              <KpiCard label="Rascunhos" value={contQ.data?.rascunho ?? 0} />
-              <KpiCard label="Em revisão" value={contQ.data?.em_revisao ?? 0} />
-              <KpiCard label="Publicados" value={contQ.data?.publicado ?? 0} />
-            </>)}
-        </div>
+        <Tabs value={status} onValueChange={(valor) => mudar(() => { setStatus(valor); setSelId(null); })}>
+          <TabsList className="h-auto flex flex-wrap justify-start gap-1">
+            {[["rascunho", "Rascunhos"], ["em_revisao", "Em revisão"], ["publicado", "Publicados"], ["descartado", "Descartados"], [NONE, "Todos"]].map(([valor, label]) => (
+              <TabsTrigger key={valor} value={valor} disabled={saving}>
+                {label} <span className="ml-2 tabular-nums">{listaQ.isLoading ? "…" : listaQ.isError ? "-" : valor === NONE ? listaBase.length : contagens[valor] ?? 0}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
 
         <div className="flex flex-wrap gap-3">
-          {filtro("Vigência", vigencia, mudarVigencia, [["vigentes", "Vigentes"], ["em_julgamento", "Em julgamento"]])}
+          {filtro("Vigência", vigencia, setVigencia, [["vigentes", "Vigentes"], ["em_julgamento", "Em julgamento"]])}
           {filtro("Fonte", fonte, setFonte, (fontesQ.data ?? []).map((f) => [f.id, f.nome]))}
           {filtro("Abrangência", abrangencia, setAbrangencia, [...ABRANGENCIAS.map(([v, l]): [string, string] => [v, l]), ["a_definir", "A definir"]], "Todas")}
           {filtro("Situação", situacao, setSituacao, Object.entries(SITUACOES))}
-          {filtro("Status de curadoria", status, setStatus, Object.entries(STATUS))}
           {filtro("Ano", ano, setAno, anos.map((a) => [String(a), String(a)]))}
         </div>
         {fontesQ.isError && <p className="text-xs text-destructive">Não foi possível carregar as fontes.</p>}
@@ -269,18 +277,27 @@ const CuradoriaPage = () => {
         {isMobile ? (
           selecionado ? (
             <div className="space-y-3">
-              <Button variant="ghost" size="sm" onClick={() => setSelId(null)}><ArrowLeft className="w-4 h-4 mr-1" /> Voltar à lista</Button>
-              <EditalCuradoriaDetail key={selecionado.id} edital={selecionado} />
+              <Button variant="ghost" size="sm" disabled={saving} onClick={() => mudar(() => setSelId(null))}><ArrowLeft className="w-4 h-4 mr-1" /> Voltar à lista</Button>
+              <EditalCuradoriaDetail key={selecionado.id} edital={selecionado} onDirtyChange={acompanharAlteracoes} onPendingChange={acompanharGravacao} onStatusChange={manterVisivel} />
             </div>
           ) : listaView
         ) : (
           <div className="grid grid-cols-[minmax(280px,380px)_1fr] gap-6 items-start">
             <div className="max-h-[calc(100vh-120px)] overflow-y-auto pr-1 sticky top-4">{listaView}</div>
-            {selecionado ? <EditalCuradoriaDetail key={selecionado.id} edital={selecionado} />
+            {selecionado ? <EditalCuradoriaDetail key={selecionado.id} edital={selecionado} onDirtyChange={acompanharAlteracoes} onPendingChange={acompanharGravacao} onStatusChange={manterVisivel} />
               : <Placeholder title="Selecione um edital para revisar" text="Escolha um item na lista ao lado." />}
           </div>
         )}
       </main>
+      <AlertDialog open={Boolean(trocaPendente)} onOpenChange={(aberto) => { if (!aberto) setTrocaPendente(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader><AlertDialogTitle>Alterações não salvas</AlertDialogTitle><AlertDialogDescription>Deseja descartar as alterações não salvas e trocar de edital ou filtro?</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continuar editando</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { trocaPendente?.(); setDirty(false); setTrocaPendente(null); }}>Descartar alterações e continuar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

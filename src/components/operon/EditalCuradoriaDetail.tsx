@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,8 +15,10 @@ import {
 import { Placeholder } from "@/components/servicedesk/sd-ui";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { ExternalLink, Download, Loader2 } from "lucide-react";
+import { Check, ExternalLink, Download, Loader2 } from "lucide-react";
 import { oe, fmtData, rodadaVigente, SITUACOES, semNumero, exigeConfirmacaoSemRodadas, type EditalRow, type Rodada } from "@/pages/editais/CuradoriaPage";
+import { supabase } from "@/integrations/supabase/client";
+import { atualizarEditalNaLista, transicaoCuradoria, type AcaoCuradoria } from "@/lib/operon-curadoria-state";
 import FonteBadge from "@/components/operon/FonteBadge";
 import AbrangenciaBadge, { ABRANGENCIAS } from "@/components/operon/AbrangenciaBadge";
 
@@ -66,7 +68,9 @@ const Bloco = ({ q, vazio, children }: { q: { isLoading: boolean; isError: boole
 
 const toText = (e: EditalRow, k: Campo) => (k === "areas" ? (e.areas ?? []).join(", ") : (e[k] ?? ""));
 
-const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
+const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatusChange }: {
+  edital: EditalRow; onDirtyChange?: (dirty: boolean) => void; onPendingChange?: (pending: boolean) => void; onStatusChange?: (status: string) => void;
+}) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -75,6 +79,28 @@ const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
   const [restricaoIes, setRestricaoIes] = useState(edital.restricao_ies ?? "__none__");
   const [abrangencia, setAbrangencia] = useState(edital.abrangencia ?? "__none__");
   const [confirmarPublicacao, setConfirmarPublicacao] = useState(false);
+  const [estado, setEstado] = useState(edital);
+  const assinatura = JSON.stringify({ form, restricaoIes, abrangencia });
+  const [salvo, setSalvo] = useState(assinatura);
+  const dirty = assinatura !== salvo;
+  useEffect(() => { setEstado(edital); }, [edital]);
+  useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
+  useEffect(() => () => { onDirtyChange?.(false); onPendingChange?.(false); }, [onDirtyChange, onPendingChange]);
+  useEffect(() => {
+    if (!dirty) return;
+    const avisar = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", avisar);
+    return () => window.removeEventListener("beforeunload", avisar);
+  }, [dirty]);
+  const revisorQ = useQuery({
+    queryKey: ["oe-revisor", estado.verificado_por], enabled: Boolean(estado.verificado_por),
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("full_name, email").eq("user_id", estado.verificado_por ?? "").maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  const revisor = revisorQ.data?.full_name || revisorQ.data?.email || (estado.verificado_por === user?.id ? user?.user_metadata?.full_name || user?.email : null);
 
   const rodadasQ = useLista<Rodada>("oe-rodadas", edital.id, "oe_rodada", "ordem", true);
   const docsQ = useLista<any>("oe-docs", edital.id, "oe_documento", "publicado_em", false);
@@ -99,20 +125,30 @@ const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
   });
 
   const invalidar = () => {
-    ["oe-editais", "oe-contadores", "oe-extracoes"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
+    ["oe-editais", "oe-contadores", "oe-extracoes", "oe-eventos", "oe-portal-painel", "oe-portal-ficha"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
   };
 
   const mut = useMutation({
-    mutationFn: async (acao: "publicar" | "revisao" | "descartar") => {
+    onMutate: async (acao: AcaoCuradoria) => {
+      await qc.cancelQueries({ queryKey: ["oe-editais"] });
+      const anteriores = qc.getQueriesData<EditalRow[]>({ queryKey: ["oe-editais"] });
+      const anterior = estado;
+      const patch = transicaoCuradoria(acao, new Date().toISOString(), user?.id);
+      const campos = acao === "descartar" || acao === "despublicar" ? {} : payloadCampos();
+      const atualizado = { ...estado, ...campos, ...patch };
+      qc.setQueriesData<EditalRow[]>({ queryKey: ["oe-editais"] }, (lista) => atualizarEditalNaLista(lista, edital.id, atualizado));
+      setEstado(atualizado);
+      onStatusChange?.(atualizado.status_curadoria);
+      return { anteriores, anterior, assinatura, atualizado };
+    },
+    mutationFn: async (acao: AcaoCuradoria) => {
       const agora = new Date().toISOString();
-      let upd: Record<string, unknown>;
-      if (acao === "descartar") upd = { status_curadoria: "descartado" };
-      else if (acao === "revisao") upd = { ...payloadCampos(), status_curadoria: "em_revisao" };
-      else upd = { ...payloadCampos(), status_curadoria: "publicado", verificado_em: agora, verificado_por: user?.id };
+      const campos = acao === "descartar" || acao === "despublicar" ? {} : payloadCampos();
+      const upd = { ...campos, ...transicaoCuradoria(acao, agora, user?.id) };
       const { error } = await oe.from("oe_edital").update(upd).eq("id", edital.id);
       if (error) throw error;
       let falhas = 0;
-      if (acao === "publicar") {
+      if (acao === "publicar" || acao === "salvar_publicado") {
         for (const x of extQ.data ?? []) {
           const final = x.campo === "areas"
             ? form.areas.split(",").map((s) => s.trim()).filter(Boolean).join(",")
@@ -120,34 +156,52 @@ const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
           const extraido = x.campo === "areas"
             ? (x.valor ?? "").split(",").map((s) => s.trim()).filter(Boolean).join(",")
             : norm(x.valor);
+          try {
           const { error: e2 } = await oe.from("oe_extracao").update({
             status: final === extraido ? "aprovado" : "editado", revisado_por: user?.id, revisado_em: agora,
           }).eq("id", x.id);
           if (e2) falhas++;
+          } catch { falhas++; }
         }
       }
-      return { acao, falhas };
+      return { acao, falhas, upd };
     },
-    onSuccess: ({ acao, falhas }) => {
-      if (acao === "publicar" && falhas > 0) {
+    onSuccess: ({ acao, falhas, upd }, _variavel, contexto) => {
+      if (contexto) {
+        setEstado({ ...contexto.atualizado, ...upd });
+        if (acao !== "descartar" && acao !== "despublicar") setSalvo(contexto.assinatura);
+      }
+      if ((acao === "publicar" || acao === "salvar_publicado") && falhas > 0) {
         toast({
           title: "Edital publicado com ressalva",
           description: `O edital foi publicado, mas ${falhas} ${falhas === 1 ? "extração não foi marcada" : "extrações não foram marcadas"}. Revise as extrações manualmente.`,
           variant: "destructive",
         });
       } else {
-        toast({ title: acao === "publicar" ? "Edital publicado" : acao === "revisao" ? "Salvo como em revisão" : "Edital descartado" });
+        toast({ title: acao === "publicar" ? "Edital publicado" : acao === "revisao" ? "Salvo como em revisão" : acao === "despublicar" ? "Edital despublicado" : acao === "salvar_publicado" ? "Alterações publicadas salvas" : "Edital descartado" });
       }
-      invalidar();
     },
-    onError: (e: Error) => toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" }),
+    onError: (e: Error, _acao, contexto) => {
+      contexto?.anteriores.forEach(([key, data]) => qc.setQueryData(key, data));
+      if (contexto) setEstado(contexto.anterior);
+      toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" });
+    },
+    onSettled: invalidar,
   });
 
+  useEffect(() => { onPendingChange?.(mut.isPending); }, [mut.isPending, onPendingChange]);
+  const publicado = estado.status_curadoria === "publicado";
   const vig = rodadaVigente(rodadasQ.data ?? []);
   const agora = Date.now();
 
   return (
     <div className="space-y-4 min-w-0">
+      {publicado && !(mut.isPending && mut.variables === "publicar") && (
+        <div role="status" className="sticky top-0 z-10 rounded-xl border border-success/30 bg-success-light p-4 text-foreground flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm min-w-0"><Check className="inline mr-2 h-4 w-4 text-success" />Publicado em {fmtData(estado.verificado_em, true)} por {revisor || "revisor identificado no registro"}. Já visível no portal dos usuários.</p>
+          <Button asChild variant="outline" size="sm"><a href={`/editais/${edital.id}`} target="_blank" rel="noopener noreferrer">Ver no portal <ExternalLink className="ml-1 h-4 w-4" /></a></Button>
+        </div>
+      )}
       <Card className="rounded-xl">
         <CardContent className="py-5 space-y-2">
           <div className="flex flex-wrap items-center gap-1.5">
@@ -169,7 +223,7 @@ const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
 
       <Card className="rounded-xl">
         <CardHeader><CardTitle className="text-base">Cartão público</CardTitle></CardHeader>
-        <CardContent className="space-y-5">
+        <CardContent className="space-y-5"><fieldset disabled={mut.isPending} className="space-y-5">
           {extQ.isError && <p className="text-xs text-destructive">Não foi possível carregar os valores extraídos.</p>}
           {CAMPOS.map(({ key, label }) => {
             const x = extPorCampo[key];
@@ -222,7 +276,7 @@ const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
               </SelectContent>
             </Select>
           </div>
-        </CardContent>
+        </fieldset></CardContent>
       </Card>
 
       <Card className="rounded-xl">
@@ -306,11 +360,13 @@ const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
       </Card>
 
       <div className="flex flex-wrap gap-2 sticky bottom-0 bg-background py-3">
-        <Button disabled={mut.isPending || rodadasQ.isLoading || rodadasQ.isError} onClick={() => {
+        {dirty && <span className="w-full text-sm text-warning-foreground" role="status">Alterações não salvas</span>}
+        <Button variant={publicado && !dirty ? "outline" : "default"} disabled={mut.isPending || (publicado ? !dirty : rodadasQ.isLoading || rodadasQ.isError)} onClick={() => {
+          if (publicado) { mut.mutate("salvar_publicado"); return; }
           if (exigeConfirmacaoSemRodadas(edital.situacao, rodadasQ.data ?? [])) setConfirmarPublicacao(true);
           else mut.mutate("publicar");
         }}>
-          {mut.isPending && mut.variables === "publicar" && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Aprovar e publicar
+          {mut.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}{publicado ? dirty ? "Salvar alterações publicadas" : "Publicado ✓" : "Aprovar e publicar"}
         </Button>
         <AlertDialog open={confirmarPublicacao} onOpenChange={setConfirmarPublicacao}>
           <AlertDialogContent>
@@ -324,9 +380,15 @@ const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-        <Button variant="outline" disabled={mut.isPending} onClick={() => mut.mutate("revisao")}>
+        {publicado ? <AlertDialog>
+          <AlertDialogTrigger asChild><Button variant="outline" disabled={mut.isPending}>Despublicar</Button></AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader><AlertDialogTitle>Despublicar este edital?</AlertDialogTitle><AlertDialogDescription>O edital deixa de aparecer no portal dos usuários. Alterações não salvas permanecem no formulário.</AlertDialogDescription></AlertDialogHeader>
+            <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => mut.mutate("despublicar")}>Despublicar</AlertDialogAction></AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog> : <Button variant="outline" disabled={mut.isPending} onClick={() => mut.mutate("revisao")}>
           {mut.isPending && mut.variables === "revisao" && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Salvar como em revisão
-        </Button>
+        </Button>}
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button variant="destructive" disabled={mut.isPending}>Descartar</Button>
