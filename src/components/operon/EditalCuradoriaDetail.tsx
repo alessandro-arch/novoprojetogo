@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { atualizarEditalNaLista, transicaoCuradoria, type AcaoCuradoria } from "@/lib/operon-curadoria-state";
 import FonteBadge from "@/components/operon/FonteBadge";
 import AbrangenciaBadge, { ABRANGENCIAS } from "@/components/operon/AbrangenciaBadge";
+import { Switch } from "@/components/ui/switch";
+import { Sparkles } from "lucide-react";
+import { gerarSugestoes, type CampoIA, type SugestoesIA } from "@/lib/operon-ia";
+import OperonIASugestao from "@/components/operon/OperonIASugestao";
+import OperonIARodadas from "@/components/operon/OperonIARodadas";
 
 type Campo = "objetivo" | "recursos" | "quem_pode" | "requisitos_ies" | "contrapartida" | "areas";
 const CAMPOS: { key: Campo; label: string }[] = [
@@ -82,9 +87,47 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
   const [resumoSalvo, setResumoSalvo] = useState((edital.resumo_tldr ?? "").trim());
   const [confirmarPublicacao, setConfirmarPublicacao] = useState(false);
   const [estado, setEstado] = useState(edital);
+  const [sobrescrever, setSobrescrever] = useState(false);
+  const [iaSobrescrever, setIaSobrescrever] = useState(false);
+  const [sugestoes, setSugestoes] = useState<SugestoesIA>({});
+  const [anterioresIA, setAnterioresIA] = useState<Partial<Record<CampoIA, string>>>({});
+  const [salvandoRodadas, setSalvandoRodadas] = useState(false);
+  const acompanharRodadas = useCallback((pending: boolean) => setSalvandoRodadas(pending), []);
+  const curadorQ = useQuery({
+    queryKey: ["oe-ia-curador", user?.id], enabled: Boolean(user), retry: false,
+    queryFn: async () => { const { data, error } = await supabase.rpc("oe_is_curador"); if (error) throw error; return data === true; },
+  });
   const assinatura = JSON.stringify({ form, restricaoIes, abrangencia, resumo });
   const [salvo, setSalvo] = useState(assinatura);
-  const dirty = assinatura !== salvo;
+  const sugestoesPendentes = Object.keys(sugestoes).length > 0;
+  const dirty = assinatura !== salvo || sugestoesPendentes;
+  const escreverCampoIA = (key: CampoIA, value: string) => {
+    if (key === "resumo_tldr") setResumo(value);
+    else if (key === "restricao_ies") setRestricaoIes(value || "__none__");
+    else if (key === "abrangencia") setAbrangencia(value || "__none__");
+    else if (key !== "rodadas") setForm(current => ({ ...current, [key]: value }));
+  };
+  const concluirSugestao = (key: CampoIA, descartar = false) => {
+    if (descartar && key !== "rodadas") escreverCampoIA(key, anterioresIA[key] ?? "");
+    setSugestoes(current => { const next = { ...current }; delete next[key]; return next; });
+  };
+  const iaMut = useMutation({
+    mutationFn: () => gerarSugestoes(edital.id, sobrescrever),
+    onSuccess: result => {
+      const anteriores: Partial<Record<CampoIA, string>> = {};
+      for (const [key, suggestion] of Object.entries(result.propostas)) {
+        const campo = key as CampoIA;
+        if (typeof suggestion.valor !== "string" || campo === "rodadas") continue;
+        anteriores[campo] = campo === "resumo_tldr" ? resumo : campo === "restricao_ies" ? restricaoIes : campo === "abrangencia" ? abrangencia : form[campo];
+        escreverCampoIA(campo, suggestion.valor);
+      }
+      setAnterioresIA(anteriores);
+      setIaSobrescrever(sobrescrever);
+      setSugestoes(result.propostas);
+      toast({ title: Object.keys(result.propostas).length ? "Sugestões prontas para revisão" : "Nenhuma sugestão elegível", description: "Nada foi salvo ou publicado." });
+    },
+    onError: (error: Error) => toast({ title: "Não foi possível gerar com IA", description: error.message, variant: "destructive" }),
+  });
   useEffect(() => { setEstado(edital); }, [edital]);
   useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
   useEffect(() => () => { onDirtyChange?.(false); onPendingChange?.(false); }, [onDirtyChange, onPendingChange]);
@@ -129,7 +172,7 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
   });
 
   const invalidar = () => {
-    ["oe-editais", "oe-contadores", "oe-extracoes", "oe-eventos", "oe-portal-painel", "oe-portal-ficha"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
+    ["oe-editais", "oe-contadores", "oe-extracoes", "oe-eventos", "oe-rodadas", "oe-portal-painel", "oe-portal-ficha"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
   };
 
   const mut = useMutation({
@@ -196,7 +239,8 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
     onSettled: invalidar,
   });
 
-  useEffect(() => { onPendingChange?.(mut.isPending); }, [mut.isPending, onPendingChange]);
+  const busy = mut.isPending || iaMut.isPending || salvandoRodadas;
+  useEffect(() => { onPendingChange?.(busy); }, [busy, onPendingChange]);
   const publicado = estado.status_curadoria === "publicado";
   const vig = rodadaVigente(rodadasQ.data ?? []);
   const agora = Date.now();
@@ -209,6 +253,18 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
           <Button asChild variant="outline" size="sm"><a href={`/editais/${edital.id}`} target="_blank" rel="noopener noreferrer">Ver no portal <ExternalLink className="ml-1 h-4 w-4" /></a></Button>
         </div>
       )}
+      {curadorQ.data === true && <div className="space-y-3 border-b border-border pb-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="outline" disabled={busy || sugestoesPendentes} onClick={() => iaMut.mutate()}>
+            {iaMut.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}{iaMut.isPending ? "Gerando sugestões…" : "Gerar com IA"}
+          </Button>
+          <div className="flex items-center gap-2"><Switch id="ia-sobrescrever" checked={sobrescrever} onCheckedChange={setSobrescrever} disabled={busy || sugestoesPendentes} /><Label htmlFor="ia-sobrescrever">Sobrescrever campos já preenchidos</Label></div>
+          <span className="text-xs text-muted-foreground tabular-nums">{iaMut.data?.free_model_daily_requests ? `${iaMut.data.free_model_daily_requests.remaining} requisições gratuitas restantes` : "Saldo gratuito indisponível"}</span>
+        </div>
+        <p className="text-xs text-muted-foreground">Conteúdo gerado por IA, confira com o edital</p>
+        {iaMut.data && <p className="text-xs text-muted-foreground break-all">Modelo utilizado: {iaMut.data.modelo}</p>}
+        {sugestoesPendentes && <p className="text-sm text-primary">Aceite ou descarte cada sugestão antes de salvar. As datas exigem confirmação própria.</p>}
+      </div>}
       <Card className="rounded-xl">
         <CardContent className="py-5 space-y-2">
           <div className="flex flex-wrap items-center gap-1.5">
@@ -230,7 +286,7 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
 
       <Card className="rounded-xl">
         <CardHeader><CardTitle className="text-base">Cartão público</CardTitle></CardHeader>
-        <CardContent className="space-y-5"><fieldset disabled={mut.isPending} className="space-y-5">
+        <CardContent className="space-y-5"><fieldset disabled={busy} className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="resumo-tldr">Em resumo (TL;DR)</Label>
             <Textarea id="resumo-tldr" rows={4} value={resumo} onChange={(event) => setResumo(event.target.value)} aria-describedby="resumo-tldr-dica resumo-tldr-contador" />
@@ -238,6 +294,7 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
               <p id="resumo-tldr-dica">3 a 4 frases, linguagem científica: objeto, público elegível, aporte, prazo, restrição de IES</p>
               <span id="resumo-tldr-contador" className="tabular-nums">{Array.from(resumo).length} caracteres</span>
             </div>
+            <OperonIASugestao sugestao={sugestoes.resumo_tldr} aceitar={() => concluirSugestao("resumo_tldr")} descartar={() => concluirSugestao("resumo_tldr", true)} disabled={busy} />
           </div>
           {extQ.isError && <p className="text-xs text-destructive">Não foi possível carregar os valores extraídos.</p>}
           {CAMPOS.map(({ key, label }) => {
@@ -249,6 +306,7 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
                   {key === "areas"
                     ? <Input value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
                     : <Textarea rows={4} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />}
+                  {key !== "areas" && <OperonIASugestao sugestao={sugestoes[key]} aceitar={() => concluirSugestao(key)} descartar={() => concluirSugestao(key, true)} disabled={busy} />}
                 </div>
                 <div className="rounded-xl border border-border bg-muted/40 p-3 space-y-2 text-sm text-muted-foreground">
                   {extQ.isLoading ? <Skeleton className="h-16 w-full" /> : !x ? <p>Sem valor extraído.</p> : (
@@ -280,6 +338,7 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
                 <SelectItem value="nao_informado">Edital não trata do tema</SelectItem>
               </SelectContent>
             </Select>
+            <OperonIASugestao sugestao={sugestoes.restricao_ies} aceitar={() => concluirSugestao("restricao_ies")} descartar={() => concluirSugestao("restricao_ies", true)} disabled={busy} />
           </div>
           <div className="space-y-1">
             <Label htmlFor="abrangencia">Abrangência</Label>
@@ -290,9 +349,12 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
                 <SelectItem value="__none__">A definir</SelectItem>
               </SelectContent>
             </Select>
+            <OperonIASugestao sugestao={sugestoes.abrangencia} aceitar={() => concluirSugestao("abrangencia")} descartar={() => concluirSugestao("abrangencia", true)} disabled={busy} />
           </div>
         </fieldset></CardContent>
       </Card>
+
+      {sugestoes.rodadas && <OperonIARodadas editalId={edital.id} sugestao={sugestoes.rodadas} sobrescrever={iaSobrescrever} concluir={() => concluirSugestao("rodadas")} onPending={acompanharRodadas} />}
 
       <Card className="rounded-xl">
         <CardHeader><CardTitle className="text-base">Datas das rodadas</CardTitle></CardHeader>
@@ -376,7 +438,7 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
 
       <div className="flex flex-wrap gap-2 sticky bottom-0 bg-background py-3">
         {dirty && <span className="w-full text-sm text-warning-foreground" role="status">Alterações não salvas</span>}
-        <Button variant={publicado && !dirty ? "outline" : "default"} disabled={mut.isPending || (publicado ? !dirty : rodadasQ.isLoading || rodadasQ.isError)} onClick={() => {
+        <Button variant={publicado && !dirty ? "outline" : "default"} disabled={busy || sugestoesPendentes || (publicado ? !dirty : rodadasQ.isLoading || rodadasQ.isError)} onClick={() => {
           if (publicado) { mut.mutate("salvar_publicado"); return; }
           if (exigeConfirmacaoSemRodadas(edital.situacao, rodadasQ.data ?? [])) setConfirmarPublicacao(true);
           else mut.mutate("publicar");
@@ -396,17 +458,17 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
           </AlertDialogContent>
         </AlertDialog>
         {publicado ? <AlertDialog>
-          <AlertDialogTrigger asChild><Button variant="outline" disabled={mut.isPending}>Despublicar</Button></AlertDialogTrigger>
+          <AlertDialogTrigger asChild><Button variant="outline" disabled={busy || sugestoesPendentes}>Despublicar</Button></AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader><AlertDialogTitle>Despublicar este edital?</AlertDialogTitle><AlertDialogDescription>O edital deixa de aparecer no portal dos usuários. Alterações não salvas permanecem no formulário.</AlertDialogDescription></AlertDialogHeader>
             <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => mut.mutate("despublicar")}>Despublicar</AlertDialogAction></AlertDialogFooter>
           </AlertDialogContent>
-        </AlertDialog> : <Button variant="outline" disabled={mut.isPending} onClick={() => mut.mutate("revisao")}>
+        </AlertDialog> : <Button variant="outline" disabled={busy || sugestoesPendentes} onClick={() => mut.mutate("revisao")}>
           {mut.isPending && mut.variables === "revisao" && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Salvar como em revisão
         </Button>}
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive" disabled={mut.isPending}>Descartar</Button>
+            <Button variant="destructive" disabled={busy || sugestoesPendentes}>Descartar</Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>

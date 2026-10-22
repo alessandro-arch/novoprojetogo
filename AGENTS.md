@@ -1,4 +1,5 @@
 # AGENTS
+- Operon AI is a read-only JWT/oe_is_curador-gated edge service with independently validated, source-backed field suggestions; the curation form stages them until explicit review, and rounds use a separate confirmed RLS-backed upsert preserving existing records. Official agency HTTPS PDF downloads are domain-allowlisted and DNS/redirect/size validated to prevent SSRF and accidental document truncation.
 - Operon detail derives a dated timeline client-side from released events, rounds, documents and the edital publication date, deduplicating by instant and label; module types reuse generated migration fields to avoid schema drift.
 - Operon curation fetches status-independent lists and derives combined-filter tab counts from the same cache; optimistic status transitions snapshot and restore that cache so publication keeps selection visible without changing the public portal.
 - Operon user portal uses a published-only query layer with explicit released-event filtering and user-scoped following; this prevents exposure of pending events and keeps notification delivery outside the frontend.
