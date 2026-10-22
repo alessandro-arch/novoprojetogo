@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
       return json({ error: "Muitas solicitações. Aguarde 15 minutos e tente novamente." }, 429);
     await admin.from("sd_first_access_attempts").insert({ matricula: key, ip, success: false });
 
-    const suffix = back === "sd" ? "?back=sd" : "";
+    const suffix = back === "sd" ? "?back=sd" : back === "/editais/login" ? "?back=%2Feditais%2Flogin" : "";
     const { data: link, error: lErr } = await admin.auth.admin.generateLink({
       type: "recovery", email, options: { redirectTo: `${SITE}/reset-password${suffix}` },
     });

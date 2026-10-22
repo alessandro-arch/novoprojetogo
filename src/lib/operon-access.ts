@@ -1,0 +1,22 @@
+import { supabase } from "@/integrations/supabase/client";
+
+export const OPERON_LOGIN = "/editais/login";
+
+export const checkOperonAccess = async (userId: string): Promise<boolean> => {
+  const [roles, config] = await Promise.all([
+    supabase.from("user_roles").select("role").eq("user_id", userId),
+    (supabase as any).from("oe_org_config").select("organization_id").eq("ativa", true).limit(1),
+  ]);
+  if (!roles.error && (roles.data ?? []).some((r) => r.role === "icca_admin")) return true;
+  if (!config.error && (config.data ?? []).length > 0) return true;
+  if (roles.error || config.error) throw new Error("Não foi possível verificar seu acesso ao Operon Fomento. Tente novamente.");
+  return false;
+};
+
+export const logoutOperon = async (navigate: (path: string, options: { replace: boolean }) => void) => {
+  // Leave the protected page before SIGNED_OUT can render a route guard.
+  navigate(OPERON_LOGIN, { replace: true });
+  const { error } = await supabase.auth.signOut();
+  if (error) throw error;
+  window.location.replace(OPERON_LOGIN);
+};

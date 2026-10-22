@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -17,11 +18,12 @@ import { useToast } from "@/hooks/use-toast";
 import { ExternalLink, Download, Loader2 } from "lucide-react";
 import { oe, fmtData, rodadaVigente, SITUACOES, semNumero, type EditalRow, type Rodada } from "@/pages/editais/CuradoriaPage";
 
-type Campo = "objetivo" | "recursos" | "quem_pode" | "contrapartida" | "areas";
+type Campo = "objetivo" | "recursos" | "quem_pode" | "requisitos_ies" | "contrapartida" | "areas";
 const CAMPOS: { key: Campo; label: string }[] = [
   { key: "objetivo", label: "Objetivo" },
   { key: "recursos", label: "Recursos" },
   { key: "quem_pode", label: "Quem pode participar" },
+  { key: "requisitos_ies", label: "Da Instituição de Ensino Superior" },
   { key: "contrapartida", label: "Contrapartida" },
   { key: "areas", label: "Áreas (separadas por vírgula)" },
 ];
@@ -68,6 +70,7 @@ const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
   const qc = useQueryClient();
   const [form, setForm] = useState<Record<Campo, string>>(() =>
     Object.fromEntries(CAMPOS.map((c) => [c.key, toText(edital, c.key)])) as Record<Campo, string>);
+  const [restricaoIes, setRestricaoIes] = useState(edital.restricao_ies ?? "__none__");
 
   const rodadasQ = useLista<Rodada>("oe-rodadas", edital.id, "oe_rodada", "ordem", true);
   const docsQ = useLista<any>("oe-docs", edital.id, "oe_documento", "publicado_em", false);
@@ -84,6 +87,8 @@ const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
     objetivo: norm(form.objetivo) || null,
     recursos: norm(form.recursos) || null,
     quem_pode: norm(form.quem_pode) || null,
+    requisitos_ies: norm(form.requisitos_ies) || null,
+    restricao_ies: restricaoIes === "__none__" ? null : restricaoIes,
     contrapartida: norm(form.contrapartida) || null,
     areas: form.areas.split(",").map((s) => s.trim()).filter(Boolean),
   });
@@ -165,7 +170,7 @@ const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
             return (
               <div key={key} className="grid gap-3 md:grid-cols-2">
                 <div className="space-y-1">
-                  <Label>{label}</Label>
+                  <Label>{key === "objetivo" && edital.oe_fonte?.slug === "fapes" ? "Finalidade" : label}</Label>
                   {key === "areas"
                     ? <Input value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
                     : <Textarea rows={4} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />}
@@ -187,6 +192,20 @@ const EditalCuradoriaDetail = ({ edital }: { edital: EditalRow }) => {
               </div>
             );
           })}
+          <div className="space-y-1">
+            <Label htmlFor="restricao-ies">Restrição para IES</Label>
+            <Select value={restricaoIes} onValueChange={setRestricaoIes}>
+              <SelectTrigger id="restricao-ies"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Não analisado</SelectItem>
+                <SelectItem value="sem_restricao">Sem restrição</SelectItem>
+                <SelectItem value="exclui_privadas_com_fins_lucrativos">Exclui IES privadas com fins lucrativos</SelectItem>
+                <SelectItem value="somente_publicas">Somente IES públicas</SelectItem>
+                <SelectItem value="outra">Outra restrição</SelectItem>
+                <SelectItem value="nao_informado">Edital não trata do tema</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardContent>
       </Card>
 

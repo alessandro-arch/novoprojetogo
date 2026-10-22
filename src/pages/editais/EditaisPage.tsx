@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -12,10 +11,14 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Placeholder } from "@/components/servicedesk/sd-ui";
 import { ArrowLeft, ExternalLink, FileText, LogOut } from "lucide-react";
 import { oe, EditalRow, Rodada, fmtData, rodadaVigente, ehVigente, diasAte, semNumero } from "./CuradoriaPage";
+import { logoutOperon } from "@/lib/operon-access";
 
 const NONE = "__none__";
 const DESTAQUE = ["retificacao", "retificação", "errata", "adendo"];
 const tm = (v: string | null) => (v ? new Date(v).getTime() : null);
+const AvisoIes = ({ e }: { e: EditalRow }) => (
+  e.restricao_ies === "exclui_privadas_com_fins_lucrativos" || e.restricao_ies === "somente_publicas"
+) ? <div className="space-y-1"><Badge variant="destructive">Atenção: restrição para IES</Badge><p className="text-sm text-muted-foreground">Confirme se a sua instituição pode participar.</p></div> : null;
 
 interface Documento { id: string; tipo: string | null; rotulo: string | null; url: string; versao: string | null }
 
@@ -45,11 +48,12 @@ const Detalhe = ({ e }: { e: EditalRow }) => {
   const vig = rodadaVigente(e.oe_rodada);
   const rodadas = [...(e.oe_rodada ?? [])].sort((a, b) => a.ordem - b.ordem);
   const campos: [string, string | null][] = [
-    ["Objetivo", e.objetivo], ["Recursos", e.recursos], ["Quem pode participar", e.quem_pode], ["Contrapartida", e.contrapartida],
+    [e.oe_fonte?.slug === "fapes" ? "Finalidade" : "Objetivo", e.objetivo], ["Recursos", e.recursos], ["Quem pode participar", e.quem_pode], ["Da Instituição de Ensino Superior", e.requisitos_ies], ["Contrapartida", e.contrapartida],
   ];
 
   return (
     <div className="space-y-5">
+      <AvisoIes e={e} />
       {e.url_oficial && (
         <a href={e.url_oficial} target="_blank" rel="noopener noreferrer">
           <Button variant="outline" size="sm" className="gap-1"><ExternalLink className="w-4 h-4" /> Abrir no site oficial</Button>
@@ -58,7 +62,7 @@ const Detalhe = ({ e }: { e: EditalRow }) => {
       {campos.filter(([, v]) => v && v.trim()).map(([k, v]) => (
         <div key={k}>
           <p className="text-sm font-semibold text-foreground">{k}</p>
-          <p className="text-sm text-muted-foreground whitespace-pre-line">{v}</p>
+          <p className="text-sm text-muted-foreground whitespace-pre-line break-words">{v}</p>
         </div>
       ))}
 
@@ -76,7 +80,7 @@ const Detalhe = ({ e }: { e: EditalRow }) => {
                   {futura && <Badge variant="outline">Inscrições abrem em {fmtData(r.abertura)}</Badge>}
                 </div>
                 <p className="text-muted-foreground">Abertura: {fmtData(r.abertura, true)} · Prazo final: {fmtData(r.prazo_fim, true)}</p>
-                {r.texto_original && <p className="text-xs text-muted-foreground mt-1">{r.texto_original}</p>}
+                {r.texto_original && <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line break-words">{r.texto_original}</p>}
               </div>
             );
           })}
@@ -86,13 +90,13 @@ const Detalhe = ({ e }: { e: EditalRow }) => {
         <p className="text-sm font-semibold text-foreground">Documentos para baixar</p>
         {docsQ.isLoading ? <Skeleton className="h-16 rounded-xl" />
           : docsQ.isError ? <Erro msg={(docsQ.error as Error)?.message ?? ""} retry={() => docsQ.refetch()} />
-          : !docsQ.data!.length ? <Placeholder title="Nenhum documento" text="Ainda não há documentos para este edital." />
-          : docsQ.data!.map((d) => {
+          : !docsQ.data?.length ? <Placeholder title="Nenhum documento" text="Ainda não há documentos para este edital." />
+          : docsQ.data.map((d) => {
             const dest = DESTAQUE.includes((d.tipo ?? "").toLowerCase());
             return (
               <div key={d.id} className={`rounded-xl border p-3 flex items-center justify-between gap-3 ${dest ? "border-primary bg-primary/5" : "border-border"}`}>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{d.rotulo ?? "Documento"}</p>
+                  <p className="text-sm font-medium whitespace-pre-line break-words">{d.rotulo ?? "Documento"}</p>
                   <div className="flex gap-2 mt-1">
                     {d.tipo && <Badge variant={dest ? "default" : "secondary"}>{d.tipo}</Badge>}
                     {d.versao && <span className="text-xs text-muted-foreground">Versão {d.versao}</span>}
@@ -117,9 +121,7 @@ const EditaisPage = () => {
   const handleLogout = async () => {
     setSaindo(true);
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      navigate("/editais/login", { replace: true });
+      await logoutOperon(navigate);
     } catch {
       toast({ title: "Erro ao sair", description: "Não foi possível sair. Tente novamente.", variant: "destructive" });
     } finally {
@@ -159,7 +161,7 @@ const EditaisPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 py-4 flex flex-wrap gap-3 items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg gradient-primary flex items-center justify-center">
               <FileText className="w-5 h-5 text-primary-foreground" />
@@ -208,6 +210,7 @@ const EditaisPage = () => {
                   <PrazoBadge prazo={v?.prazo_fim} />
                 </div>
                 <p className="font-medium text-foreground text-sm">{e.titulo}</p>
+                <AvisoIes e={e} />
                 <p className="text-xs text-muted-foreground mt-1">
                   {e.categoria ?? "Sem categoria"} · Prazo: {v ? fmtData(v.prazo_fim, true) : "Datas ainda não extraídas"}
                 </p>

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { KpiCard, Placeholder } from "@/components/servicedesk/sd-ui";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ArrowLeft, FileText } from "lucide-react";
+import { ArrowLeft, FileText, LogOut } from "lucide-react";
+import { logoutOperon } from "@/lib/operon-access";
+import { useToast } from "@/hooks/use-toast";
 import EditalCuradoriaDetail from "@/components/operon/EditalCuradoriaDetail";
 
 // Tabelas oe_* ainda não estão nos tipos gerados: cast pontual.
@@ -20,6 +22,7 @@ export interface EditalRow {
   id: string; fonte_id: string; numero: string | null; ano: number | null; titulo: string; categoria: string | null;
   situacao: string | null; status_curadoria: string; url_oficial: string | null; visto_ultima_vez_em: string | null;
   objetivo: string | null; recursos: string | null; quem_pode: string | null; contrapartida: string | null; areas: string[] | null;
+  requisitos_ies: string | null; restricao_ies: string | null;
   oe_fonte?: { slug: string; nome: string } | null; oe_rodada?: Rodada[];
 }
 
@@ -65,6 +68,15 @@ const NONE = "__none__";
 export const semNumero = (n: string | null) => !n || n.trim().toLowerCase().replace(/\s/g, "") === "s/n";
 
 const CuradoriaPage = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [saindo, setSaindo] = useState(false);
+  const handleLogout = async () => {
+    setSaindo(true);
+    try { await logoutOperon(navigate); }
+    catch { toast({ title: "Erro ao sair", description: "Não foi possível encerrar sua sessão. Tente novamente.", variant: "destructive" }); }
+    finally { setSaindo(false); }
+  };
   const isMobile = useIsMobile();
   const [fonte, setFonte] = useState(NONE);
   const [situacao, setSituacao] = useState(NONE);
@@ -99,7 +111,7 @@ const CuradoriaPage = () => {
     queryKey: ["oe-editais", fonte, situacao, status, ano],
     queryFn: async () => {
       const { data, error } = await aplicar(
-        oe.from("oe_edital").select("id, fonte_id, numero, ano, titulo, categoria, situacao, status_curadoria, url_oficial, visto_ultima_vez_em, objetivo, recursos, quem_pode, contrapartida, areas, oe_fonte(slug, nome), oe_rodada(id, ordem, abertura, prazo_fim)"),
+        oe.from("oe_edital").select("id, fonte_id, numero, ano, titulo, categoria, situacao, status_curadoria, url_oficial, visto_ultima_vez_em, objetivo, recursos, quem_pode, requisitos_ies, restricao_ies, contrapartida, areas, oe_fonte(slug, nome), oe_rodada(id, ordem, abertura, prazo_fim)"),
         true,
       ).limit(1000);
       if (error) throw error;
@@ -206,7 +218,10 @@ const CuradoriaPage = () => {
               <p className="text-xs text-muted-foreground">Curadoria</p>
             </div>
           </div>
-          <Link to="/admin"><Button variant="ghost" size="sm"><ArrowLeft className="w-4 h-4 mr-1" /> Painel admin</Button></Link>
+          <div className="flex flex-wrap items-center gap-1">
+            <Button asChild variant="ghost" size="sm"><Link to="/editais"><ArrowLeft className="w-4 h-4 mr-1" /> Voltar</Link></Button>
+            <Button variant="ghost" size="sm" onClick={handleLogout} disabled={saindo}><LogOut className="w-4 h-4 mr-1" /> Sair</Button>
+          </div>
         </div>
       </header>
 
