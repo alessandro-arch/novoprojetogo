@@ -27,7 +27,7 @@ describe("Telegram do Operon", () => {
   });
   it("sem bot configurado não há nome válido", () => {
     expect(nomeBotTelegram("")).toBeNull();
-    expect(nomeBotTelegram(undefined)).toBeNull();
+    expect(nomeBotTelegram(null)).toBeNull();
     expect(nomeBotTelegram("nao valido")).toBeNull();
   });
   it("canal só aceita link https do t.me", () => {
