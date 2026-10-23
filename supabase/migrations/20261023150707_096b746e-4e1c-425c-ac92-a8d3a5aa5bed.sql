@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.oe_validar_seguidor_telegram() FROM PUBLIC, anon, authenticated;
