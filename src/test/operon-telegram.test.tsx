@@ -24,8 +24,8 @@ const montar = async () => {
 
 describe("Telegram do Operon", () => {
   it("usa o endereço configurado do canal sem substituí-lo pelo bot de vinculação", async () => {
-    canalConfig.url = "https://t.me/c/4494976966?boost";
-    expect(await carregarCanalOrganizacao()).toBe("https://t.me/c/4494976966?boost");
+    canalConfig.url = "https://t.me/+wXMZGHzAs9w1MTUx";
+    expect(await carregarCanalOrganizacao()).toBe("https://t.me/+wXMZGHzAs9w1MTUx");
     expect(linkVinculo("ArethaFranklin_bot", "abc123")).toBe("https://t.me/ArethaFranklin_bot?start=abc123");
   });
   it("monta o link com o bot configurado", () => {
