@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, ReactNode 
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { aplicarViewAs, definirContextoViewAs, limparViewAs, useViewAs } from "@/lib/view-as";
 
 type AppRole = "icca_admin" | "org_admin" | "edital_manager" | "proponente" | "reviewer";
 
@@ -17,6 +18,10 @@ interface AuthContextType {
   globalRole: AppRole | null;
   membership: UserMembership | null;
   fomentoRole: string | null;
+  /** Papéis reais lidos do banco, nunca afetados pelo "Ver como". */
+  realGlobalRole: AppRole | null;
+  realFomentoRole: string | null;
+  simulando: boolean;
   signOut: (redirectTo?: string) => Promise<void>;
   refreshRoles: () => Promise<void>;
 }
@@ -28,6 +33,9 @@ const AuthContext = createContext<AuthContextType>({
   globalRole: null,
   membership: null,
   fomentoRole: null,
+  realGlobalRole: null,
+  realFomentoRole: null,
+  simulando: false,
   signOut: async () => {},
   refreshRoles: async () => {},
 });
@@ -41,6 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [globalRole, setGlobalRole] = useState<AppRole | null>(null);
   const [membership, setMembership] = useState<UserMembership | null>(null);
   const [fomentoRole, setFomentoRole] = useState<string | null>(null);
+  const [rolesFor, setRolesFor] = useState<string | null>(null);
 
   let queryClient: ReturnType<typeof useQueryClient> | null = null;
   try {
@@ -95,6 +104,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .single();
 
     setFomentoRole((profile as any)?.fomento_role ?? null);
+    setRolesFor(userId);
   }, []);
 
   const refreshRoles = useCallback(async () => {
@@ -140,7 +150,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, [fetchRoles]);
 
+  // Só depois de ler os papéis reais o "Ver como" é aceito ou descartado.
+  useEffect(() => {
+    if (loading) return;
+    if (!user) { definirContextoViewAs(null, false); return; }
+    if (rolesFor === user.id) definirContextoViewAs(user.id, fomentoRole === "superadmin");
+  }, [loading, user, rolesFor, fomentoRole]);
+
+  const viewAs = useViewAs();
+  const efetivo = aplicarViewAs({ globalRole, membership, fomentoRole }, viewAs.escolha);
+
   const signOut = useCallback(async (redirectTo = "/login") => {
+    limparViewAs();
     // 1. Sign out from Supabase
     await supabase.auth.signOut();
 
@@ -161,7 +182,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [queryClient]);
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, globalRole, membership, fomentoRole, signOut, refreshRoles }}>
+    <AuthContext.Provider value={{ user, session, loading, globalRole: efetivo.globalRole, membership: efetivo.membership, fomentoRole: efetivo.fomentoRole, realGlobalRole: globalRole, realFomentoRole: fomentoRole, simulando: efetivo.simulando, signOut, refreshRoles }}>
       {children}
     </AuthContext.Provider>
   );

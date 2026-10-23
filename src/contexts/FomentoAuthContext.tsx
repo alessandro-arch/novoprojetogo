@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { aplicarViewAs, limparViewAs, useViewAs } from "@/lib/view-as";
 
 interface FomentoAuthContextType {
   user: User | null;
@@ -11,6 +12,7 @@ interface FomentoAuthContextType {
   profileName: string | null;
   isSuperadmin: boolean;
   isAuditor: boolean;
+  realFomentoRole: string | null;
   signOut: () => Promise<void>;
   refreshRole: () => Promise<void>;
 }
@@ -24,6 +26,7 @@ const FomentoAuthContext = createContext<FomentoAuthContextType>({
   profileName: null,
   isSuperadmin: false,
   isAuditor: false,
+  realFomentoRole: null,
   signOut: async () => {},
   refreshRole: async () => {},
 });
@@ -38,8 +41,12 @@ export const FomentoAuthProvider = ({ children }: { children: ReactNode }) => {
   const [fomentoOrgId, setFomentoOrgId] = useState<string | null>(null);
   const [profileName, setProfileName] = useState<string | null>(null);
 
-  const isSuperadmin = fomentoRole === "superadmin";
-  const isAuditor = fomentoRole === "auditor" || fomentoRole === "coordenador";
+  const viewAs = useViewAs();
+  const efetivo = aplicarViewAs({ globalRole: null, membership: null, fomentoRole, fomentoOrgId }, viewAs.escolha);
+  const papel = efetivo.fomentoRole;
+  const orgEfetiva = efetivo.simulando ? efetivo.fomentoOrgId ?? null : fomentoOrgId;
+  const isSuperadmin = papel === "superadmin";
+  const isAuditor = papel === "auditor" || papel === "coordenador";
 
   const fetchFomentoRole = useCallback(async (userId: string) => {
     const { data: profile } = await supabase
@@ -89,6 +96,7 @@ export const FomentoAuthProvider = ({ children }: { children: ReactNode }) => {
   }, [fetchFomentoRole]);
 
   const signOut = useCallback(async () => {
+    limparViewAs();
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
@@ -99,7 +107,7 @@ export const FomentoAuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <FomentoAuthContext.Provider value={{ user, session, loading, fomentoRole, fomentoOrgId, profileName, isSuperadmin, isAuditor, signOut, refreshRole }}>
+    <FomentoAuthContext.Provider value={{ user, session, loading, fomentoRole: papel, fomentoOrgId: orgEfetiva, profileName, isSuperadmin, isAuditor, realFomentoRole: fomentoRole, signOut, refreshRole }}>
       {children}
     </FomentoAuthContext.Provider>
   );

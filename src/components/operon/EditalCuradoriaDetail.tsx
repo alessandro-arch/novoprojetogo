@@ -1,3 +1,4 @@
+import { curadorSimulado } from "@/lib/view-as";
 import { useCallback, useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -95,7 +96,7 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
   const acompanharRodadas = useCallback((pending: boolean) => setSalvandoRodadas(pending), []);
   const curadorQ = useQuery({
     queryKey: ["oe-ia-curador", user?.id], enabled: Boolean(user), retry: false,
-    queryFn: async () => { const { data, error } = await supabase.rpc("oe_is_curador"); if (error) throw error; return data === true; },
+    queryFn: async () => { const sim = curadorSimulado(); if (sim !== null) return sim; const { data, error } = await supabase.rpc("oe_is_curador"); if (error) throw error; return data === true; },
   });
   const assinatura = JSON.stringify({ form, restricaoIes, abrangencia, resumo });
   const [salvo, setSalvo] = useState(assinatura);
