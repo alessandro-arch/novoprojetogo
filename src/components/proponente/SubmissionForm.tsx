@@ -14,6 +14,7 @@ import { TextFieldWithCounter } from "@/components/ui/text-field-with-counter";
 import BudgetModule, { emptyBudget, type BudgetData } from "@/components/proponente/BudgetModule";
 import CnpqAreaSelector from "@/components/CnpqAreaSelector";
 import { useToast } from "@/hooks/use-toast";
+import { escapeHtml } from "@/lib/escape-html";
 import { Loader2, ArrowLeft, ArrowRight, Save, Send, AlertTriangle, CheckCircle2, Download, FileText } from "lucide-react";
 
 interface SubmissionFormProps {
@@ -334,25 +335,25 @@ const SubmissionForm = ({ editalId, editalTitle, editalStartDate, editalEndDate,
           const ka = snapshot.knowledge_areas.find(k => k.id === answerDisplay);
           if (ka) answerDisplay = ka.name;
         }
-        return `<div style="margin-bottom:12px"><strong>${q.label}${q.is_required ? ' *' : ''}</strong><br/><span>${answerDisplay}</span></div>`;
+        return `<div style="margin-bottom:12px"><strong>${escapeHtml(q.label)}${q.is_required ? ' *' : ''}</strong><br/><span>${escapeHtml(answerDisplay)}</span></div>`;
       }).join("");
-      return `<h2 style="color:#333;border-bottom:1px solid #ccc;padding-bottom:4px;margin-top:20px">${s.title}</h2>${s.description ? `<p style="color:#666;font-size:13px">${s.description}</p>` : ""}${questionsHtml}`;
+      return `<h2 style="color:#333;border-bottom:1px solid #ccc;padding-bottom:4px;margin-top:20px">${escapeHtml(s.title)}</h2>${s.description ? `<p style="color:#666;font-size:13px">${escapeHtml(s.description)}</p>` : ""}${questionsHtml}`;
     }).join("");
 
-    printWindow.document.write(`<!DOCTYPE html><html><head><title>Proposta - ${(submission as any).protocol}</title>
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>Proposta - ${escapeHtml((submission as any).protocol)}</title>
       <style>body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;padding:20px;color:#222}
       .header{text-align:center;border-bottom:2px solid #333;padding-bottom:16px;margin-bottom:24px}
       .footer{margin-top:40px;border-top:1px solid #ccc;padding-top:12px;font-size:11px;color:#888;text-align:center}</style></head>
       <body>
         <div class="header">
-          <h1 style="font-size:18px;margin-bottom:8px">${editalTitle}</h1>
-          <p><strong>Protocolo:</strong> ${(submission as any).protocol}</p>
-          <p><strong>Data de submissão:</strong> ${new Date((submission as any).submitted_at).toLocaleString("pt-BR")}</p>
+          <h1 style="font-size:18px;margin-bottom:8px">${escapeHtml(editalTitle)}</h1>
+          <p><strong>Protocolo:</strong> ${escapeHtml((submission as any).protocol)}</p>
+          <p><strong>Data de submissão:</strong> ${escapeHtml(new Date((submission as any).submitted_at).toLocaleString("pt-BR"))}</p>
         </div>
         ${sectionsHtml}
         <div class="footer">
           <p>Documento gerado automaticamente pela plataforma ProjetoGO</p>
-          <p>ID: ${(submission as any).id}</p>
+          <p>ID: ${escapeHtml((submission as any).id)}</p>
         </div>
       </body></html>`);
     printWindow.document.close();
