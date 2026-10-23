@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { FomentoAuthProvider } from "@/contexts/FomentoAuthContext";
+import ViewAsBar from "@/components/ViewAsSwitcher";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -47,6 +48,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <FomentoAuthProvider>
+            <ViewAsBar />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />

@@ -1,3 +1,4 @@
+import { curadorSimulado } from "@/lib/view-as";
 import { z } from "zod";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,7 +28,8 @@ export async function gerarSugestoes(editalId: string, sobrescrever: boolean) {
 
 export async function confirmarRodadasIA(editalId: string, proposed: RodadaIA[], overwrite: boolean) {
   const dates = z.array(RodadaIASchema).min(1).max(30).parse(proposed);
-  const { data: allowed, error: authError } = await supabase.rpc("oe_is_curador");
+  const sim = curadorSimulado();
+  const { data: allowed, error: authError } = sim !== null ? { data: sim, error: null } : await supabase.rpc("oe_is_curador");
   if (authError || allowed !== true) throw new Error("Somente curadores podem confirmar rodadas.");
   const { data, error } = await supabase.from("oe_rodada").select("id,ordem,abertura,prazo_fim,resultado_em").eq("edital_id", editalId).order("ordem");
   if (error) throw error;

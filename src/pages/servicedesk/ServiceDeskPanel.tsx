@@ -10,6 +10,7 @@ import { SdArea, NotificationBell, FilteredRequests } from "@/components/service
 import { UsersAccessTab, ServicesTab, AuditTab } from "@/components/servicedesk/AdminExtras";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useViewAs } from "@/lib/view-as";
 import PanelLayout from "@/components/layout/PanelLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,12 +52,15 @@ const ROLE_LABELS: Record<string, string> = {
  */
 const ServiceDeskPanel = () => {
   const { user, loading, globalRole, signOut } = useAuth();
+  const sim = useViewAs().escolha;
   const isSuper = globalRole === "icca_admin";
+  const simKey = sim ? `${sim.papel}:${sim.orgId}:${sim.grupoId}` : "real";
 
   const { data: orgs, isLoading } = useQuery({
-    queryKey: ["sd-orgs", user?.id, isSuper],
+    queryKey: ["sd-orgs", user?.id, isSuper, simKey],
     enabled: !!user,
     queryFn: async () => {
+      if (sim && !isSuper) return [];
       if (isSuper) return (await db.from("organizations").select("*").order("name")).data || [];
       const { data: m } = await db.from("sd_members").select("organization_id, role").eq("user_id", user!.id).eq("role", "admin").eq("status", "ativo");
       const ids = (m || []).map((x: any) => x.organization_id);
@@ -65,14 +69,21 @@ const ServiceDeskPanel = () => {
     },
   });
   const { data: myGroups, isLoading: loadingGroups } = useQuery({
-    queryKey: ["sd-my-groups", user?.id],
+    queryKey: ["sd-my-groups", user?.id, simKey],
     enabled: !!user,
     queryFn: async () => {
+      if (sim) {
+        if (sim.papel !== "sd_atendente" || !sim.grupoId) return [];
+        const { data: g } = await db.from("sd_groups").select("id, code, name, is_active, organization_id").eq("id", sim.grupoId).maybeSingle();
+        return g ? [g] : [];
+      }
       const { data: gm } = await db.from("sd_group_members").select("group_id, organization_id, sd_groups(id, code, name, is_active)").eq("user_id", user!.id);
       return (gm || []).filter((x: any) => x.sd_groups && x.sd_groups.is_active !== false).map((x: any) => ({ ...x.sd_groups, organization_id: x.organization_id }));
     },
   });
-  const { data: requester, isLoading: loadingReq } = useRequester(user?.id);
+  const { data: requesterReal, isLoading: loadingReq } = useRequester(user?.id);
+  // Simulação de solicitante: abre o Portal; os dados exibidos continuam os da conta real.
+  const requester = sim ? (sim.papel === "sd_solicitante" ? (requesterReal ?? { simulado: true }) : null) : requesterReal;
   // Grupos visíveis: os meus + (para administradores) todos os grupos das instituições que administro.
   const adminOrgIds = (orgs || []).map((o: any) => o.id);
   const { data: adminGroups = [] } = useQuery({

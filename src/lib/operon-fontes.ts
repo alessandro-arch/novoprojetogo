@@ -1,3 +1,4 @@
+import { curadorSimulado } from "@/lib/view-as";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import type { BadgeProps } from "@/components/ui/badge";
@@ -35,7 +36,8 @@ export async function carregarFontesOperon(): Promise<FonteOperon[]> {
 
 /** Exclusivo da curadoria; a autorização vem da função do banco com a sessão atual. */
 export async function carregarFontesCuradoria(): Promise<FonteOperon[]> {
-  const { data: curador, error: acessoError } = await supabase.rpc("oe_is_curador");
+  const sim = curadorSimulado();
+  const { data: curador, error: acessoError } = sim !== null ? { data: sim, error: null } : await supabase.rpc("oe_is_curador");
   if (acessoError) throw acessoError;
   if (curador !== true) return carregarFontesOperon();
   const { data, error } = await supabase.from("oe_fonte").select("id,slug,nome,esfera,uf").eq("ativa", true).order("nome");
