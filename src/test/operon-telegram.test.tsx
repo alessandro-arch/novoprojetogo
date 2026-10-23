@@ -3,17 +3,17 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-const { rpc, toast } = vi.hoisted(() => ({ rpc: vi.fn(), toast: vi.fn() }));
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc, from: () => ({ select: () => ({ eq: () => ({ not: () => ({ limit: () => Promise.resolve({ data: [{ telegram_canal: "https://evil.com/x" }], error: null }) }) }) }) }) } }));
+const { rpc, toast, canalConfig } = vi.hoisted(() => ({ rpc: vi.fn(), toast: vi.fn(), canalConfig: { url: "https://evil.com/x" } }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc, from: () => ({ select: () => ({ eq: () => ({ not: () => ({ limit: () => Promise.resolve({ data: [{ telegram_canal: canalConfig.url }], error: null }) }) }) }) }) } }));
 vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ user: { id: "u" } }) }));
 vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast }) }));
 
-import { linkCanalValido, linkVinculo, mensagemErroTelegram, nomeBotTelegram, carregarStatusTelegram } from "@/lib/operon-telegram";
+import { linkCanalValido, linkVinculo, mensagemErroTelegram, nomeBotTelegram, carregarStatusTelegram, carregarCanalOrganizacao } from "@/lib/operon-telegram";
 import TelegramAlertas from "@/components/operon/TelegramAlertas";
 import { definirContextoViewAs, limparViewAs, salvarViewAs } from "@/lib/view-as";
 
 let root: Root | undefined; let el: HTMLDivElement;
-afterEach(async () => { await act(async () => root?.unmount()); el?.remove(); limparViewAs(); definirContextoViewAs(null, false); vi.useRealTimers(); vi.restoreAllMocks(); vi.clearAllMocks(); vi.unstubAllEnvs(); });
+afterEach(async () => { await act(async () => root?.unmount()); el?.remove(); canalConfig.url = "https://evil.com/x"; limparViewAs(); definirContextoViewAs(null, false); vi.useRealTimers(); vi.restoreAllMocks(); vi.clearAllMocks(); vi.unstubAllEnvs(); });
 const montar = async () => {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   el = document.createElement("div"); document.body.appendChild(el); root = createRoot(el);
@@ -23,6 +23,11 @@ const montar = async () => {
 };
 
 describe("Telegram do Operon", () => {
+  it("usa o endereço configurado do canal sem substituí-lo pelo bot de vinculação", async () => {
+    canalConfig.url = "https://t.me/c/4494976966?boost";
+    expect(await carregarCanalOrganizacao()).toBe("https://t.me/c/4494976966?boost");
+    expect(linkVinculo("ArethaFranklin_bot", "abc123")).toBe("https://t.me/ArethaFranklin_bot?start=abc123");
+  });
   it("monta o link com o bot configurado", () => {
     expect(nomeBotTelegram("@ArethaFranklin_bot")).toBe("ArethaFranklin_bot");
     expect(linkVinculo("ArethaFranklin_bot", "abc123")).toBe("https://t.me/ArethaFranklin_bot?start=abc123");
