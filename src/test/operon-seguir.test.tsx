@@ -3,7 +3,9 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import SeguirEditalButton from "@/components/operon/SeguirEditalButton";
-import { alterarSeguimento, carregarSeguidor } from "@/lib/operon-portal";
+import { alterarCanalTelegram, alterarSeguimento, carregarSeguidor } from "@/lib/operon-portal";
+import { carregarStatusTelegram } from "@/lib/operon-telegram";
+import { definirContextoViewAs, limparViewAs, salvarViewAs } from "@/lib/view-as";
 
 const { toast } = vi.hoisted(() => ({ toast: vi.fn() }));
 vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ user: { id: "usuario" } }) }));
@@ -12,7 +14,7 @@ vi.mock("@/lib/operon-portal", () => ({ carregarSeguidor: vi.fn(), alterarSeguim
 vi.mock("@/lib/operon-telegram", () => ({ carregarStatusTelegram: vi.fn().mockResolvedValue({ conectado: false, pendente_ate: null }), carregarCanalOrganizacao: vi.fn().mockResolvedValue(null), gerarCodigoTelegram: vi.fn(), desconectarTelegram: vi.fn(), linkVinculo: vi.fn(), mensagemErroTelegram: () => "erro", nomeBotTelegram: () => "Teste_bot" }));
 let root: Root | undefined;
 let container: HTMLDivElement;
-afterEach(async () => { await act(async () => root?.unmount()); container?.remove(); vi.clearAllMocks(); });
+afterEach(async () => { await act(async () => root?.unmount()); container?.remove(); limparViewAs(); definirContextoViewAs(null, false); vi.mocked(carregarStatusTelegram).mockResolvedValue({ conectado: false, pendente_ate: null }); vi.clearAllMocks(); });
 const esperar = async (check: () => boolean) => {
   for (let i = 0; i < 50; i++) {
     await act(async () => { await new Promise(resolve => setTimeout(resolve, 10)); });
@@ -38,6 +40,37 @@ const montar = async () => {
 const registro = { user_id: "usuario", edital_id: "edital", canal_email: true, canal_telegram: false };
 
 describe("Estado confirmado do acompanhamento", () => {
+  it("sem vínculo o Telegram fica desativado, explicado e não altera o canal padrão de e-mail", async () => {
+    vi.mocked(carregarSeguidor).mockResolvedValue(registro);
+    await montar();
+    await esperar(() => !!container.querySelector('[role="switch"]'));
+    const canal = container.querySelector('[role="switch"]');
+    if (!(canal instanceof HTMLButtonElement)) throw new Error("Canal não encontrado");
+    expect(canal.disabled).toBe(true);
+    expect(canal.getAttribute("aria-checked")).toBe("false");
+    const dica = document.getElementById(canal.getAttribute("aria-describedby") ?? "");
+    expect(dica).not.toBeNull();
+    await act(async () => canal.click());
+    expect(alterarCanalTelegram).not.toHaveBeenCalled();
+    expect(alterarSeguimento).not.toHaveBeenCalled();
+    expect(botao().getAttribute("aria-pressed")).toBe("true");
+    expect(registro.canal_email).toBe(true);
+  });
+  it("Ver como bloqueia seguir e a opção Telegram mesmo com vínculo confirmado", async () => {
+    definirContextoViewAs("usuario", true);
+    salvarViewAs({ userId: "usuario", papel: "auditor", orgId: null, grupoId: null });
+    vi.mocked(carregarSeguidor).mockResolvedValue(registro);
+    vi.mocked(carregarStatusTelegram).mockResolvedValue({ conectado: true, pendente_ate: null });
+    await montar();
+    await esperar(() => !!container.querySelector('[role="switch"]'));
+    const canal = container.querySelector('[role="switch"]');
+    if (!(canal instanceof HTMLButtonElement)) throw new Error("Canal não encontrado");
+    expect(canal.disabled).toBe(true);
+    expect(botao().disabled).toBe(true);
+    await act(async () => { canal.click(); botao().click(); });
+    expect(alterarCanalTelegram).not.toHaveBeenCalled();
+    expect(alterarSeguimento).not.toHaveBeenCalled();
+  });
   it("segue e deixa de seguir, atualizando a ficha e invalidando o painel", async () => {
     vi.mocked(carregarSeguidor).mockResolvedValue(null);
     vi.mocked(alterarSeguimento).mockResolvedValueOnce(registro).mockResolvedValueOnce(null);
