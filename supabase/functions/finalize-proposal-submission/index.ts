@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { escapeHtml, escapeJsonForHtml } from "../_shared/escape-html.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -42,25 +43,25 @@ function generatePdfHtml(submission: any, editalTitle: string): string {
   const answersHtml = Object.entries(answers)
     .map(
       ([key, val]) =>
-        `<tr><td style="padding:4px 8px;border:1px solid #ddd;font-weight:bold;width:30%">${key}</td><td style="padding:4px 8px;border:1px solid #ddd">${
-          typeof val === "object" ? JSON.stringify(val) : String(val)
+        `<tr><td style="padding:4px 8px;border:1px solid #ddd;font-weight:bold;width:30%">${escapeHtml(key)}</td><td style="padding:4px 8px;border:1px solid #ddd">${
+          typeof val === "object" && val !== null ? escapeJsonForHtml(val, 0) : escapeHtml(val)
         }</td></tr>`
     )
     .join("");
 
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Proposta ${submission.protocol}</title>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Proposta ${escapeHtml(submission.protocol)}</title>
 <style>body{font-family:Arial,sans-serif;margin:30px;color:#222}
 h1{font-size:16px;border-bottom:2px solid #1a1a2e;padding-bottom:8px}
 .meta{font-size:11px;color:#666;margin-bottom:16px}
 table{width:100%;border-collapse:collapse;margin-top:12px}
 .footer{margin-top:30px;border-top:1px solid #ccc;padding-top:8px;font-size:9px;color:#999;text-align:center}</style></head>
 <body>
-<h1>${editalTitle}</h1>
+<h1>${escapeHtml(editalTitle)}</h1>
 <div class="meta">
-<p><strong>Protocolo:</strong> ${submission.protocol}</p>
-<p><strong>ID:</strong> ${submission.id}</p>
-<p><strong>Submetido em:</strong> ${submission.submitted_at}</p>
-${submission.cnpq_area_code ? `<p><strong>Área CNPq:</strong> ${submission.cnpq_area_code}</p>` : ""}
+<p><strong>Protocolo:</strong> ${escapeHtml(submission.protocol)}</p>
+<p><strong>ID:</strong> ${escapeHtml(submission.id)}</p>
+<p><strong>Submetido em:</strong> ${escapeHtml(submission.submitted_at)}</p>
+${submission.cnpq_area_code ? `<p><strong>Área CNPq:</strong> ${escapeHtml(submission.cnpq_area_code)}</p>` : ""}
 </div>
 <table>${answersHtml}</table>
 <div class="footer">
