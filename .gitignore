@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Variáveis locais adicionais (o .env do projeto é gerenciado pelo Lovable e contém só valores públicos)
+.env.local
+.env.*.local
