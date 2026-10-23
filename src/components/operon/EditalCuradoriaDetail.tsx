@@ -259,7 +259,7 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
             {iaMut.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}{iaMut.isPending ? "Gerando sugestões…" : "Gerar com IA"}
           </Button>
           <div className="flex items-center gap-2"><Switch id="ia-sobrescrever" checked={sobrescrever} onCheckedChange={setSobrescrever} disabled={busy || sugestoesPendentes} /><Label htmlFor="ia-sobrescrever">Sobrescrever campos já preenchidos</Label></div>
-          <span className="text-xs text-muted-foreground tabular-nums">{iaMut.data?.free_model_daily_requests ? `${iaMut.data.free_model_daily_requests.remaining} requisições gratuitas restantes` : "Saldo gratuito indisponível"}</span>
+          {iaMut.data?.free_model_daily_requests && <span className="text-xs text-muted-foreground tabular-nums">{iaMut.data.free_model_daily_requests.remaining} requisições gratuitas restantes</span>}
         </div>
         <p className="text-xs text-muted-foreground">Conteúdo gerado por IA, confira com o edital</p>
         {iaMut.data && <p className="text-xs text-muted-foreground break-all">Modelo utilizado: {iaMut.data.modelo}</p>}
