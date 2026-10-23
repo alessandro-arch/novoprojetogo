@@ -123,3 +123,8 @@ export async function alterarSeguimento(id: string, userId: string, seguindo: bo
   if (error) throw error;
   return seguindo ? null : registro;
 }
+export async function alterarCanalTelegram(id: string, userId: string, ativo: boolean): Promise<void> {
+  if (!userId || !id) throw new Error("Entre no Operon para alterar seus avisos.");
+  const { error } = await oe.from("oe_seguidor_edital").update({ canal_telegram: ativo }).eq("edital_id", id).eq("user_id", userId);
+  if (error) throw error;
+}

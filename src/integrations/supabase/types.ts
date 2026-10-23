@@ -4100,10 +4100,12 @@ export type Database = {
         Args: { p_chat_id: string; p_token: string }
         Returns: string
       }
+      oe_desconectar_telegram: { Args: never; Returns: undefined }
       oe_gerar_vinculo_telegram: { Args: never; Returns: string }
       oe_is_curador: { Args: never; Returns: boolean }
       oe_is_curador_org: { Args: { org: string }; Returns: boolean }
       oe_membro_org: { Args: { org: string }; Returns: boolean }
+      oe_status_telegram: { Args: never; Returns: Json }
       sd_advance_request: {
         Args: { _action: string; _id: string; _note: string }
         Returns: undefined
