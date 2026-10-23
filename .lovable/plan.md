@@ -57,38 +57,44 @@ Mapa de papéis:
 | Gestor de Edital | null | edital_manager | null | conforme org / não | não |
 | Avaliador | reviewer | reviewer | null | conforme org / não | não |
 | Proponente | null | proponente | null | conforme org / não | não |
+| Solicitante Service Desk | null | proponente | null | conforme org / não | não, Portal do solicitante |
+| Atendente de grupo | null | proponente | null | conforme org / não | não, Central só do grupo escolhido |
 | Sem papel | null | null | null | não / não | não |
 
-- Funções puras: `aplicarViewAs(real, papel)`, `lerViewAs`, `salvarViewAs`, `limparViewAs`. O override só sai de `aplicarViewAs` quando o papel real é superadmin.
+Nos papéis ligados a organização, `membership.organization_id` e `fomentoOrgId` passam a ser a organização escolhida no seletor.
+
+- Funções puras: `aplicarViewAs(real, escolha)`, `lerViewAs`, `salvarViewAs`, `limparViewAs`. O override só sai de `aplicarViewAs` quando o papel real é superadmin e o `userId` salvo é o do usuário atual.
 - `operon-access.ts`: `checkOperonAccess` recebe o override. Curadoria e IA (`oe_is_curador` no cliente) passam por um helper `podeCurar()` que respeita a simulação.
-- Service Desk: `isSuper` e os grupos em `ServiceDeskPanel`/`SdBases` passam pelo override. Fora "Admin ICCA", a área administrativa some. A Portal/Central continua guiada pelos vínculos reais, ver pergunta 2.
+- Service Desk: `isSuper`, os grupos do painel e o tipo de solicitante passam pelo override.
+  - Solicitante: abre o Portal com um perfil simulado em modo só de leitura, sem catálogo de envio.
+  - Atendente: abre a Central só com o grupo escolhido.
+  - Administração: só "Admin ICCA".
 - Sair: `signOut` dos dois contextos e `logoutOperon` chamam `limparViewAs()`. Uma troca de usuário em `onAuthStateChange` também limpa.
-- Ao trocar de papel, os caches de consulta são invalidados para os gates recalcularem.
+- Ao trocar de papel ou organização, os caches de consulta são invalidados para os gates recalcularem.
 
 ## Arquivos que seriam alterados
-- Novos: `src/lib/view-as.ts`, `src/components/ViewAsSwitcher.tsx` (botão e faixa), `src/test/view-as.test.tsx`.
+- Novos: `src/lib/view-as.ts` (mapa, armazenamento, filtro de gravação), `src/components/ViewAsSwitcher.tsx` (seletores de papel, organização e grupo, mais a faixa), `src/hooks/use-modo-visualizacao.ts`, `src/test/view-as.test.tsx`.
 - `src/contexts/AuthContext.tsx`, `src/contexts/FomentoAuthContext.tsx`, `src/App.tsx` (provider e faixa global).
 - `src/lib/operon-access.ts`, `src/components/operon/OperonAccessGate.tsx`, `src/lib/operon-ia.ts`, `src/lib/operon-fontes.ts`, `src/components/operon/EditalCuradoriaDetail.tsx` (podeCurar).
 - `src/components/ProtectedRoute.tsx`, `src/components/FomentoProtectedRoute.tsx`, `src/components/layout/PanelLayout.tsx` (botão no cabeçalho).
-- `src/pages/admin/AdminPanel.tsx`, `src/components/fomento/FomentoAdmin.tsx`, `src/pages/servicedesk/ServiceDeskPanel.tsx`, `src/components/servicedesk/SdBases.tsx`, mais os cabeçalhos de `EditaisPage`/`CuradoriaPage`.
-- AGENTS.md: uma regra sobre o override central, válido só para superadmin real e só na interface.
+- `src/pages/admin/AdminPanel.tsx`, `src/components/fomento/FomentoAdmin.tsx`, `src/pages/servicedesk/ServiceDeskPanel.tsx`, `src/components/servicedesk/SdBases.tsx`, `ServiceCenter.tsx`, `RequesterHome.tsx`, mais os cabeçalhos de `EditaisPage`/`CuradoriaPage`.
+- AGENTS.md, duas regras:
+  - o override "Ver como" é central, só para superadmin real e só na interface, com gravações bloqueadas na rede;
+  - admin comum (Admin Org e equivalentes) opera somente na própria organização. Só o superadmin real atravessa organizações e só ele vê os seletores de papel e de organização.
 - Sem migrações, sem políticas, sem dependências.
 
 ## Riscos
-- Os dados vêm do banco como superadmin: listas podem mostrar mais do que o papel veria. É só uma limitação conhecida, avisada no tooltip.
-- Ações feitas durante a simulação são gravadas com permissão real de superadmin. Proposta: enquanto a simulação estiver ativa, bloquear botões de gravação com o aviso "Modo visualização". Ver pergunta 1.
+- Os dados vêm do banco como superadmin, então listas podem mostrar mais do que o papel veria. É uma limitação conhecida, avisada no tooltip.
+- O filtro de rede depende da lista fixa de consultas só de leitura. Se uma tela usar uma consulta de leitura nova, ela aparece bloqueada ("Modo visualização") até entrar na lista. Esse erro é seguro: bloqueia a mais, nunca grava.
 - Algumas telas consultam o papel direto no banco, como `user_roles` em `operon-access` e `sd_members` no Service Desk. Cada uma precisa passar pelo override. Uma tela esquecida mostraria o papel real. Os testes cobrem os gates centrais.
-- O papel `fomento_role` mora em `profiles`, contra a regra de papéis em tabela separada. Não mudo isso agora, só leio.
+- O papel `fomento_role` fica em `profiles`, e não numa tabela de papéis separada. Não mudo isso agora, só leio.
 
 ## Testes (vitest)
-- Botão e faixa ocultos para quem não é superadmin, inclusive admin e gestor.
-- Override salvo no sessionStorage é ignorado para quem não é superadmin.
+- Botão, seletores e faixa ocultos para quem não é superadmin, inclusive admin e gestor. A lista de organizações não é consultada para esses usuários.
+- Override salvo no sessionStorage é ignorado para quem não é superadmin ou para outro userId.
 - Escolher "Auditor" muda fomentoRole e isAuditor. "Voltar ao Superadmin" restaura os valores reais.
-- signOut e troca de usuário limpam o sessionStorage.
+- Escolher "Admin Org" com outra organização muda `membership.organization_id` para a escolhida.
+- Durante a simulação, o filtro recusa POST, PATCH e DELETE ao Supabase com "Modo visualização". Leituras, login e consultas da lista passam. Ao voltar, gravações funcionam de novo.
+- signOut e troca de usuário limpam o sessionStorage e removem o filtro.
 - sessionStorage indisponível não quebra a tela.
-- O mapa aplica os valores esperados a cada papel.
-
-## Perguntas em aberto
-1. Durante a simulação, os botões que gravam devem ficar bloqueados? Recomendo bloquear, para nada ser gravado com permissão de superadmin.
-2. No Service Desk, os papéis de solicitante (aluno ou professor) e de grupo (PRPPGE, DTI) não estão na lista. Incluo "Solicitante Service Desk" e "Atendente de grupo", ou basta esconder a área administrativa?
-3. Para "Admin Org", "Gestor de Edital" e "Avaliador", uso a organização real do superadmin ou permito escolher a organização?
+- O mapa aplica os valores esperados a cada papel, incluindo Solicitante e Atendente de grupo.
