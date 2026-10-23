@@ -1,6 +1,7 @@
 # Roadmap — Service Desk Acadêmico
 
-- [ ] Complemento Telegram: aviso de conta, expiração com novo código, opção desativada sem vínculo, proteção Ver como e suíte Vitest. Sem mudanças de banco.
+- [x] Complemento Telegram: aviso de conta, expiração local com novo código, opção desativada sem vínculo e proteção Ver como; 129 testes Vitest passaram, compilação sem erros, sem mudanças de banco.
+- [ ] Complemento Telegram: conferir vínculo real pelo Hermes. Bloqueio: Supabase externo sem sessão autenticada de teste; a RPC não informa códigos expirados antes de abrir Meus alertas, portanto o aviso local cobre somente códigos observados nesta tela.
 
 - [x] Operon acabamento: filtro UF removido preservando os tipos da fonte, prazo genérico sem rodadas com mensagens de situação preservadas, fontes ativas para curador sem organização e cache separado do painel; 104 testes passaram e compilação sem erros.
 
