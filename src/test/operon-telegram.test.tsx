@@ -64,7 +64,8 @@ describe("Telegram do Operon", () => {
     rpc.mockResolvedValue({ data: { conectado: false, pendente_ate: new Date(Date.now() + 600000).toISOString() }, error: null });
     await montar();
     expect(el.textContent).toContain("Aguardando confirmação no Telegram");
-    expect(el.textContent).toContain("Gerar novo código");
+    expect(el.textContent).toContain("Receber no Telegram");
+    expect(el.textContent).not.toContain("Gerar novo código");
   });
   it("desconectado mostra aviso LGPD e botão", async () => {
     vi.stubEnv("VITE_OPERON_TELEGRAM_BOT", "Teste_bot");
@@ -103,8 +104,8 @@ describe("Telegram do Operon", () => {
     rpc.mockImplementation(async (fn: string) => ({ data: fn === "oe_gerar_vinculo_telegram" ? "novo" : { conectado: false, pendente_ate: new Date(Date.now() + 900000).toISOString() }, error: null }));
     const aba = { opener: null, location: { href: "" }, close: vi.fn() };
     vi.spyOn(window, "open").mockReturnValue(aba as unknown as Window);
-    const gerar = Array.from(el.querySelectorAll("button")).find(b => b.textContent?.includes("Gerar novo código"));
-    if (!gerar) throw new Error("Novo código não disponível");
+    const gerar = Array.from(el.querySelectorAll("button")).find(b => b.textContent?.includes("Receber no Telegram"));
+    if (!gerar) throw new Error("Conexão não disponível");
     await act(async () => { gerar.click(); await vi.advanceTimersByTimeAsync(10); });
     expect(rpc).toHaveBeenCalledWith("oe_gerar_vinculo_telegram");
     expect(aba.location.href).toBe("https://t.me/Teste_bot?start=novo");

@@ -97,9 +97,9 @@ export default function TelegramAlertas() {
         </div>
         : <div className="space-y-3">
           <p className="text-sm text-muted-foreground max-w-2xl">{AVISO_LGPD_TELEGRAM}</p>
-          {expirado ? <p role="status" className="text-sm text-muted-foreground">O código de vínculo expirou. Gere outro código para conectar seu Telegram. Os avisos por e-mail continuam.</p>
+          {expirado ? <p role="status" className="text-sm text-muted-foreground">O código de vínculo expirou. Conecte seu Telegram novamente para receber avisos por lá. Os avisos por e-mail continuam.</p>
             : pendenteAte && <p className="flex items-center gap-2 text-sm"><Clock className="w-4 h-4 text-muted-foreground" />Aguardando confirmação no Telegram (código válido por mais {minutosRestantes(pendenteAte)} min).</p>}
-          <ConectarTelegramButton rotulo={pendenteAte ? "Gerar novo código" : "Receber no Telegram"} />
+          <ConectarTelegramButton />
         </div>}
       {canal.data && <Button asChild variant="outline"><a href={canal.data} target="_blank" rel="noopener noreferrer"><Users />Entrar no canal Operon Fomento</a></Button>}
     </CardContent>
