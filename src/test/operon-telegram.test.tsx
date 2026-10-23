@@ -90,6 +90,7 @@ describe("Telegram do Operon", () => {
     const qc = await montar();
     vi.useFakeTimers();
     vi.setSystemTime(inicio);
+    await act(async () => qc.setQueryData(["oe-telegram", "u"], { conectado: false, pendente_ate: new Date(inicio + 2001).toISOString() }));
     await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
     expect(el.querySelector('[role="status"]')).not.toBeNull();
     await act(async () => qc.setQueryData(["oe-telegram", "u"], { conectado: false, pendente_ate: null }));
