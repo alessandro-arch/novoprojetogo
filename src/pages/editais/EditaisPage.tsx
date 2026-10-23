@@ -20,6 +20,7 @@ import { ErroOperon, RodapeOperon, RestricaoIes, SituacaoEdital, PrazoTexto } fr
 import { fmtData } from "./CuradoriaPage";
 import { carregarFontesOperon } from "@/lib/operon-fontes";
 import { logoutOperon } from "@/lib/operon-access";
+import TelegramAlertas from "@/components/operon/TelegramAlertas";
 import { ABAS_OPERON, carregarPainel, carregarSeguidos, filtrarPainel, numeroEdital, rotuloEvento, type AbaOperon, type EditalPublicado } from "@/lib/operon-portal";
 
 const NONE = "__none__";
@@ -65,6 +66,7 @@ export default function EditaisPage() {
     </header>
     <main className="max-w-7xl mx-auto px-4 py-8 space-y-6">
       <div className="space-y-2"><h2 className="text-2xl md:text-3xl font-bold font-heading">Chamadas de fomento ligadas ao seu perfil</h2><p className="text-muted-foreground">Acompanhe editais das agências de fomento, com avisos de prazo, retificações, errata e resultados.</p><p className="text-sm text-muted-foreground">Resumos feitos pela curadoria. Confirme no texto oficial do edital.</p></div>
+      <TelegramAlertas />
       <div className="relative max-w-2xl"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input aria-label="Buscar editais" placeholder="Buscar por título, número, categoria ou área" className="pl-9" value={busca} onChange={e => setBusca(e.target.value)} /></div>
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-4">
         <Tabs value={aba} onValueChange={v => { if (ABAS_OPERON.some(([k]) => k === v)) setAba(v as AbaOperon); }} className="w-full sm:w-auto"><TabsList className="w-full sm:w-auto h-auto min-h-11 flex-wrap gap-1">{ABAS_OPERON.map(([k, titulo]) => <TabsTrigger key={k} value={k} className="gap-2 min-h-10">{titulo}<span className="text-xs tabular-nums">{listaQ.isLoading ? "…" : abas[k].length}</span></TabsTrigger>)}</TabsList></Tabs>
