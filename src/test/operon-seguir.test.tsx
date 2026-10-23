@@ -8,7 +8,8 @@ import { alterarSeguimento, carregarSeguidor } from "@/lib/operon-portal";
 const { toast } = vi.hoisted(() => ({ toast: vi.fn() }));
 vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ user: { id: "usuario" } }) }));
 vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast }) }));
-vi.mock("@/lib/operon-portal", () => ({ carregarSeguidor: vi.fn(), alterarSeguimento: vi.fn() }));
+vi.mock("@/lib/operon-portal", () => ({ carregarSeguidor: vi.fn(), alterarSeguimento: vi.fn(), alterarCanalTelegram: vi.fn() }));
+vi.mock("@/lib/operon-telegram", () => ({ carregarStatusTelegram: vi.fn().mockResolvedValue({ conectado: false, pendente_ate: null }), carregarCanalOrganizacao: vi.fn().mockResolvedValue(null), gerarCodigoTelegram: vi.fn(), desconectarTelegram: vi.fn(), linkVinculo: vi.fn(), mensagemErroTelegram: () => "erro", nomeBotTelegram: () => "Teste_bot" }));
 let root: Root | undefined;
 let container: HTMLDivElement;
 afterEach(async () => { await act(async () => root?.unmount()); container?.remove(); vi.clearAllMocks(); });
@@ -20,7 +21,7 @@ const esperar = async (check: () => boolean) => {
   throw new Error("Estado esperado não confirmado");
 };
 const botao = () => {
-  const el = container.querySelector("button");
+  const el = container.querySelector("button[aria-pressed]");
   if (!(el instanceof HTMLButtonElement)) throw new Error("Botão não encontrado");
   return el;
 };
