@@ -73,7 +73,11 @@ export function validateAI(raw: string, source: string): Proposals {
     if (parsed.data.valor == null) continue;
     const excerpt = parsed.data.trecho_origem?.trim();
     // Whitespace differences introduced by PDF extraction are harmless; invented excerpts are not.
-    if (!excerpt || !normalizedSource.includes(normalize(excerpt))) { invalid = true; continue; }
+    // resumo_tldr is a new synthesis with no single literal source: accept it without evidence instead of dropping it.
+    if (!excerpt || !normalizedSource.includes(normalize(excerpt))) {
+      if (k === "resumo_tldr") { result[k] = { valor: parsed.data.valor, trecho_origem: "", atual_vazio: false, atual_cortado: false }; continue; }
+      invalid = true; continue;
+    }
     result[k] = { valor: parsed.data.valor, trecho_origem: excerpt, atual_vazio: false, atual_cortado: false };
   }
   if (!Object.keys(result).length && invalid) throw new ExtractionError(422, "Nenhum campo válido com origem literal foi retornado pela IA.");
