@@ -80,6 +80,8 @@ export default function ValorCuradoria({ edital, onDirtyChange, onEntradaChange,
     onError: (e: Error) => toast({ title: "Não foi possível salvar o valor", description: e.message, variant: "destructive" }),
   });
 
+  // Sem a seção visível, sugestões de valor não podem ficar pendentes bloqueando a publicação.
+  useEffect(() => { if (globalRole !== "icca_admin" && temSugestao) concluirSugestoes?.(); }, [globalRole, temSugestao, concluirSugestoes]);
   if (globalRole !== "icca_admin") return null;
   const bloqueado = m.isPending || modoVisualizacao;
   return <Card className="rounded-xl">
