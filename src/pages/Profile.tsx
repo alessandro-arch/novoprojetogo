@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, User, MapPin, Briefcase, Bell, FileText, LogOut, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
 import CnpqAreaSelector from "@/components/CnpqAreaSelector";
 import InstitutionSelector from "@/components/InstitutionSelector";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import MfaSecurityCard from "@/components/MfaSecurityCard";
 import MeuAcessoCard from "@/components/MeuAcessoCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,6 +29,8 @@ const Profile = () => {
   const { signOut, globalRole, membership, fomentoRole } = useAuth();
   const { profile, loading, updateProfile, completionPercentage } = useProfile();
   const { toast } = useToast();
+  const [params] = useSearchParams();
+  const abaInicial = ["perfil", "conta", "acesso"].includes(params.get("aba") ?? "") ? params.get("aba")! : "perfil";
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Partial<UserProfile>>({});
 
@@ -102,7 +104,7 @@ const Profile = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-3xl">
-        <Tabs defaultValue="perfil">
+        <Tabs defaultValue={abaInicial}>
         <TabsList className="mb-6 grid w-full grid-cols-3 h-auto">
           <TabsTrigger value="perfil" className="min-h-11">Meu perfil</TabsTrigger>
           <TabsTrigger value="conta" className="min-h-11">Minha conta</TabsTrigger>
