@@ -54,13 +54,15 @@ Deno.test("TLDR sintetizado aceita evidência literal separada até 300 caracter
   assert(!eligibleProposals(result, { resumo_tldr: "Resumo curado completo." }, false).resumo_tldr);
   assert(eligibleProposals(result, { resumo_tldr: "Resumo curado completo." }, true).resumo_tldr?.valor === summary);
 });
-Deno.test("TLDR sem evidência literal ou com evidência longa continua rejeitado", () => {
-  for (const excerpt of ["Síntese inventada.", "x".repeat(301)]) {
-    let failed = false;
-    try { validateAI(JSON.stringify({ resumo_tldr: { valor: "Resumo científico.", trecho_origem: excerpt } }), source); }
-    catch (e) { failed = e instanceof ExtractionError && e.status === 422; }
-    assert(failed);
+Deno.test("TLDR sem evidência literal é aceito sem origem; evidência longa é rejeitada", () => {
+  for (const excerpt of ["Síntese inventada.", null]) {
+    const result = validateAI(JSON.stringify({ resumo_tldr: { valor: "Resumo científico.", trecho_origem: excerpt } }), source);
+    assert(result.resumo_tldr?.valor === "Resumo científico." && result.resumo_tldr.trecho_origem === "");
   }
+  let failed = false;
+  try { validateAI(JSON.stringify({ resumo_tldr: { valor: "Resumo científico.", trecho_origem: "x".repeat(301) } }), source); }
+  catch (e) { failed = e instanceof ExtractionError && e.status === 422; }
+  assert(failed);
 });
 Deno.test("JWT inválido recebe 401 sem consultar permissão", async () => {
   let queried = false, denied = false;
