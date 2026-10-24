@@ -85,7 +85,7 @@ describe("indicadores da visão geral", () => {
   it("lançamentos por mês somam por fonte", () => {
     const { dados } = lancamentosPorMes(rows, AGORA);
     const total = dados.reduce((s, d) => s + Number(d.total), 0);
-    expect(total).toBe(5); // a, b, c e f publicados com data; e é rascunho, d sem data
+    expect(total).toBe(4); // a, b, c e f; e é rascunho e d não tem data
     expect(dados).toHaveLength(12);
   });
   it("próximos prazos em 60 dias, do mais próximo", () => {
