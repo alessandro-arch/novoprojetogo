@@ -106,8 +106,8 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
 
   const openReqs = (requests || []).filter((q: any) => isOpen(q.status));
   const pendencias: { text: string; tone: "alert" | "warn" }[] = [
-    ...(!c.email ? [{ text: "Informe seu e-mail pessoal em Meu cadastro.", tone: "alert" as const }] : []),
-    ...(!r.phone ? [{ text: "Informe seu celular com WhatsApp em Meu cadastro.", tone: "alert" as const }] : []),
+    ...(!c.email ? [{ text: "Informe seu e-mail pessoal em Meu perfil.", tone: "alert" as const }] : []),
+    ...(!r.phone ? [{ text: "Informe seu celular com WhatsApp em Meu perfil.", tone: "alert" as const }] : []),
     ...(suspended ? [{ text: "Seu acesso a novas solicitações está suspenso. Fale com a secretaria do programa.", tone: "warn" as const }] : []),
   ];
   const unread = (notifs || []).filter((n: any) => !n.read_at).length;
@@ -199,7 +199,7 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
     { to: `${BASE}/servicos`, label: "Serviços", icon: ShieldCheck },
     { to: `${BASE}/solicitacoes`, label: "Minhas solicitações", icon: ClipboardList, count: openReqs.length },
     { to: `${BASE}/notificacoes`, label: "Notificações", icon: Bell, count: unread },
-    { to: `${BASE}/cadastro`, label: "Meu cadastro", icon: UserCircle },
+    { to: `${BASE}/cadastro`, label: "Meu perfil", icon: UserCircle },
   ];
   const first = r.full_name?.split(" ")[0];
   const subtitle = isStudent ? `${r.level ? r.level[0].toUpperCase() + r.level.slice(1) : ""} em ${r.sd_programs?.name || "-"} · Matrícula ${r.enrollment}` : `Vínculo: ${r.contract_type || "-"} · Situação: ${r.status} · Matrícula ${r.enrollment}`;
@@ -248,7 +248,7 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
         } />
         <Route path="cadastro" element={
           <div className="space-y-4">
-            <h1 className="text-2xl font-bold font-heading">Meu cadastro</h1>
+            <h1 className="text-2xl font-bold font-heading">Meu perfil</h1>
             <Card className="rounded-xl">
               <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
                 <CardTitle className="text-base">Dados institucionais</CardTitle>

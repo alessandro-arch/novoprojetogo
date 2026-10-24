@@ -36,7 +36,7 @@ const Dashboard = () => {
         {profile && !profile.profile_completed && (
           <div className="flex items-center justify-center gap-2">
             <Badge variant="destructive" className="bg-destructive/10 text-destructive border-destructive/20">
-              <AlertCircle className="w-3 h-3 mr-1" /> Cadastro incompleto
+              <AlertCircle className="w-3 h-3 mr-1" /> Perfil incompleto
             </Badge>
           </div>
         )}
@@ -47,7 +47,7 @@ const Dashboard = () => {
 
         <Link to="/profile">
           <Button size="lg">
-            <UserCircle className="w-4 h-4 mr-2" /> Meu Cadastro
+            <UserCircle className="w-4 h-4 mr-2" /> Meu perfil
           </Button>
         </Link>
       </div>

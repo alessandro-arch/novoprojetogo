@@ -424,7 +424,7 @@ const ReviewerPanel = () => {
           <div className="flex items-center gap-2">
             <Link to="/profile">
               <Button variant="ghost" size="sm">
-                <UserCircle className="w-4 h-4 mr-1" /> Cadastro
+                <UserCircle className="w-4 h-4 mr-1" /> Meu perfil
               </Button>
             </Link>
             <Button variant="ghost" size="sm" onClick={() => signOut()}>

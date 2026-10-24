@@ -112,7 +112,7 @@ const AdminPanel = () => {
               <Button variant="ghost" size="sm"><FileText className="w-4 h-4 mr-1" /> Operon Editais</Button>
             </Link>
             <Link to="/profile">
-              <Button variant="ghost" size="sm"><UserCircle className="w-4 h-4 mr-1" /> Cadastro</Button>
+              <Button variant="ghost" size="sm"><UserCircle className="w-4 h-4 mr-1" /> Meu perfil</Button>
             </Link>
             <Button variant="ghost" size="sm" onClick={() => signOut()}>
               <LogOut className="w-4 h-4 mr-2" /> Sair
