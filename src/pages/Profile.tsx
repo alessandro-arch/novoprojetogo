@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, User, MapPin, Briefcase, Bell, FileText, LogOut, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
 import CnpqAreaSelector from "@/components/CnpqAreaSelector";
 import InstitutionSelector from "@/components/InstitutionSelector";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import MfaSecurityCard from "@/components/MfaSecurityCard";
 import MeuAcessoCard from "@/components/MeuAcessoCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -30,6 +30,8 @@ const Profile = () => {
   const { profile, loading, updateProfile, completionPercentage } = useProfile();
   const { toast } = useToast();
   const [params] = useSearchParams();
+  const voltarState = (useLocation().state as { voltar?: string } | null)?.voltar;
+  const voltarPara = voltarState && voltarState.startsWith("/") && !voltarState.startsWith("//") ? voltarState : "/dashboard";
   const abaInicial = ["perfil", "conta", "acesso"].includes(params.get("aba") ?? "") ? params.get("aba")! : "perfil";
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Partial<UserProfile>>({});
@@ -93,7 +95,7 @@ const Profile = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Link to="/dashboard">
+            <Link to={voltarPara}>
               <Button variant="ghost" size="sm"><ArrowLeft className="w-4 h-4 mr-1" /> Voltar</Button>
             </Link>
             <Button variant="ghost" size="sm" onClick={() => signOut()}>
