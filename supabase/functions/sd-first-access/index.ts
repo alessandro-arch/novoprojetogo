@@ -1,5 +1,7 @@
+import { escapeHtml } from "../_shared/escape-html.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.3";
 import { Resend } from "npm:resend@2.0.0";
+import { serveCors } from "../_shared/cors.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -11,7 +13,7 @@ const json = (b: unknown, s = 200) =>
 
 const GENERIC = "Não foi possível validar a matrícula. Confira os dados ou procure a secretaria do seu programa.";
 
-Deno.serve(async (req) => {
+serveCors(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   if (req.method !== "POST") return json({ error: "Método inválido" }, 405);
   try {
@@ -95,7 +97,7 @@ Deno.serve(async (req) => {
       html: `<div style="font-family:Arial,sans-serif;max-width:560px">
         <p>Olá!</p>
         <p>Recebemos o seu primeiro acesso ao Service Desk. Para ativar a sua conta, confirme o seu e-mail clicando no botão abaixo:</p>
-        <p><a href="${actionLink}" style="background:#1e3a5f;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;display:inline-block">Confirmar e-mail</a></p>
+        <p><a href="${escapeHtml(actionLink)}" style="background:#1e3a5f;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;display:inline-block">Confirmar e-mail</a></p>
         <p>Depois, entre sempre em <a href="https://projetogo.innovago.app/servicedesk/login">projetogo.innovago.app/servicedesk/login</a> com este e-mail e a senha criada.</p>
         <p style="color:#666;font-size:12px">Se você não fez este cadastro, ignore este e-mail.</p></div>`,
     });

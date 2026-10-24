@@ -1,5 +1,6 @@
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.3";
+import { serveCors } from "../_shared/cors.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -10,7 +11,7 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 const UUID = /^[0-9a-f-]{36}$/;
 const ROLES = ["admin", "operador"];
 
-Deno.serve(async (req) => {
+serveCors(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   try {
     const auth = req.headers.get("Authorization");

@@ -1,6 +1,7 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
+import { escapeHtml } from "../_shared/escape-html.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.3";
+import { serveCors } from "../_shared/cors.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -88,10 +89,10 @@ const handler = async (req: Request): Promise<Response> => {
           </head><body><div class="container">
             <div class="header"><h1>📋 Convite para Avaliador</h1></div>
             <div class="content">
-              <p>Olá, <strong>${fullName}</strong>,</p>
-              <p>Você foi convidado(a) pela organização <strong>${org?.name || "-"}</strong> para atuar como avaliador(a) no ProjetoGO.</p>
+              <p>Olá, <strong>${escapeHtml(fullName)}</strong>,</p>
+              <p>Você foi convidado(a) pela organização <strong>${escapeHtml(org?.name || "-")}</strong> para atuar como avaliador(a) no ProjetoGO.</p>
               <div class="cta"><a href="${inviteUrl}">Aceitar Convite</a></div>
-              ${codeDisplay ? `<p style="text-align:center;color:#475569;font-size:14px;margin-top:8px;">Ou use o código: <strong style="font-family:monospace;font-size:16px;letter-spacing:2px;">${codeDisplay}</strong><br/>em <a href="${activateUrl}">${activateUrl}</a></p>` : ''}
+              ${codeDisplay ? `<p style="text-align:center;color:#475569;font-size:14px;margin-top:8px;">Ou use o código: <strong style="font-family:monospace;font-size:16px;letter-spacing:2px;">${escapeHtml(codeDisplay)}</strong><br/>em <a href="${activateUrl}">${activateUrl}</a></p>` : ''}
               <p style="color:#64748b;font-size:14px;">Este convite é válido por 7 dias.</p>
             </div>
             <div class="footer"><p>ProjetoGO, Email automático, não responda.</p></div>
@@ -114,4 +115,4 @@ async function hashToken(token: string): Promise<string> {
   return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-serve(handler);
+serveCors(handler);

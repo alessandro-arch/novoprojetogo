@@ -13,7 +13,7 @@ export type RodadaIA = z.infer<typeof RodadaIASchema>;
 const suggestion = z.object({ valor: z.union([z.string(), z.array(RodadaIASchema)]), trecho_origem: z.string().max(300), atual_vazio: z.boolean(), atual_cortado: z.boolean() });
 export type SugestaoIA = z.infer<typeof suggestion>;
 export type SugestoesIA = Partial<Record<CampoIA, SugestaoIA>>;
-const responseSchema = z.object({ propostas: z.record(z.enum(CAMPOS_IA), suggestion), modelo: z.string(), free_model_daily_requests: z.object({ used: z.number(), limit: z.number(), remaining: z.number() }).nullable() });
+const responseSchema = z.object({ propostas: z.partialRecord(z.enum(CAMPOS_IA), suggestion), modelo: z.string(), free_model_daily_requests: z.object({ used: z.number(), limit: z.number(), remaining: z.number() }).nullable() });
 
 export async function gerarSugestoes(editalId: string, sobrescrever: boolean) {
   const { data, error } = await supabase.functions.invoke("operon-ia-extrair", { body: { edital_id: editalId, sobrescrever } });
