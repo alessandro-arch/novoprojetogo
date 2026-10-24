@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { matchPath, useLocation } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Eye, Undo2 } from "lucide-react";
 import { toast } from "sonner";
@@ -67,7 +68,8 @@ export function ViewAsControles({ onPronto }: { onPronto?: () => void }) {
 
 /** Faixa fixa e botão "Ver como", visíveis em todos os módulos. */
 export default function ViewAsBar() {
-  const { realFomentoRole } = useAuth();
+  const { user, loading, realFomentoRole } = useAuth();
+  const { pathname } = useLocation();
   const { escolha } = useViewAs();
   const qc = useQueryClient();
   const [aberto, setAberto] = useState(false);
@@ -76,7 +78,10 @@ export default function ViewAsBar() {
     window.addEventListener(EVENTO_BLOQUEIO, fn);
     return () => window.removeEventListener(EVENTO_BLOQUEIO, fn);
   }, []);
-  if (realFomentoRole !== "superadmin") return null;
+  const painel = ["/dashboard", "/profile", "/admin/*", "/org/*", "/proponente/*", "/reviewer/*", "/financeiro/*", "/fomento/*", "/editais/*", "/servicedesk/*"]
+    .some(path => matchPath(path, pathname))
+    && !["/fomento/login", "/editais/login", "/servicedesk/login", "/servicedesk/primeiro-acesso", "/reviewer/activate"].includes(pathname.replace(/\/$/, ""));
+  if (!user || loading || realFomentoRole !== "superadmin" || !painel) return null;
   const voltar = () => { limparViewAs(); qc.invalidateQueries(); };
   const seletor = <Popover open={aberto} onOpenChange={setAberto}>
     <Tooltip><TooltipTrigger asChild><PopoverTrigger asChild>
