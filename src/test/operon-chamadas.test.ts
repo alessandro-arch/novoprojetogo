@@ -48,7 +48,7 @@ describe("data de publicação", () => {
     const e = ed("g", { publicado_em: iso(-60), verificado_em: iso(-2) });
     expect(dataPublicacaoInfo(e)).toEqual({ data: iso(-60), aproximada: false });
     expect(aplicarFiltrosExtras([e], { prazo: "", publicados: "30d" }, AGORA)).toHaveLength(0);
-    expect(ordenarChamadas([ed("a"), e], { coluna: "publicacao", direcao: "desc" }, AGORA).map(x => x.id)).toEqual(["a", "g"]);
+    expect(ordenarChamadas([ed("a", { verificado_em: iso(-5) }), e], { coluna: "publicacao", direcao: "desc" }, AGORA).map(x => x.id)).toEqual(["a", "g"]);
   });
   it("sem data da agência, usa a conferência marcada como aproximada", () => {
     expect(dataPublicacaoInfo(ed("h", { verificado_em: iso(-2) }))).toEqual({ data: iso(-2), aproximada: true });
