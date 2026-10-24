@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
 import { aplicarViewAs, definirContextoViewAs, escolhaAtiva, limparViewAs, lerViewAs, salvarViewAs, CHAVE_VIEW_AS } from "@/lib/view-as";
 import { gravacaoBloqueada, instalarGuardaGravacao } from "@/lib/view-as-guard";
 
@@ -100,10 +101,33 @@ describe("bloqueio de gravação", () => {
 describe("botão Ver como", () => {
   let root: Root | undefined; let el: HTMLDivElement;
   afterEach(async () => { await act(async () => root?.unmount()); el?.remove(); });
-  const montar = async () => {
+  const montar = async (path = "/dashboard") => {
     el = document.createElement("div"); document.body.appendChild(el); root = createRoot(el);
-    await act(async () => root?.render(<QueryClientProvider client={new QueryClient()}><TooltipProvider><ViewAsBar /></TooltipProvider></QueryClientProvider>));
+    await act(async () => root?.render(<MemoryRouter initialEntries={[path]}><QueryClientProvider client={new QueryClient()}><TooltipProvider><ViewAsBar /></TooltipProvider></QueryClientProvider></MemoryRouter>));
   };
+  it.each(["/", "/login", "/register", "/fomento/login", "/editais/login", "/servicedesk/login", "/servicedesk/primeiro-acesso", "/reviewer/activate", "/vpn-uvv"])("oculta controles e faixa na página pública %s mesmo com dono logado", async path => {
+    auth.value = { user: { id: "u1" }, realFomentoRole: "superadmin", membership: null };
+    definirContextoViewAs("u1", true);
+    salvarViewAs({ userId: "u1", papel: "auditor", orgId: null, grupoId: null });
+    await montar(path);
+    expect(el.querySelector("button")).toBeNull();
+    expect(el.querySelector('[role="status"]')).toBeNull();
+  });
+  it.each(["/admin", "/org/editais", "/proponente", "/reviewer", "/financeiro", "/fomento", "/editais", "/editais/curadoria", "/servicedesk/admin"])("disponível para o dono logado no painel %s", async path => {
+    auth.value = { user: { id: "u1" }, realFomentoRole: "superadmin", membership: null };
+    await montar(path);
+    expect(el.querySelector("button")).not.toBeNull();
+  });
+  it("oculto sem usuário autenticado mesmo se o papel anterior ainda estiver presente", async () => {
+    auth.value = { user: null, realFomentoRole: "superadmin", membership: null };
+    await montar();
+    expect(el.querySelector("button")).toBeNull();
+  });
+  it("oculto enquanto a sessão está carregando", async () => {
+    auth.value = { user: { id: "u1" }, loading: true, realFomentoRole: "superadmin", membership: null };
+    await montar();
+    expect(el.querySelector("button")).toBeNull();
+  });
   it("oculto para admin comum e gestor", async () => {
     for (const papel of ["admin", "gestor", null]) {
       auth.value = { user: { id: "u1" }, realFomentoRole: papel, membership: null };
