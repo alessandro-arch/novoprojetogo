@@ -1,5 +1,7 @@
 # Roadmap — Service Desk Acadêmico
 
+- [ ] Operon menu de usuário nas três telas, perfil com edição do próprio nome, Curadoria por papel efetivo, Meus alertas e logout exclusivo; testes e suíte, sem publicar.
+
 - [x] Complemento Telegram: aviso de conta, expiração local com novo código, opção desativada sem vínculo e proteção Ver como; 129 testes Vitest passaram, compilação sem erros, sem mudanças de banco.
 - [ ] Complemento Telegram: conferir vínculo real pelo Hermes. Bloqueio: Supabase externo sem sessão autenticada de teste; a RPC não informa códigos expirados antes de abrir Meus alertas, portanto o aviso local cobre somente códigos observados nesta tela.
 
