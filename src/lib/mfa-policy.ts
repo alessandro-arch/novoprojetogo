@@ -16,7 +16,7 @@ export const rotaPublica = (path: string) => PUBLICAS.some((r) => r.test(path));
 
 export const contaMfaObrigatoria = (
   userId: string,
-  env: { VITE_MFA_REQUIRED_USERS?: string } = import.meta.env,
+  env: { VITE_MFA_REQUIRED_USERS?: string } = import.meta.env as { VITE_MFA_REQUIRED_USERS?: string },
 ) => (env.VITE_MFA_REQUIRED_USERS ?? "").split(",").map((s) => s.trim()).filter(Boolean).includes(userId);
 
 export const passoMfa = (e: MfaEstado): MfaPasso => {
