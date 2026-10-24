@@ -82,8 +82,24 @@ export function validateAI(raw: string, source: string): Proposals {
     }
     result[k] = { valor: parsed.data.valor, trecho_origem: excerpt, atual_vazio: false, atual_cortado: false };
   }
+  if (!result.valor_total_reais) {
+    const literal = valorLiteral(normalizedSource);
+    if (literal.valor_total_reais) { result.valor_total_reais = literal.valor_total_reais; result.valor_tipo ??= literal.valor_tipo; }
+  }
   if (!Object.keys(result).length && invalid) throw new ExtractionError(422, "Nenhum campo válido com origem literal foi retornado pela IA.");
   return result;
+}
+
+// Deterministic fallback: the model sometimes omits the global amount even when the text states it literally.
+export function valorLiteral(source: string): Proposals {
+  const m = /(?:valor|montante|recursos?)[^.;]{0,40}?(?:global|total)[^;]{0,220}?R\$\s?(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)/i.exec(source);
+  if (!m) return {};
+  const reais = m[1].replace(/\./g, "").replace(",", ".");
+  if (!/^\d{1,15}(\.\d{1,2})?$/.test(reais)) return {};
+  const trecho = m[0].slice(-300);
+  const tipo = /\b(até|estimad|previst)/i.test(m[0]) ? "estimado" : "total";
+  const base = { trecho_origem: trecho, atual_vazio: false, atual_cortado: false };
+  return { valor_total_reais: { ...base, valor: reais }, valor_tipo: { ...base, valor: tipo } };
 }
 
 export function eligibleProposals(proposals: Proposals, current: Record<string, unknown>, overwrite: boolean) {
