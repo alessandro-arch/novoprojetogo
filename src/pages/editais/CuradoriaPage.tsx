@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Placeholder } from "@/components/servicedesk/sd-ui";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ArrowLeft, Check, FileText, LogOut } from "lucide-react";
-import { logoutOperon } from "@/lib/operon-access";
-import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft, Check, FileText } from "lucide-react";
+import OperonUserMenu from "@/components/operon/OperonUserMenu";
 import EditalCuradoriaDetail from "@/components/operon/EditalCuradoriaDetail";
 import FonteBadge from "@/components/operon/FonteBadge";
 import AbrangenciaBadge, { ABRANGENCIAS, correspondeAbrangencia } from "@/components/operon/AbrangenciaBadge";
@@ -111,15 +110,6 @@ export const semNumero = (n: string | null) => !n || n.trim().toLowerCase().repl
 
 const CuradoriaPage = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [saindo, setSaindo] = useState(false);
-  const handleLogout = async () => {
-    setSaindo(true);
-    try { await logoutOperon(navigate); }
-    catch { toast({ title: "Erro ao sair", description: "Não foi possível encerrar sua sessão. Tente novamente.", variant: "destructive" }); }
-    finally { setSaindo(false); }
-  };
   const isMobile = useIsMobile();
   const [fonte, setFonte] = useState(NONE);
   const [esfera, setEsfera] = useState(NONE);
@@ -244,7 +234,7 @@ const CuradoriaPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 py-4 flex flex-wrap gap-3 items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg gradient-primary flex items-center justify-center">
               <FileText className="w-5 h-5 text-primary-foreground" />
@@ -256,7 +246,7 @@ const CuradoriaPage = () => {
           </div>
           <div className="flex flex-wrap items-center gap-1">
             <Button asChild variant="ghost" size="sm"><Link to="/editais"><ArrowLeft className="w-4 h-4 mr-1" /> Voltar</Link></Button>
-            <Button variant="ghost" size="sm" onClick={handleLogout} disabled={saindo}><LogOut className="w-4 h-4 mr-1" /> Sair</Button>
+            <OperonUserMenu onNavigate={mudar} />
           </div>
         </div>
       </header>

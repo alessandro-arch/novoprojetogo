@@ -1,9 +1,8 @@
-import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, FileText, LogOut, Search, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, FileText, Search, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +18,7 @@ import AbrangenciaBadge, { ABRANGENCIAS } from "@/components/operon/AbrangenciaB
 import { ErroOperon, RodapeOperon, RestricaoIes, SituacaoEdital, PrazoTexto } from "@/components/operon/PortalEditalUI";
 import { fmtData } from "./CuradoriaPage";
 import { carregarFontesOperon } from "@/lib/operon-fontes";
-import { logoutOperon } from "@/lib/operon-access";
+import OperonUserMenu from "@/components/operon/OperonUserMenu";
 import TelegramAlertas from "@/components/operon/TelegramAlertas";
 import { ABAS_OPERON, carregarPainel, carregarSeguidos, filtrarPainel, numeroEdital, rotuloEvento, type AbaOperon, type EditalPublicado } from "@/lib/operon-portal";
 
@@ -38,10 +37,15 @@ export default function EditaisPage() {
   const [abrangencia, setAbrangencia] = useState(NONE);
   const [busca, setBusca] = useState("");
   const [aba, setAba] = useState<AbaOperon>("abertos");
-  const [saindo, setSaindo] = useState(false);
   const navigate = useNavigate();
+  const { hash } = useLocation();
   const { user } = useAuth();
-  const { toast } = useToast();
+  useEffect(() => {
+    if (hash !== "#meus-alertas") return;
+    const cartao = document.getElementById("meus-alertas");
+    cartao?.scrollIntoView({ block: "start" });
+    cartao?.focus({ preventScroll: true });
+  }, [hash]);
   const listaQ = useQuery({ queryKey: ["oe-portal-painel", user?.id], queryFn: carregarPainel });
   const fontesQ = useQuery({ queryKey: ["oe-fontes", user?.id], queryFn: carregarFontesOperon, enabled: !!user });
   const seguidosQ = useQuery({ queryKey: ["oe-seguidos", user?.id], enabled: !!user, queryFn: () => carregarSeguidos(user?.id ?? "") });
@@ -51,22 +55,16 @@ export default function EditaisPage() {
   const semFiltros = filtrarPainel(listaQ.data ?? [], { busca: "", fonte: NONE, abrangencia: NONE });
   const ocultos = semFiltros[aba].length - lista.length;
   const limparFiltros = () => { setBusca(""); setFonte(NONE); setEsfera(NONE); setAbrangencia(NONE); };
-  const handleLogout = async () => {
-    setSaindo(true);
-    try { await logoutOperon(navigate); }
-    catch { toast({ title: "Erro ao sair", description: "Não foi possível sair. Tente novamente.", variant: "destructive" }); }
-    finally { setSaindo(false); }
-  };
   return <div className="min-h-screen bg-background text-foreground">
     <header className="border-b border-border bg-card">
       <div className="max-w-7xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3"><div className="w-9 h-9 rounded-lg gradient-primary flex items-center justify-center"><FileText className="w-5 h-5 text-primary-foreground" /></div><h1 className="text-lg font-bold font-heading">Operon Fomento</h1></div>
-        <div className="flex gap-1"><Button asChild variant="ghost" size="sm"><Link to="/"><ArrowLeft />Voltar</Link></Button><Button variant="ghost" size="sm" disabled={saindo} onClick={handleLogout}><LogOut />Sair</Button></div>
+        <div className="flex items-center gap-1"><Button asChild variant="ghost" size="sm"><Link to="/"><ArrowLeft />Voltar</Link></Button><OperonUserMenu /></div>
       </div>
     </header>
     <main className="max-w-7xl mx-auto px-4 py-8 space-y-6">
       <div className="space-y-2"><h2 className="text-2xl md:text-3xl font-bold font-heading">Chamadas de fomento ligadas ao seu perfil</h2><p className="text-muted-foreground">Acompanhe editais das agências de fomento, com avisos de prazo, retificações, errata e resultados.</p><p className="text-sm text-muted-foreground">Resumos feitos pela curadoria. Confirme no texto oficial do edital.</p></div>
-      <TelegramAlertas />
+      <section id="meus-alertas" aria-label="Meus alertas" tabIndex={-1} className="scroll-mt-6 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><TelegramAlertas /></section>
       <div className="relative max-w-2xl"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input aria-label="Buscar editais" placeholder="Buscar por título, número, categoria ou área" className="pl-9" value={busca} onChange={e => setBusca(e.target.value)} /></div>
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-4">
         <Tabs value={aba} onValueChange={v => { if (ABAS_OPERON.some(([k]) => k === v)) setAba(v as AbaOperon); }} className="w-full sm:w-auto"><TabsList className="w-full sm:w-auto h-auto min-h-11 flex-wrap gap-1">{ABAS_OPERON.map(([k, titulo]) => <TabsTrigger key={k} value={k} className="gap-2 min-h-10">{titulo}<span className="text-xs tabular-nums">{listaQ.isLoading ? "…" : abas[k].length}</span></TabsTrigger>)}</TabsList></Tabs>

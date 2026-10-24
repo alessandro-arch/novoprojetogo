@@ -1,5 +1,8 @@
 # Roadmap — Service Desk Acadêmico
 
+- [x] Operon menu de usuário nas três telas, perfil com edição do próprio nome, Curadoria por papel efetivo, Meus alertas e logout exclusivo; 186 testes passaram, compilação sem erros, sem publicar ou alterar banco.
+- [ ] Operon menu: conferir edição e leitura do nome com conta real. Bloqueio: Supabase externo sem sessão autenticada de teste disponível.
+
 - [x] Complemento Telegram: aviso de conta, expiração local com novo código, opção desativada sem vínculo e proteção Ver como; 129 testes Vitest passaram, compilação sem erros, sem mudanças de banco.
 - [ ] Complemento Telegram: conferir vínculo real pelo Hermes. Bloqueio: Supabase externo sem sessão autenticada de teste; a RPC não informa códigos expirados antes de abrir Meus alertas, portanto o aviso local cobre somente códigos observados nesta tela.
 

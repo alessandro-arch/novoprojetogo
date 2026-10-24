@@ -10,6 +10,7 @@ import { Placeholder } from "@/components/servicedesk/sd-ui";
 import FonteBadge from "@/components/operon/FonteBadge";
 import AbrangenciaBadge from "@/components/operon/AbrangenciaBadge";
 import SeguirEditalButton from "@/components/operon/SeguirEditalButton";
+import OperonUserMenu from "@/components/operon/OperonUserMenu";
 import { ErroOperon, RodapeOperon, RestricaoIes, SituacaoEdital, PrazoTexto } from "@/components/operon/PortalEditalUI";
 import { fmtData, rodadaVigente, situacaoEdital } from "./CuradoriaPage";
 import { carregarFicha, carregarDocumentos, carregarEventosPublicados, montarLinhaDoTempo, numeroEdital, normalizarBusca, rotuloEvento, temRestricaoIes } from "@/lib/operon-portal";
@@ -31,7 +32,7 @@ export default function EditalFichaPage() {
   ] : [];
   return <div className="min-h-screen bg-background text-foreground">
     <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-      <Button asChild variant="outline"><Link to="/editais"><ArrowLeft />Voltar ao painel</Link></Button>
+      <div className="flex flex-wrap items-center justify-between gap-3"><Button asChild variant="outline"><Link to="/editais"><ArrowLeft />Voltar ao painel</Link></Button><OperonUserMenu /></div>
       {editalQ.isLoading ? <div className="space-y-4"><Skeleton className="h-40 rounded-xl" /><Skeleton className="h-80 rounded-xl" /></div> : editalQ.isError ? <ErroOperon retry={() => editalQ.refetch()} /> : !e ? <Placeholder title="Edital não encontrado" text="Este edital não existe ou não está publicado." /> : <>
         <header className="space-y-4 pb-6 border-b border-border">
           <div className="flex flex-wrap gap-2 items-center"><FonteBadge slug={e.oe_fonte?.slug} nome={e.oe_fonte?.nome} /><AbrangenciaBadge abrangencia={e.abrangencia} /><SituacaoEdital e={e} /></div>
