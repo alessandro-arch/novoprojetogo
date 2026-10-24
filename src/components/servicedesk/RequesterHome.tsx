@@ -248,7 +248,7 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
         } />
         <Route path="cadastro" element={
           <div className="space-y-4">
-            <h1 className="text-2xl font-bold font-heading">Meu perfil</h1>
+            <div><h1 className="text-2xl font-bold font-heading">Meu perfil</h1><p className="text-sm text-muted-foreground">Dados do solicitante</p></div>
             <Card className="rounded-xl">
               <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
                 <CardTitle className="text-base">Dados institucionais</CardTitle>
