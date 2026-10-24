@@ -125,3 +125,9 @@ export function montarPayloadValor(v: EntradaValor, opcoes: { confirmar: boolean
     valor_confirmado_por: confirma ? opcoes.userId : null,
   };
 }
+
+/** Ao aprovar e publicar: confirma o valor preenchido no formulário, se for válido e tiver tipo. */
+export function confirmacaoAoPublicar(v: EntradaValor | null, userId: string | undefined, agora: string) {
+  if (!v || !userId || v.tipo === "__none__" || validarValor(v)) return {};
+  return montarPayloadValor(v, { confirmar: true, userId, agora });
+}

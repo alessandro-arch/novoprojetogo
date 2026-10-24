@@ -27,7 +27,7 @@ export async function salvarValorEdital(editalId: string, entrada: EntradaValor,
   return payload;
 }
 
-export default function ValorCuradoria({ edital, onDirtyChange }: { edital: EditalRow; onDirtyChange?: (d: boolean) => void }) {
+export default function ValorCuradoria({ edital, onDirtyChange, onEntradaChange }: { edital: EditalRow; onDirtyChange?: (d: boolean) => void; onEntradaChange?: (v: EntradaValor) => void }) {
   const { globalRole } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -39,6 +39,7 @@ export default function ValorCuradoria({ edital, onDirtyChange }: { edital: Edit
   const dirty = JSON.stringify(v) !== JSON.stringify(entradaDoEdital(base));
   useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
   useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
+  useEffect(() => { onEntradaChange?.(v); }, [v, onEntradaChange]);
   const erro = validarValor(v);
   const confirmadoAntes = situacaoValor(base) === "confirmado" || (base.valor_tipo === "por_agencia" && !!base.valor_confirmado_em);
 
@@ -57,6 +58,7 @@ export default function ValorCuradoria({ edital, onDirtyChange }: { edital: Edit
   return <Card className="rounded-xl">
     <CardHeader><CardTitle className="text-base">Valor do edital</CardTitle></CardHeader>
     <CardContent className="space-y-4">
+      <p className="text-xs text-muted-foreground">Ao aprovar e publicar, o valor preenchido aqui é confirmado automaticamente.</p>
       <p className="text-sm text-muted-foreground">{base.valor_confirmado_em ? `Confirmado em ${fmtData(base.valor_confirmado_em, true)}.` : "Valor ainda não confirmado pela curadoria."}</p>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1">

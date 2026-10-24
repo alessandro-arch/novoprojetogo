@@ -39,3 +39,14 @@ describe("valor na curadoria", () => {
     expect(update).not.toHaveBeenCalled();
   });
 });
+
+import { confirmacaoAoPublicar } from "@/lib/operon-valores";
+describe("confirmação ao publicar", () => {
+  it("confirma valor válido com tipo", () => {
+    expect(confirmacaoAoPublicar({ valor: "100", tipo: "total", observacao: "" }, "u", "T")).toMatchObject({ valor_total_reais: 100, valor_confirmado_em: "T", valor_confirmado_por: "u" });
+  });
+  it("não mexe quando não há tipo ou valor é inválido", () => {
+    expect(confirmacaoAoPublicar({ valor: "", tipo: "__none__", observacao: "" }, "u", "T")).toEqual({});
+    expect(confirmacaoAoPublicar({ valor: "", tipo: "total", observacao: "" }, "u", "T")).toEqual({});
+  });
+});
