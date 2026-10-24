@@ -6,6 +6,7 @@ import FonteBadge from "@/components/operon/FonteBadge";
 import AbrangenciaBadge from "@/components/operon/AbrangenciaBadge";
 import SeguirEditalButton from "@/components/operon/SeguirEditalButton";
 import { RestricaoIes, SituacaoEdital, PrazoTexto } from "@/components/operon/PortalEditalUI";
+import { ValorBloco } from "@/components/operon/ValorEdital";
 import { fmtData } from "@/pages/editais/CuradoriaPage";
 import { numeroEdital, type EditalPublicado } from "@/lib/operon-portal";
 
@@ -20,6 +21,7 @@ export default function EditalDrawer({ edital, onClose }: { edital: EditalPublic
         </SheetHeader>
         <SituacaoEdital e={edital} />
         <div><p className="text-sm font-medium">Prazo</p><PrazoTexto e={edital} /></div>
+        <ValorBloco e={edital} />
         {edital.resumo_tldr?.trim() && <section className="border-l-2 border-primary pl-4 space-y-1"><h3 className="text-sm font-semibold">Em resumo</h3><p className="text-sm whitespace-pre-line">{edital.resumo_tldr}</p></section>}
         {!!edital.oe_rodada?.length && <section className="space-y-2"><h3 className="text-sm font-semibold">Rodadas</h3><ul className="space-y-1 text-sm">{[...edital.oe_rodada].sort((a, b) => a.ordem - b.ordem).map(r => <li key={r.ordem}>Rodada {r.ordem}: {r.abertura ? fmtData(r.abertura) : "abertura a confirmar"} até {r.prazo_fim ? fmtData(r.prazo_fim, true) : "prazo a confirmar"}</li>)}</ul></section>}
         <RestricaoIes e={edital} aviso />

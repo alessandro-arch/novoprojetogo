@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Placeholder } from "@/components/servicedesk/sd-ui";
 import FonteBadge from "@/components/operon/FonteBadge";
 import AbrangenciaBadge from "@/components/operon/AbrangenciaBadge";
+import { ValorBloco } from "@/components/operon/ValorEdital";
 import SeguirEditalButton from "@/components/operon/SeguirEditalButton";
 import { ErroOperon, RestricaoIes, SituacaoEdital, PrazoTexto } from "@/components/operon/PortalEditalUI";
 import { fmtData, rodadaVigente, situacaoEdital } from "./CuradoriaPage";
@@ -42,6 +43,7 @@ export default function EditalFichaPage() {
           </section>}
           <p className="text-sm text-muted-foreground">{numeroEdital(e)} · {e.verificado_em ? `Conferido pela curadoria em ${fmtData(e.verificado_em)}` : "Conferência não informada"}</p>
           {e.verificado_em && <Badge variant="outline" className="gap-1"><CheckCircle2 className="h-3 w-3" />Conferido pela curadoria</Badge>}
+          <ValorBloco e={e} />
           <RestricaoIes e={e} aviso />
           <p className="text-sm text-muted-foreground">Resumos feitos pela curadoria. Confirme no texto oficial do edital.</p>
           {e.url_oficial && <Button asChild variant="outline"><a href={e.url_oficial} target="_blank" rel="noopener noreferrer"><ExternalLink />Ver texto oficial</a></Button>}

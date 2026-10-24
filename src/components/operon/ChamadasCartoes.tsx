@@ -7,6 +7,7 @@ import { SeguirEditalCompacto } from "@/components/operon/SeguirEditalButton";
 import { PrazoTexto } from "@/components/operon/PortalEditalUI";
 import { situacaoEdital } from "@/pages/editais/CuradoriaPage";
 import { numeroEdital, type EditalPublicado } from "@/lib/operon-portal";
+import { ValorCompacto } from "@/components/operon/ValorEdital";
 import { ROTULO_SITUACAO } from "@/lib/operon-chamadas";
 
 export default function ChamadasCartoes({ lista, seguidos, onAbrir }: { lista: EditalPublicado[]; seguidos: Set<string>; onAbrir: (e: EditalPublicado) => void }) {
@@ -15,6 +16,7 @@ export default function ChamadasCartoes({ lista, seguidos, onAbrir }: { lista: E
       <div className="flex flex-wrap items-center gap-1.5"><FonteBadge slug={e.oe_fonte?.slug} nome={e.oe_fonte?.nome} /><Badge variant="secondary">{ROTULO_SITUACAO[situacaoEdital(e) ?? ""] ?? "A confirmar"}</Badge><RestricaoIesIcone e={e} /></div>
       <button type="button" onClick={() => onAbrir(e)} className="text-left font-semibold break-words rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{e.titulo}</button>
       <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground"><span>{numeroEdital(e)}</span><AbrangenciaBadge abrangencia={e.abrangencia} /></div>
+      <ValorCompacto e={e} />
       <div className="flex items-center justify-between gap-2"><PrazoTexto e={e} /><SeguirEditalCompacto editalId={e.id} seguindo={seguidos.has(e.id)} titulo={e.titulo} /></div>
     </CardContent>
   </Card>)}</div>;

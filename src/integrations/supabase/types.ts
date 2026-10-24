@@ -1552,6 +1552,11 @@ export type Database = {
           titulo: string
           updated_at: string
           url_oficial: string
+          valor_confirmado_em: string | null
+          valor_confirmado_por: string | null
+          valor_observacao: string | null
+          valor_tipo: string | null
+          valor_total_reais: number | null
           verificado_em: string | null
           verificado_por: string | null
           visto_ultima_vez_em: string | null
@@ -1585,6 +1590,11 @@ export type Database = {
           titulo: string
           updated_at?: string
           url_oficial: string
+          valor_confirmado_em?: string | null
+          valor_confirmado_por?: string | null
+          valor_observacao?: string | null
+          valor_tipo?: string | null
+          valor_total_reais?: number | null
           verificado_em?: string | null
           verificado_por?: string | null
           visto_ultima_vez_em?: string | null
@@ -1618,6 +1628,11 @@ export type Database = {
           titulo?: string
           updated_at?: string
           url_oficial?: string
+          valor_confirmado_em?: string | null
+          valor_confirmado_por?: string | null
+          valor_observacao?: string | null
+          valor_tipo?: string | null
+          valor_total_reais?: number | null
           verificado_em?: string | null
           verificado_por?: string | null
           visto_ultima_vez_em?: string | null
