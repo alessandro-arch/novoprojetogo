@@ -29,7 +29,7 @@ describe("filtros das chamadas", () => {
   it("encerram em 7 dias inclui só prazos entre hoje e 7 dias", () => {
     expect(aplicarFiltrosExtras(rows, { prazo: "7d", publicados: "" }, AGORA).map(e => e.id)).toEqual(["a", "e"]);
   });
-  it("lançados em 30 dias usa a conferência e, sem ela, a data da agência", () => {
+  it("lançados em 30 dias usa a data da agência e, sem ela, a conferência", () => {
     expect(aplicarFiltrosExtras(rows, { prazo: "", publicados: "30d" }, AGORA).map(e => e.id)).toEqual(["a", "e", "f"]);
   });
   it("lê o aprofundamento pela URL", () => {
