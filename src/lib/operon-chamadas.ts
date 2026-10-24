@@ -103,7 +103,11 @@ export function salvarFiltros(userId: string | undefined, filtros: FiltrosChamad
 }
 
 const fmt = (v: string | null) => v ? new Date(v).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "";
-const celula = (v: string) => /[;"\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+// Neutraliza injecao de formula (=, +, -, @, tab, CR) em planilhas antes de aplicar as aspas do CSV.
+export const celula = (v: string) => {
+  const t = /^[=+\-@\t\r]/.test(v) ? `'${v}` : v;
+  return /[;"\n\r]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+};
 export const ROTULO_SITUACAO: Record<string, string> = { aberto: "Aberto", em_julgamento: "Em julgamento", encerrado: "Encerrado", resultado: "Resultado", revogado: "Revogado" };
 export function gerarCsv(rows: EditalPublicado[], agora = Date.now()): string {
   const cab = ["Título", "Número", "Fonte", "Situação", "Prazo", "Publicação", "Restrição para IES", "Valor (R$)", "Tipo de valor", "Situação do valor", "Observação do valor", "Link oficial"];

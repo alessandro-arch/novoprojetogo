@@ -1,3 +1,4 @@
+import { escapeHtml } from "../_shared/escape-html.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.3";
 import { Resend } from "npm:resend@2.0.0";
 
@@ -52,7 +53,7 @@ Deno.serve(async (req) => {
       html: `<div style="font-family:Arial,sans-serif;max-width:560px">
         <p>Olá!</p>
         <p>Recebemos um pedido para redefinir a sua senha. Clique no botão abaixo para criar uma nova senha:</p>
-        <p><a href="${link.properties.action_link}" style="background:#1e3a5f;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;display:inline-block">Redefinir senha</a></p>
+        <p><a href="${escapeHtml(link.properties.action_link)}" style="background:#1e3a5f;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;display:inline-block">Redefinir senha</a></p>
         <p style="color:#666;font-size:12px">Se você não fez este pedido, ignore este e-mail. Sua senha atual continua valendo.</p></div>`,
     });
     if (sendErr) {
