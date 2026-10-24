@@ -27,6 +27,7 @@ import { Sparkles } from "lucide-react";
 import { gerarSugestoes, type CampoIA, type SugestoesIA } from "@/lib/operon-ia";
 import OperonIASugestao from "@/components/operon/OperonIASugestao";
 import OperonIARodadas from "@/components/operon/OperonIARodadas";
+import ValorCuradoria from "@/components/operon/ValorCuradoria";
 
 type Campo = "objetivo" | "recursos" | "quem_pode" | "requisitos_ies" | "contrapartida" | "areas";
 const CAMPOS: { key: Campo; label: string }[] = [
@@ -101,6 +102,7 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
   const assinatura = JSON.stringify({ form, restricaoIes, abrangencia, resumo });
   const [salvo, setSalvo] = useState(assinatura);
   const sugestoesPendentes = Object.keys(sugestoes).length > 0;
+  const [valorDirty, setValorDirty] = useState(false);
   const dirty = assinatura !== salvo || sugestoesPendentes;
   const escreverCampoIA = (key: CampoIA, value: string) => {
     if (key === "resumo_tldr") setResumo(value);
@@ -130,14 +132,14 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
     onError: (error: Error) => toast({ title: "Não foi possível gerar com IA", description: error.message, variant: "destructive" }),
   });
   useEffect(() => { setEstado(edital); }, [edital]);
-  useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
+  useEffect(() => { onDirtyChange?.(dirty || valorDirty); }, [dirty, valorDirty, onDirtyChange]);
   useEffect(() => () => { onDirtyChange?.(false); onPendingChange?.(false); }, [onDirtyChange, onPendingChange]);
   useEffect(() => {
-    if (!dirty) return;
+    if (!dirty && !valorDirty) return;
     const avisar = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
     window.addEventListener("beforeunload", avisar);
     return () => window.removeEventListener("beforeunload", avisar);
-  }, [dirty]);
+  }, [dirty, valorDirty]);
   const revisorQ = useQuery({
     queryKey: ["oe-revisor", estado.verificado_por], enabled: Boolean(estado.verificado_por),
     queryFn: async () => {
@@ -354,6 +356,8 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
           </div>
         </fieldset></CardContent>
       </Card>
+
+      <ValorCuradoria edital={edital} onDirtyChange={setValorDirty} />
 
       {sugestoes.rodadas && <OperonIARodadas editalId={edital.id} sugestao={sugestoes.rodadas} sobrescrever={iaSobrescrever} concluir={() => concluirSugestao("rodadas")} onPending={acompanharRodadas} />}
 

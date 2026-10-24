@@ -90,3 +90,38 @@ export function valoresPorTipo(lista: EditalPublicado[]) {
   const r = resumoValores(lista);
   return [{ tipo: "Total", valor: r.somaTotal }, { tipo: "Estimado", valor: r.somaEstimado }];
 }
+
+export interface EntradaValor { valor: string; tipo: TipoValor | "__none__"; observacao: string }
+export const entradaDoEdital = (e: CamposValor): EntradaValor => {
+  const n = numeroValor(e.valor_total_reais);
+  return { valor: n === null ? "" : String(n).replace(".", ","), tipo: tipoValido(e.valor_tipo) ?? "__none__", observacao: e.valor_observacao ?? "" };
+};
+/** Aceita "1.234.567,89", "1234567.89" ou "1234567". */
+export function lerReais(texto: string): number | null {
+  const t = texto.replace(/[R$\s]/g, "");
+  if (!t) return null;
+  const normal = t.includes(",") ? t.replace(/\./g, "").replace(",", ".") : t;
+  if (!/^\d+(\.\d{1,2})?$/.test(normal)) return NaN;
+  return Number(normal);
+}
+export function validarValor(v: EntradaValor): string | null {
+  if (v.observacao.length > 2000) return "A observação pode ter até 2.000 caracteres.";
+  const n = lerReais(v.valor);
+  if (Number.isNaN(n)) return "Informe o valor em reais, por exemplo 1.500.000,00.";
+  if (v.tipo === "total" || v.tipo === "estimado") return n === null || n <= 0 ? "Informe um valor maior que zero para Total ou Estimado." : null;
+  if (v.tipo === "nao_informado" || v.tipo === "__none__") return n !== null ? "Para Sem valor, deixe o campo de valor vazio." : null;
+  if (n !== null && n <= 0) return "O valor por agência deve ser maior que zero.";
+  return null;
+}
+/** Somente os cinco campos de valor. Editar sem confirmar limpa a confirmação anterior. */
+export function montarPayloadValor(v: EntradaValor, opcoes: { confirmar: boolean; userId: string; agora?: string }) {
+  const n = lerReais(v.valor);
+  const confirma = opcoes.confirmar && v.tipo !== "__none__";
+  return {
+    valor_total_reais: n === null || Number.isNaN(n) ? null : n,
+    valor_tipo: v.tipo === "__none__" ? null : v.tipo,
+    valor_observacao: v.observacao.trim() || null,
+    valor_confirmado_em: confirma ? opcoes.agora ?? new Date().toISOString() : null,
+    valor_confirmado_por: confirma ? opcoes.userId : null,
+  };
+}
