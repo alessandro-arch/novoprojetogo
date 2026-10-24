@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { portaisAdministrativos } from "@/lib/admin-portais";
+import { destinoPainelGlobal, portaisAdministrativos } from "@/lib/admin-portais";
 
 describe("atalhos administrativos por papel efetivo", () => {
+  it("retorna diretamente ao painel global sem landing ou login", () => {
+    expect(destinoPainelGlobal(true, false, "icca_admin")).toBe("/admin");
+  });
+  it("não oferece retorno global sem sessão, durante carregamento ou com papel comum", () => {
+    expect(destinoPainelGlobal(false, false, "icca_admin")).toBeNull();
+    expect(destinoPainelGlobal(true, true, "icca_admin")).toBeNull();
+    expect(destinoPainelGlobal(true, false, "org_admin")).toBeNull();
+  });
   it("inclui os quatro portais para administrador global e superadmin Fomento", () => {
     expect(portaisAdministrativos("icca_admin", "superadmin").map(p => p.destino)).toEqual([
       "/admin", "/fomento/master", "/editais/curadoria", "/servicedesk/admin",

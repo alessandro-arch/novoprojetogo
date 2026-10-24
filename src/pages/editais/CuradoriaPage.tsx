@@ -13,6 +13,7 @@ import { Placeholder } from "@/components/servicedesk/sd-ui";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ArrowLeft, Check, FileText } from "lucide-react";
 import OperonUserMenu from "@/components/operon/OperonUserMenu";
+import AdminReturnLink from "@/components/admin/AdminReturnLink";
 import IndicadoresUsuarios from "@/components/operon/IndicadoresUsuarios";
 import EditalCuradoriaDetail from "@/components/operon/EditalCuradoriaDetail";
 import FonteBadge from "@/components/operon/FonteBadge";
@@ -248,6 +249,7 @@ const CuradoriaPage = () => {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-1">
+            <AdminReturnLink onNavigate={mudar} />
             <Button asChild variant="ghost" size="sm"><Link to="/editais"><ArrowLeft className="w-4 h-4 mr-1" /> Voltar</Link></Button>
             <OperonUserMenu onNavigate={mudar} />
           </div>

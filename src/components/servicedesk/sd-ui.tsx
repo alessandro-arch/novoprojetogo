@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { StatusBadge, fmtDT, fmtDate, isOpen, STATUS_LABEL } from "./sd-requests";
+import AdminReturnLink from "@/components/admin/AdminReturnLink";
 
 const db = supabase as any;
 
@@ -69,7 +70,8 @@ export const SdShell = ({ title, subtitle, userId, areas, nav, onSignOut, childr
             <p className="font-bold font-heading">{title}</p>
             {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <AdminReturnLink />
             {areas.length > 1 && (
               <select aria-label="Área" className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={areas.find((a) => window.location.pathname.startsWith(a.path))?.path || ""} onChange={(e) => navigate(e.target.value)}>
                 {areas.map((a) => <option key={a.path} value={a.path}>{a.label}</option>)}

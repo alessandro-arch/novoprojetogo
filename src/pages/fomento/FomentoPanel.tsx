@@ -15,6 +15,7 @@ import FomentoAdmin from "@/components/fomento/FomentoAdmin";
 import FomentoMasterPanel from "@/components/fomento/FomentoMasterPanel";
 import FomentoParceirasList from "@/components/fomento/FomentoParceirasList";
 import FomentoParceiraForm from "@/components/fomento/FomentoParceiraForm";
+import AdminReturnLink from "@/components/admin/AdminReturnLink";
 
 const FomentoPanel = () => {
   const { loading, fomentoRole, isSuperadmin, isAuditor, signOut } = useFomentoAuth();
@@ -118,6 +119,7 @@ const FomentoPanel = () => {
       activeNav={activeNav}
       onNavChange={handleNavChange}
       onSignOut={signOut}
+      headerActions={<AdminReturnLink />}
     >
       {isAuditor && (
         <div className="mb-4 flex items-center gap-2 rounded-lg border border-[#EF9F27]/30 bg-[#EF9F27]/10 px-4 py-2.5 text-sm text-[#B07A1A]">

@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { FileText, LogOut, UserCircle, Menu, Bell } from "lucide-react";
+import AdminReturnLink from "@/components/admin/AdminReturnLink";
 
 export interface NavItem {
   key: string;
@@ -21,6 +22,7 @@ interface PanelLayoutProps {
   onNavChange: (key: string) => void;
   onSignOut: () => void;
   footerLinks?: { to: string; label: string; icon: React.ComponentType<{ className?: string }> }[];
+  headerActions?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -123,7 +125,7 @@ const PanelLayout = (props: PanelLayoutProps) => {
       {/* Mobile Header */}
       {isMobile && (
         <header className="sticky top-0 z-50 border-b border-border bg-card/90 backdrop-blur-lg">
-          <div className="flex items-center justify-between px-4 h-14">
+          <div className="flex flex-wrap gap-2 items-center justify-between px-4 min-h-14 py-2">
             <div className="flex items-center gap-3">
               <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
                 <SheetTrigger asChild>
@@ -138,6 +140,7 @@ const PanelLayout = (props: PanelLayoutProps) => {
               <p className="text-sm font-bold font-heading text-foreground">{props.title}</p>
             </div>
             <div className="flex items-center gap-2">
+              {props.headerActions}
               <Button variant="ghost" size="icon" className="min-h-[44px] min-w-[44px] text-muted-foreground">
                 <Bell className="w-5 h-5" />
               </Button>
@@ -158,6 +161,7 @@ const PanelLayout = (props: PanelLayoutProps) => {
       {!isMobile && (
         <div className="flex-1 flex flex-col min-w-0">
           <header className="sticky top-0 z-40 h-14 border-b border-border bg-card/90 backdrop-blur-lg flex items-center justify-end px-8 gap-3">
+            {props.headerActions}
             <Button variant="ghost" size="icon" className="text-muted-foreground">
               <Bell className="w-5 h-5" />
             </Button>
