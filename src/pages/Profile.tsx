@@ -15,6 +15,7 @@ import { Loader2, Save, User, MapPin, Briefcase, Bell, FileText, LogOut, ArrowLe
 import CnpqAreaSelector from "@/components/CnpqAreaSelector";
 import InstitutionSelector from "@/components/InstitutionSelector";
 import { Link } from "react-router-dom";
+import MfaSecurityCard from "@/components/MfaSecurityCard";
 
 const BRAZILIAN_STATES = [
   "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA",
@@ -300,6 +301,8 @@ const Profile = () => {
             </div>
           </CardContent>
         </Card>
+
+        <MfaSecurityCard />
 
         {/* Save Button */}
         <div className="flex justify-end pb-8">
