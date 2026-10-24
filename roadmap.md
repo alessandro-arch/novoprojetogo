@@ -1,5 +1,8 @@
 # Roadmap — Service Desk Acadêmico
 
+- [x] Operon valores: confirmação individual com observação específica, ausência sem zero nem confirmação; 33 testes passaram e compilação sem erros, somente preview, nenhuma alteração de dados em produção.
+- [ ] Operon valores: conferir confirmação no portal com sessão real. Bloqueio: Supabase externo sem sessão de teste; dados de produção não serão usados para testes de gravação.
+
 - [x] Operon portal fases 1 e 2: menu lateral, Visão geral com indicadores e gráficos, Chamadas com ordenação/chips/filtros salvos/CSV/painel lateral/Seguir na linha, Prazos, Meus alertas e Fontes; 202 testes passaram.
 - [x] Operon ajustes do portal: data de publicação prefere a agência (conferência vira "aproximada" com tooltip e marca no CSV), Saúde das coletas por fonte (Ok/Atenção/Falha/Sem coleta, 36h e falhas seguidas, último erro expansível) e Indicadores de usuários na Curadoria via RPC agregada com aviso elegante enquanto a função não existe; 218 testes passaram, compilação sem erros, sem publicar.
 - [ ] Operon painel de usuários da Curadoria: aplicar a RPC agregada oe_indicadores_usuarios no banco. Bloqueio: SQL em revisão pelo proprietário (outra branch); a UI já trata a ausência da função.

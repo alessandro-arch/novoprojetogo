@@ -26,3 +26,4 @@
 - Operon collection health derives per source from `oe_coleta` in operon-coletas (Ok <36h since last success and no consecutive failures; Atenção >36h or 1-2; Falha 3+; Sem coleta when none) — pure client rules, no new queries.
 - Operon user indicators call the aggregate RPC `oe_indicadores_usuarios` (curator-only, allowlisted as read-only in the view-as guard); when the function does not exist yet, the UI shows an activation notice instead of an error.
 - Operon edital values derive in operon-valores: only total/estimado with valor_confirmado_em enter sums; por_agencia, unconfirmed and empty values are always listed separately, never estimated.
+- Operon value writes and individual publication share the confirmation validator in operon-valores; this prevents bypassing the form's observation guard through another frontend write path. Missing-value payloads remain unconfirmed, and no batch confirmation path is introduced.
