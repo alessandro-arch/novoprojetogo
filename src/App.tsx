@@ -33,7 +33,13 @@ import ServiceDeskLogin from "./pages/servicedesk/ServiceDeskLogin";
 import ServiceDeskFirstAccess from "./pages/servicedesk/ServiceDeskFirstAccess";
 import VpnUvv from "./pages/VpnUvv";
 import CuradoriaPage from "./pages/editais/CuradoriaPage";
-import EditaisPage from "./pages/editais/EditaisPage";
+import OperonLayout from "./pages/editais/OperonLayout";
+import VisaoGeralPage from "./pages/editais/VisaoGeralPage";
+import ChamadasPage from "./pages/editais/ChamadasPage";
+import PrazosPage from "./pages/editais/PrazosPage";
+import AlertasPage from "./pages/editais/AlertasPage";
+import FontesPage from "./pages/editais/FontesPage";
+import ColetasPage from "./pages/editais/ColetasPage";
 import EditalFichaPage from "./pages/editais/EditalFichaPage";
 import EditaisLogin from "./pages/editais/EditaisLogin";
 import OperonAccessGate from "./components/operon/OperonAccessGate";
@@ -61,8 +67,15 @@ const App = () => (
               <Route path="/editais/login" element={<EditaisLogin />} />
               <Route path="/editais/curadoria" element={<ProtectedRoute allowedRoles={["icca_admin"]} loginPath="/editais/login"><CuradoriaPage /></ProtectedRoute>} />
               {/* TODO: controle por plano e afiliação institucional em etapa posterior */}
-              <Route path="/editais" element={<ProtectedRoute loginPath="/editais/login"><OperonAccessGate><EditaisPage /></OperonAccessGate></ProtectedRoute>} />
-              <Route path="/editais/:id" element={<ProtectedRoute loginPath="/editais/login"><OperonAccessGate><EditalFichaPage /></OperonAccessGate></ProtectedRoute>} />
+              <Route path="/editais" element={<ProtectedRoute loginPath="/editais/login"><OperonAccessGate><OperonLayout /></OperonAccessGate></ProtectedRoute>}>
+                <Route index element={<VisaoGeralPage />} />
+                <Route path="chamadas" element={<ChamadasPage />} />
+                <Route path="prazos" element={<PrazosPage />} />
+                <Route path="alertas" element={<AlertasPage />} />
+                <Route path="fontes" element={<FontesPage />} />
+                <Route path="coletas" element={<ProtectedRoute allowedRoles={["icca_admin"]} loginPath="/editais/login"><ColetasPage /></ProtectedRoute>} />
+                <Route path=":id" element={<EditalFichaPage />} />
+              </Route>
               <Route path="/org/*" element={<ProtectedRoute allowedRoles={["org_admin", "edital_manager"]}><OrgPanel /></ProtectedRoute>} />
               <Route path="/proponente/*" element={<ProtectedRoute allowedRoles={["proponente"]}><ProponentePanel /></ProtectedRoute>} />
               <Route path="/reviewer/terms" element={<ProtectedRoute allowedRoles={["reviewer"]}><ReviewerTermsPage /></ProtectedRoute>} />

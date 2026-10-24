@@ -34,7 +34,7 @@ export default function OperonUserMenu({ onNavigate }: { onNavigate?: (action: (
   const ir = (action: () => void) => onNavigate ? onNavigate(action) : action();
   const alertas = () => ir(() => {
     const cartao = document.getElementById("meus-alertas");
-    if (!cartao) { navigate("/editais#meus-alertas"); return; }
+    if (!cartao) { navigate("/editais/alertas"); return; }
     focoAlertas.current = cartao;
     cartao.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
     cartao.focus({ preventScroll: true });
