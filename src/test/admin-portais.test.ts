@@ -4,7 +4,7 @@ import { portaisAdministrativos } from "@/lib/admin-portais";
 describe("atalhos administrativos por papel efetivo", () => {
   it("inclui os quatro portais para administrador global e superadmin Fomento", () => {
     expect(portaisAdministrativos("icca_admin", "superadmin").map(p => p.destino)).toEqual([
-      "/admin", "/fomento/organizacoes", "/editais/curadoria", "/servicedesk/admin",
+      "/admin", "/fomento/master", "/editais/curadoria", "/servicedesk/admin",
     ]);
   });
   it("não oferece Fomento global sem o papel superadmin", () => {
@@ -17,6 +17,6 @@ describe("atalhos administrativos por papel efetivo", () => {
     expect(portaisAdministrativos(null, null)).toEqual([]);
   });
   it("superadmin apenas do Fomento recebe apenas o atalho do Fomento", () => {
-    expect(portaisAdministrativos(null, "superadmin").map(p => p.destino)).toEqual(["/fomento/organizacoes"]);
+    expect(portaisAdministrativos(null, "superadmin").map(p => p.destino)).toEqual(["/fomento/master"]);
   });
 });

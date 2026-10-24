@@ -5,7 +5,7 @@ export function portaisAdministrativos(globalRole: string | null, fomentoRole: s
     portais.push({ nome: "ProjetoGO", destino: "/admin", icone: "projeto" });
   }
   if (fomentoRole === "superadmin") {
-    portais.push({ nome: "ProjetoGO Fomento", destino: "/fomento/organizacoes", icone: "fomento" });
+    portais.push({ nome: "ProjetoGO Fomento", destino: "/fomento/master", icone: "fomento" });
   }
   if (globalRole === "icca_admin") {
     portais.push({ nome: "Operon Editais", destino: "/editais/curadoria", icone: "operon" });
