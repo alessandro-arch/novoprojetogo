@@ -135,11 +135,11 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
   useEffect(() => { onDirtyChange?.(dirty || valorDirty); }, [dirty, valorDirty, onDirtyChange]);
   useEffect(() => () => { onDirtyChange?.(false); onPendingChange?.(false); }, [onDirtyChange, onPendingChange]);
   useEffect(() => {
-    if (!dirty) return;
+    if (!dirty && !valorDirty) return;
     const avisar = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
     window.addEventListener("beforeunload", avisar);
     return () => window.removeEventListener("beforeunload", avisar);
-  }, [dirty]);
+  }, [dirty, valorDirty]);
   const revisorQ = useQuery({
     queryKey: ["oe-revisor", estado.verificado_por], enabled: Boolean(estado.verificado_por),
     queryFn: async () => {
