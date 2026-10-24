@@ -1,4 +1,8 @@
 /** Navigation only: each destination retains its existing admission gate. */
+export function destinoPainelGlobal(autenticado: boolean, carregando: boolean, globalRole: string | null): string | null {
+  return autenticado && !carregando && globalRole === "icca_admin" ? "/admin" : null;
+}
+
 export function portaisAdministrativos(globalRole: string | null, fomentoRole: string | null) {
   const portais: { nome: string; destino: string; icone: "projeto" | "fomento" | "operon" | "sd" }[] = [];
   if (globalRole === "icca_admin") {
