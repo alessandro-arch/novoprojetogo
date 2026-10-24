@@ -11,6 +11,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { simulando, useModoVisualizacao } from "@/lib/view-as";
+import OperonIASugestao from "@/components/operon/OperonIASugestao";
+import type { SugestaoIA } from "@/lib/operon-ia";
 import { oe, fmtData, type EditalRow } from "@/pages/editais/CuradoriaPage";
 import { entradaDoEdital, montarPayloadValor, validarValor, situacaoValor, ROTULO_TIPO_VALOR, type EntradaValor, type TipoValor } from "@/lib/operon-valores";
 
@@ -27,7 +29,21 @@ export async function salvarValorEdital(editalId: string, entrada: EntradaValor,
   return payload;
 }
 
-export default function ValorCuradoria({ edital, onDirtyChange, onEntradaChange }: { edital: EditalRow; onDirtyChange?: (d: boolean) => void; onEntradaChange?: (v: EntradaValor) => void }) {
+export function aplicarSugestaoValor(v: EntradaValor, valor?: SugestaoIA, tipo?: SugestaoIA): EntradaValor {
+  const n = typeof valor?.valor === "string" ? Number(valor.valor) : NaN;
+  const t = typeof tipo?.valor === "string" && tipo.valor in ROTULO_TIPO_VALOR ? tipo.valor as TipoValor : null;
+  return {
+    ...v,
+    ...(Number.isFinite(n) ? { valor: n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) } : {}),
+    ...(t ? { tipo: t } : {}),
+    ...(t === "nao_informado" ? { valor: "" } : {}),
+  };
+}
+
+export default function ValorCuradoria({ edital, onDirtyChange, onEntradaChange, sugestaoValor, sugestaoTipo, concluirSugestoes }: {
+  edital: EditalRow; onDirtyChange?: (d: boolean) => void; onEntradaChange?: (v: EntradaValor) => void;
+  sugestaoValor?: SugestaoIA; sugestaoTipo?: SugestaoIA; concluirSugestoes?: () => void;
+}) {
   const { globalRole } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -40,6 +56,17 @@ export default function ValorCuradoria({ edital, onDirtyChange, onEntradaChange 
   useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
   useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
   useEffect(() => { onEntradaChange?.(v); }, [v, onEntradaChange]);
+  const [anterior, setAnterior] = useState<EntradaValor | null>(null);
+  const temSugestao = !!(sugestaoValor || sugestaoTipo);
+  useEffect(() => {
+    if (!temSugestao) return;
+    setV(atual => { setAnterior(atual); return aplicarSugestaoValor(atual, sugestaoValor, sugestaoTipo); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sugestaoValor, sugestaoTipo]);
+  const sugestaoUnica: SugestaoIA | undefined = temSugestao ? {
+    valor: "", atual_vazio: true, atual_cortado: false,
+    trecho_origem: [sugestaoValor?.trecho_origem, sugestaoTipo?.trecho_origem].filter((t, i, a) => t && a.indexOf(t) === i).join("\n\n"),
+  } : undefined;
   const erro = validarValor(v);
   const confirmadoAntes = situacaoValor(base) === "confirmado" || (base.valor_tipo === "por_agencia" && !!base.valor_confirmado_em);
 
@@ -53,6 +80,8 @@ export default function ValorCuradoria({ edital, onDirtyChange, onEntradaChange 
     onError: (e: Error) => toast({ title: "Não foi possível salvar o valor", description: e.message, variant: "destructive" }),
   });
 
+  // Sem a seção visível, sugestões de valor não podem ficar pendentes bloqueando a publicação.
+  useEffect(() => { if (globalRole !== "icca_admin" && temSugestao) concluirSugestoes?.(); }, [globalRole, temSugestao, concluirSugestoes]);
   if (globalRole !== "icca_admin") return null;
   const bloqueado = m.isPending || modoVisualizacao;
   return <Card className="rounded-xl">
@@ -80,6 +109,9 @@ export default function ValorCuradoria({ edital, onDirtyChange, onEntradaChange 
         <Label htmlFor="valor-obs">Observação</Label>
         <Textarea id="valor-obs" rows={3} value={v.observacao} onChange={e => setV({ ...v, observacao: e.target.value })} />
       </div>
+      <OperonIASugestao sugestao={sugestaoUnica} disabled={m.isPending}
+        aceitar={() => { setAnterior(null); concluirSugestoes?.(); }}
+        descartar={() => { if (anterior) setV(anterior); setAnterior(null); concluirSugestoes?.(); }} />
       {erro && <p id="valor-erro" className="text-sm text-destructive" role="alert">{erro}</p>}
       {dirty && confirmadoAntes && <p className="text-sm text-muted-foreground" role="status">Ao salvar sem confirmar, a confirmação anterior é removida.</p>}
       <div className="flex flex-wrap items-center gap-2">

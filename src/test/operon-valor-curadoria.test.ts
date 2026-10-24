@@ -50,3 +50,14 @@ describe("confirmação ao publicar", () => {
     expect(confirmacaoAoPublicar({ valor: "", tipo: "total", observacao: "" }, "u", "T")).toEqual({});
   });
 });
+
+import { aplicarSugestaoValor } from "@/components/operon/ValorCuradoria";
+describe("sugestão de valor da IA", () => {
+  const s = (valor: string) => ({ valor, trecho_origem: "x", atual_vazio: true, atual_cortado: false });
+  it("preenche valor em reais e tipo, sem confirmar", () => {
+    expect(aplicarSugestaoValor({ valor: "", tipo: "__none__", observacao: "" }, s("1500000.00"), s("total"))).toEqual({ valor: "1.500.000,00", tipo: "total", observacao: "" });
+  });
+  it("nao_informado limpa o valor", () => {
+    expect(aplicarSugestaoValor({ valor: "10", tipo: "total", observacao: "" }, undefined, s("nao_informado")).valor).toBe("");
+  });
+});

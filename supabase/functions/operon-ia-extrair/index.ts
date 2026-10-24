@@ -64,7 +64,7 @@ Deno.serve(async req => {
     if (!parsed.success) throw new ExtractionError(400, "edital_id deve ser um UUID e sobrescrever deve ser booleano.");
     const { edital_id, sobrescrever, etapa, pagina } = parsed.data;
     const [edital, document, rounds] = await Promise.all([
-      client.from("oe_edital").select("resumo_tldr,objetivo,quem_pode,recursos,contrapartida,restricao_ies,requisitos_ies,abrangencia,url_oficial").eq("id", edital_id).maybeSingle(),
+      client.from("oe_edital").select("resumo_tldr,objetivo,quem_pode,recursos,contrapartida,restricao_ies,requisitos_ies,abrangencia,valor_total_reais,valor_tipo,url_oficial").eq("id", edital_id).maybeSingle(),
       client.from("oe_documento").select("url").eq("edital_id", edital_id).eq("tipo", "edital").eq("substituido", false).order("versao", { ascending: false }).order("publicado_em", { ascending: false, nullsFirst: false }).limit(1).maybeSingle(),
       client.from("oe_rodada").select("abertura,prazo_fim,resultado_em").eq("edital_id", edital_id),
     ]);

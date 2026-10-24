@@ -3,7 +3,8 @@ import { z } from "zod";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-export const CAMPOS_IA = ["resumo_tldr", "objetivo", "quem_pode", "recursos", "contrapartida", "restricao_ies", "requisitos_ies", "abrangencia", "rodadas"] as const;
+export const CAMPOS_IA = ["resumo_tldr", "objetivo", "quem_pode", "recursos", "contrapartida", "restricao_ies", "requisitos_ies", "abrangencia", "valor_total_reais", "valor_tipo", "rodadas"] as const;
+export const CAMPOS_IA_VALOR: CampoIA[] = ["valor_total_reais", "valor_tipo"];
 export type CampoIA = typeof CAMPOS_IA[number];
 const date = z.string().datetime({ offset: true }).nullable();
 export const RodadaIASchema = z.object({ abertura: date, prazo_fim: date, resultado_em: date }).refine(r =>
