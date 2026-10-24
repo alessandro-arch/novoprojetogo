@@ -27,6 +27,7 @@ import { Sparkles } from "lucide-react";
 import { gerarSugestoes, type CampoIA, type SugestoesIA } from "@/lib/operon-ia";
 import OperonIASugestao from "@/components/operon/OperonIASugestao";
 import OperonIARodadas from "@/components/operon/OperonIARodadas";
+import ValorCuradoria from "@/components/operon/ValorCuradoria";
 
 type Campo = "objetivo" | "recursos" | "quem_pode" | "requisitos_ies" | "contrapartida" | "areas";
 const CAMPOS: { key: Campo; label: string }[] = [
@@ -101,7 +102,8 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
   const assinatura = JSON.stringify({ form, restricaoIes, abrangencia, resumo });
   const [salvo, setSalvo] = useState(assinatura);
   const sugestoesPendentes = Object.keys(sugestoes).length > 0;
-  const dirty = assinatura !== salvo || sugestoesPendentes;
+  const [valorDirty, setValorDirty] = useState(false);
+  const dirty = assinatura !== salvo || sugestoesPendentes || valorDirty;
   const escreverCampoIA = (key: CampoIA, value: string) => {
     if (key === "resumo_tldr") setResumo(value);
     else if (key === "restricao_ies") setRestricaoIes(value || "__none__");
@@ -354,6 +356,8 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
           </div>
         </fieldset></CardContent>
       </Card>
+
+      <ValorCuradoria edital={edital} onDirtyChange={setValorDirty} />
 
       {sugestoes.rodadas && <OperonIARodadas editalId={edital.id} sugestao={sugestoes.rodadas} sobrescrever={iaSobrescrever} concluir={() => concluirSugestao("rodadas")} onPending={acompanharRodadas} />}
 
