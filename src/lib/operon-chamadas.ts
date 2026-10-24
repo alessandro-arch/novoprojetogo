@@ -1,5 +1,6 @@
 import { situacaoEdital } from "@/pages/editais/CuradoriaPage";
 import { prazoEdital, numeroEdital, temRestricaoIes, type AbaOperon, type EditalPublicado } from "@/lib/operon-portal";
+import { situacaoValor, textoValor, rotuloTipoValor, valorConfirmado, numeroValor, ROTULO_SITUACAO_VALOR } from "@/lib/operon-valores";
 import { ABRANGENCIAS } from "@/components/operon/AbrangenciaBadge";
 
 const NONE = "__none__";
@@ -7,7 +8,7 @@ const DIA = 86_400_000;
 
 export interface FiltrosChamadas { busca: string; fonte: string; esfera: string; abrangencia: string; prazo: "" | "7d"; publicados: "" | "30d" }
 export const FILTROS_VAZIOS: FiltrosChamadas = { busca: "", fonte: NONE, esfera: NONE, abrangencia: NONE, prazo: "", publicados: "" };
-export type ColunaOrdem = "prazo" | "publicacao" | "fonte";
+export type ColunaOrdem = "prazo" | "publicacao" | "fonte" | "valor";
 export interface Ordem { coluna: ColunaOrdem; direcao: "asc" | "desc" }
 export const ORDEM_PADRAO: Ordem = { coluna: "prazo", direcao: "asc" };
 
@@ -21,8 +22,8 @@ export const dataPublicacaoInfo = (e: EditalPublicado): DataPublicacao =>
 export const dataPublicacao = (e: EditalPublicado): string | null => dataPublicacaoInfo(e).data;
 const tempo = (v: string | null | undefined) => { const t = v ? new Date(v).getTime() : NaN; return Number.isFinite(t) ? t : null; };
 
-/** Reservado para a fase 3: nenhum edital tem valor estruturado ainda. */
-export const valorEdital = (_e: EditalPublicado): number | null => null;
+/** Valor confirmado usado em ordenação; não confirmados ficam sem chave. */
+export const valorEdital = (e: EditalPublicado): number | null => valorConfirmado(e);
 
 export function aplicarFiltrosExtras(rows: EditalPublicado[], f: Pick<FiltrosChamadas, "prazo" | "publicados">, agora = Date.now()) {
   return rows.filter(e => {
@@ -42,6 +43,7 @@ export function ordenarChamadas(rows: EditalPublicado[], ordem: Ordem, agora = D
   const chave = (e: EditalPublicado): number | string | null =>
     ordem.coluna === "prazo" ? tempo(prazoEdital(e, agora))
       : ordem.coluna === "publicacao" ? tempo(dataPublicacao(e))
+        : ordem.coluna === "valor" ? valorEdital(e)
         : (e.oe_fonte?.nome ?? e.oe_fonte?.slug ?? null)?.toLocaleLowerCase("pt-BR") ?? null;
   const sinal = ordem.direcao === "asc" ? 1 : -1;
   return [...rows].sort((a, b) => {
@@ -88,7 +90,7 @@ export function lerFiltrosSalvos(userId: string | undefined): { filtros: Filtros
     const v = JSON.parse(bruto);
     const filtros = { ...FILTROS_VAZIOS };
     (Object.keys(FILTROS_VAZIOS) as (keyof FiltrosChamadas)[]).forEach(k => { if (typeof v?.filtros?.[k] === "string") (filtros as Record<string, string>)[k] = v.filtros[k]; });
-    const ordem: Ordem = ["prazo", "publicacao", "fonte"].includes(v?.ordem?.coluna) && ["asc", "desc"].includes(v?.ordem?.direcao) ? v.ordem : ORDEM_PADRAO;
+    const ordem: Ordem = ["prazo", "publicacao", "fonte", "valor"].includes(v?.ordem?.coluna) && ["asc", "desc"].includes(v?.ordem?.direcao) ? v.ordem : ORDEM_PADRAO;
     return { filtros, ordem };
   } catch { return null; }
 }
@@ -101,10 +103,12 @@ const fmt = (v: string | null) => v ? new Date(v).toLocaleDateString("pt-BR", { 
 const celula = (v: string) => /[;"\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
 export const ROTULO_SITUACAO: Record<string, string> = { aberto: "Aberto", em_julgamento: "Em julgamento", encerrado: "Encerrado", resultado: "Resultado", revogado: "Revogado" };
 export function gerarCsv(rows: EditalPublicado[], agora = Date.now()): string {
-  const cab = ["Título", "Número", "Fonte", "Situação", "Prazo", "Publicação", "Restrição para IES", "Link oficial"];
+  const cab = ["Título", "Número", "Fonte", "Situação", "Prazo", "Publicação", "Restrição para IES", "Valor (R$)", "Tipo de valor", "Situação do valor", "Observação do valor", "Link oficial"];
   const linhas = rows.map(e => [
     e.titulo, numeroEdital(e), e.oe_fonte?.nome ?? "", ROTULO_SITUACAO[situacaoEdital(e, agora) ?? ""] ?? "",
-    fmt(prazoEdital(e, agora)), fmt(dataPublicacao(e)) + (dataPublicacaoInfo(e).aproximada ? " (data aproximada)" : ""), temRestricaoIes(e) ? "Sim" : "Não", e.url_oficial ?? "",
+    fmt(prazoEdital(e, agora)), fmt(dataPublicacao(e)) + (dataPublicacaoInfo(e).aproximada ? " (data aproximada)" : ""), temRestricaoIes(e) ? "Sim" : "Não",
+    numeroValor(e.valor_total_reais)?.toFixed(2).replace(".", ",") ?? "", situacaoValor(e) === "sem_valor" ? "Sem valor" : rotuloTipoValor(e),
+    ROTULO_SITUACAO_VALOR[situacaoValor(e)], e.valor_observacao ?? "", e.url_oficial ?? "",
   ].map(v => celula(String(v))).join(";"));
   return "\uFEFF" + [cab.join(";"), ...linhas].join("\r\n");
 }

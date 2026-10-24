@@ -31,6 +31,8 @@ export interface EditalRow extends Partial<Pick<Tables<"oe_edital">, "resumo_tld
   objetivo: string | null; recursos: string | null; quem_pode: string | null; contrapartida: string | null; areas: string[] | null;
   requisitos_ies: string | null; restricao_ies: string | null;
   abrangencia?: string | null;
+  valor_total_reais?: number | string | null; valor_tipo?: string | null; valor_observacao?: string | null;
+  valor_confirmado_em?: string | null; valor_confirmado_por?: string | null;
   verificado_em?: string | null; verificado_por?: string | null;
   oe_fonte?: IdentidadeFonte | null; oe_rodada?: Rodada[];
 }

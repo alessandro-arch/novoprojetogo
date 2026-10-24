@@ -8,7 +8,8 @@ import { PrazoTexto } from "@/components/operon/PortalEditalUI";
 import { Badge } from "@/components/ui/badge";
 import { fmtData, situacaoEdital } from "@/pages/editais/CuradoriaPage";
 import { numeroEdital, type EditalPublicado } from "@/lib/operon-portal";
-import { dataPublicacaoInfo, valorEdital, ROTULO_SITUACAO, DICA_DATA_APROXIMADA, type ColunaOrdem, type Ordem } from "@/lib/operon-chamadas";
+import { ValorCompacto } from "@/components/operon/ValorEdital";
+import { dataPublicacaoInfo, ROTULO_SITUACAO, DICA_DATA_APROXIMADA, type ColunaOrdem, type Ordem } from "@/lib/operon-chamadas";
 
 interface Props { lista: EditalPublicado[]; seguidos: Set<string>; ordem: Ordem; onOrdenar: (c: ColunaOrdem) => void; onAbrir: (e: EditalPublicado) => void }
 
@@ -25,7 +26,6 @@ function Cabecalho({ coluna, titulo, ordem, onOrdenar, className }: { coluna: Co
 }
 
 export default function ChamadasTabela({ lista, seguidos, ordem, onOrdenar, onAbrir }: Props) {
-  const mostrarValor = lista.some(e => valorEdital(e) !== null);
   return <div className="hidden md:block rounded-xl border border-border overflow-hidden">
     <Table>
       <TableHeader className="bg-muted/50"><TableRow>
@@ -34,7 +34,7 @@ export default function ChamadasTabela({ lista, seguidos, ordem, onOrdenar, onAb
         <TableHead>Situação</TableHead>
         <Cabecalho coluna="prazo" titulo="Prazo" ordem={ordem} onOrdenar={onOrdenar} />
         <Cabecalho coluna="publicacao" titulo="Publicação" ordem={ordem} onOrdenar={onOrdenar} />
-        {mostrarValor && <TableHead>Valor</TableHead>}
+        <Cabecalho coluna="valor" titulo="Valor" ordem={ordem} onOrdenar={onOrdenar} />
         <TableHead className="w-28"><span className="sr-only">Ações</span></TableHead>
       </TableRow></TableHeader>
       <TableBody>{lista.map(e => <TableRow key={e.id} className="cursor-pointer" onClick={() => onAbrir(e)}>
@@ -51,7 +51,7 @@ export default function ChamadasTabela({ lista, seguidos, ordem, onOrdenar, onAb
         <TableCell className="py-2.5 text-sm text-muted-foreground whitespace-nowrap">{(() => { const pub = dataPublicacaoInfo(e); return pub.data
           ? <span title={pub.aproximada ? DICA_DATA_APROXIMADA : undefined} className={pub.aproximada ? "underline decoration-dotted underline-offset-4" : undefined}>{fmtData(pub.data)}{pub.aproximada ? " (aprox.)" : ""}</span>
           : "Não informada"; })()}</TableCell>
-        {mostrarValor && <TableCell className="py-2.5" />}
+        <TableCell className="py-2.5"><ValorCompacto e={e} /></TableCell>
         <TableCell className="py-2.5 text-right"><SeguirEditalCompacto editalId={e.id} seguindo={seguidos.has(e.id)} titulo={e.titulo} /></TableCell>
       </TableRow>)}</TableBody>
     </Table>
