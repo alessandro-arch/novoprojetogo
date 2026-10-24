@@ -43,6 +43,25 @@ describe("filtros das chamadas", () => {
   });
 });
 
+describe("data de publicação", () => {
+  it("prefere a data da agência à conferência da curadoria", () => {
+    const e = ed("g", { publicado_em: iso(-60), verificado_em: iso(-2) });
+    expect(dataPublicacaoInfo(e)).toEqual({ data: iso(-60), aproximada: false });
+    expect(aplicarFiltrosExtras([e], { prazo: "", publicados: "30d" }, AGORA)).toHaveLength(0);
+    expect(ordenarChamadas([ed("a"), e], { coluna: "publicacao", direcao: "desc" }, AGORA).map(x => x.id)).toEqual(["a", "g"]);
+  });
+  it("sem data da agência, usa a conferência marcada como aproximada", () => {
+    expect(dataPublicacaoInfo(ed("h", { verificado_em: iso(-2) }))).toEqual({ data: iso(-2), aproximada: true });
+  });
+  it("sem nenhuma data, não há publicação", () => {
+    expect(dataPublicacaoInfo(ed("i"))).toEqual({ data: null, aproximada: false });
+  });
+  it("CSV marca a data aproximada", () => {
+    expect(gerarCsv([ed("j", { verificado_em: iso(-2) })], AGORA)).toContain("(data aproximada)");
+    expect(gerarCsv([ed("k", { publicado_em: iso(-2), verificado_em: iso(-1) })], AGORA)).not.toContain("(data aproximada)");
+  });
+});
+
 describe("filtros salvos", () => {
   beforeEach(() => localStorage.clear());
   it("salva por usuário e restaura", () => {
