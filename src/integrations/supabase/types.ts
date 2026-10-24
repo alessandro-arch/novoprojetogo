@@ -2192,6 +2192,7 @@ export type Database = {
           name: string
           sigla: string | null
           slug: string
+          staff_email_domains: string[]
           timezone: string
         }
         Insert: {
@@ -2203,6 +2204,7 @@ export type Database = {
           name: string
           sigla?: string | null
           slug: string
+          staff_email_domains?: string[]
           timezone?: string
         }
         Update: {
@@ -2214,6 +2216,7 @@ export type Database = {
           name?: string
           sigla?: string | null
           slug?: string
+          staff_email_domains?: string[]
           timezone?: string
         }
         Relationships: []
@@ -4207,6 +4210,10 @@ export type Database = {
       set_fomento_role: {
         Args: { _role: string; _target_user_id: string }
         Returns: undefined
+      }
+      staff_email_domain_ok: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
       }
     }
     Enums: {
