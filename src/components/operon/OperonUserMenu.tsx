@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent } from "react";
+import { useId, useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, ChevronDown, FileCheck2, LogOut, UserRound } from "lucide-react";
@@ -28,12 +28,14 @@ export default function OperonUserMenu({ onNavigate }: { onNavigate?: (action: (
   const [salvando, setSalvando] = useState(false);
   const [saindo, setSaindo] = useState(false);
   const nomeId = useId();
+  const focoAlertas = useRef<HTMLElement | null>(null);
   const { identidade, iniciais, semNome } = identidadeUsuarioOperon(nomeQ.data, user?.email);
   const abrirPerfil = () => { setNome(nomeQ.data ?? ""); setErro(""); setAberto(true); };
   const ir = (action: () => void) => onNavigate ? onNavigate(action) : action();
   const alertas = () => ir(() => {
     const cartao = document.getElementById("meus-alertas");
     if (!cartao) { navigate("/editais#meus-alertas"); return; }
+    focoAlertas.current = cartao;
     cartao.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
     cartao.focus({ preventScroll: true });
   });
@@ -68,7 +70,13 @@ export default function OperonUserMenu({ onNavigate }: { onNavigate?: (action: (
           <span className="hidden sm:block truncate text-sm">{identidade}</span><ChevronDown className="h-4 w-4 shrink-0" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72 max-w-[calc(100vw-2rem)]">
+      <DropdownMenuContent align="end" className="w-72 max-w-[calc(100vw-2rem)]" onCloseAutoFocus={event => {
+        if (focoAlertas.current) {
+          event.preventDefault();
+          focoAlertas.current.focus({ preventScroll: true });
+          focoAlertas.current = null;
+        }
+      }}>
         <DropdownMenuLabel className="space-y-1">
           <p className="break-words">{identidade}</p>
           <p className="break-words text-xs font-normal text-muted-foreground">{user.email}</p>
