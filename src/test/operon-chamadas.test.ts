@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import type { EditalPublicado } from "@/lib/operon-portal";
-import { FILTROS_VAZIOS, aplicarFiltrosExtras, chipsAtivos, filtrosDaUrl, gerarCsv, lerFiltrosSalvos, ordenarChamadas, removerChip, salvarFiltros, chaveFiltros } from "@/lib/operon-chamadas";
+import { FILTROS_VAZIOS, aplicarFiltrosExtras, chipsAtivos, dataPublicacaoInfo, filtrosDaUrl, gerarCsv, lerFiltrosSalvos, ordenarChamadas, removerChip, salvarFiltros, chaveFiltros } from "@/lib/operon-chamadas";
 import { calcularIndicadores, abertosPorFonte, abertosPorEsfera, lancamentosPorMes, prazosProximos } from "@/lib/operon-indicadores";
 import { itensCuradoria } from "@/components/operon/OperonSidebar";
 
@@ -29,7 +29,7 @@ describe("filtros das chamadas", () => {
   it("encerram em 7 dias inclui só prazos entre hoje e 7 dias", () => {
     expect(aplicarFiltrosExtras(rows, { prazo: "7d", publicados: "" }, AGORA).map(e => e.id)).toEqual(["a", "e"]);
   });
-  it("lançados em 30 dias usa a conferência e, sem ela, a data da agência", () => {
+  it("lançados em 30 dias usa a data da agência e, sem ela, a conferência", () => {
     expect(aplicarFiltrosExtras(rows, { prazo: "", publicados: "30d" }, AGORA).map(e => e.id)).toEqual(["a", "e", "f"]);
   });
   it("lê o aprofundamento pela URL", () => {
@@ -40,6 +40,25 @@ describe("filtros das chamadas", () => {
     const f = { ...FILTROS_VAZIOS, busca: "bolsa", esfera: "nacional", prazo: "7d" as const };
     expect(chipsAtivos(f, () => undefined).map(c => c.chave)).toEqual(["busca", "esfera", "prazo"]);
     expect(removerChip(f, "esfera").esfera).toBe("__none__");
+  });
+});
+
+describe("data de publicação", () => {
+  it("prefere a data da agência à conferência da curadoria", () => {
+    const e = ed("g", { publicado_em: iso(-60), verificado_em: iso(-2) });
+    expect(dataPublicacaoInfo(e)).toEqual({ data: iso(-60), aproximada: false });
+    expect(aplicarFiltrosExtras([e], { prazo: "", publicados: "30d" }, AGORA)).toHaveLength(0);
+    expect(ordenarChamadas([ed("a", { verificado_em: iso(-5) }), e], { coluna: "publicacao", direcao: "desc" }, AGORA).map(x => x.id)).toEqual(["a", "g"]);
+  });
+  it("sem data da agência, usa a conferência marcada como aproximada", () => {
+    expect(dataPublicacaoInfo(ed("h", { verificado_em: iso(-2) }))).toEqual({ data: iso(-2), aproximada: true });
+  });
+  it("sem nenhuma data, não há publicação", () => {
+    expect(dataPublicacaoInfo(ed("i"))).toEqual({ data: null, aproximada: false });
+  });
+  it("CSV marca a data aproximada", () => {
+    expect(gerarCsv([ed("j", { verificado_em: iso(-2) })], AGORA)).toContain("(data aproximada)");
+    expect(gerarCsv([ed("k", { publicado_em: iso(-2), verificado_em: iso(-1) })], AGORA)).not.toContain("(data aproximada)");
   });
 });
 

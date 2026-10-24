@@ -1,8 +1,8 @@
 # Roadmap — Service Desk Acadêmico
 
 - [x] Operon portal fases 1 e 2: menu lateral, Visão geral com indicadores e gráficos, Chamadas com ordenação/chips/filtros salvos/CSV/painel lateral/Seguir na linha, Prazos, Meus alertas e Fontes; 202 testes passaram.
-- [ ] Operon painel de usuários da Curadoria. Bloqueio: aprovação da RPC agregada oe_indicadores_usuarios.
-- [ ] Operon Saúde das coletas. Bloqueio: definir quais dados de coleta exibir.
+- [x] Operon ajustes do portal: data de publicação prefere a agência (conferência vira "aproximada" com tooltip e marca no CSV), Saúde das coletas por fonte (Ok/Atenção/Falha/Sem coleta, 36h e falhas seguidas, último erro expansível) e Indicadores de usuários na Curadoria via RPC agregada com aviso elegante enquanto a função não existe; 218 testes passaram, compilação sem erros, sem publicar.
+- [ ] Operon painel de usuários da Curadoria: aplicar a RPC agregada oe_indicadores_usuarios no banco. Bloqueio: SQL em revisão pelo proprietário (outra branch); a UI já trata a ausência da função.
 
 - [x] Operon menu de usuário nas três telas, perfil com edição do próprio nome, Curadoria por papel efetivo, Meus alertas e logout exclusivo; 186 testes passaram, compilação sem erros, sem publicar ou alterar banco.
 - [ ] Operon menu: conferir edição e leitura do nome com conta real. Bloqueio: Supabase externo sem sessão autenticada de teste disponível.

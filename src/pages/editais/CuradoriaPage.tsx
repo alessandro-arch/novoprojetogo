@@ -13,6 +13,7 @@ import { Placeholder } from "@/components/servicedesk/sd-ui";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ArrowLeft, Check, FileText } from "lucide-react";
 import OperonUserMenu from "@/components/operon/OperonUserMenu";
+import IndicadoresUsuarios from "@/components/operon/IndicadoresUsuarios";
 import EditalCuradoriaDetail from "@/components/operon/EditalCuradoriaDetail";
 import FonteBadge from "@/components/operon/FonteBadge";
 import AbrangenciaBadge, { ABRANGENCIAS, correspondeAbrangencia } from "@/components/operon/AbrangenciaBadge";
@@ -256,6 +257,8 @@ const CuradoriaPage = () => {
           <h2 className="text-2xl font-bold font-heading text-foreground">Curadoria de editais</h2>
           <p className="text-sm text-muted-foreground">Resumos feitos pela curadoria. Confirme no texto oficial do edital.</p>
         </div>
+
+        <IndicadoresUsuarios />
 
         <Tabs value={status} onValueChange={(valor) => mudar(() => { setStatus(valor); setSelId(null); })}>
           <TabsList className="h-auto flex flex-wrap justify-start gap-1">
