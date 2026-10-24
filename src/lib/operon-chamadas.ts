@@ -6,8 +6,8 @@ import { ABRANGENCIAS } from "@/components/operon/AbrangenciaBadge";
 const NONE = "__none__";
 const DIA = 86_400_000;
 
-export interface FiltrosChamadas { busca: string; fonte: string; esfera: string; abrangencia: string; prazo: "" | "7d"; publicados: "" | "30d" }
-export const FILTROS_VAZIOS: FiltrosChamadas = { busca: "", fonte: NONE, esfera: NONE, abrangencia: NONE, prazo: "", publicados: "" };
+export interface FiltrosChamadas { busca: string; fonte: string; esfera: string; abrangencia: string; prazo: "" | "7d"; publicados: "" | "30d"; valor: string }
+export const FILTROS_VAZIOS: FiltrosChamadas = { busca: "", fonte: NONE, esfera: NONE, abrangencia: NONE, prazo: "", publicados: "", valor: NONE };
 export type ColunaOrdem = "prazo" | "publicacao" | "fonte" | "valor";
 export interface Ordem { coluna: ColunaOrdem; direcao: "asc" | "desc" }
 export const ORDEM_PADRAO: Ordem = { coluna: "prazo", direcao: "asc" };
@@ -25,7 +25,7 @@ const tempo = (v: string | null | undefined) => { const t = v ? new Date(v).getT
 /** Valor confirmado usado em ordenação; não confirmados ficam sem chave. */
 export const valorEdital = (e: EditalPublicado): number | null => valorConfirmado(e);
 
-export function aplicarFiltrosExtras(rows: EditalPublicado[], f: Pick<FiltrosChamadas, "prazo" | "publicados">, agora = Date.now()) {
+export function aplicarFiltrosExtras(rows: EditalPublicado[], f: Pick<FiltrosChamadas, "prazo" | "publicados"> & { valor?: string }, agora = Date.now()) {
   return rows.filter(e => {
     if (f.prazo === "7d") {
       const p = tempo(prazoEdital(e, agora));
@@ -35,6 +35,7 @@ export function aplicarFiltrosExtras(rows: EditalPublicado[], f: Pick<FiltrosCha
       const p = tempo(dataPublicacao(e));
       if (p === null || p < agora - 30 * DIA || p > agora) return false;
     }
+    if (f.valor && f.valor !== NONE && situacaoValor(e) !== f.valor) return false;
     return true;
   });
 }
@@ -63,6 +64,7 @@ export function filtrosDaUrl(params: URLSearchParams): { filtros: Partial<Filtro
   if (params.get("publicados") === "30d") out.publicados = "30d";
   const fonte = params.get("fonte"); if (fonte) out.fonte = fonte;
   const esfera = params.get("esfera"); if (esfera === "nacional" || esfera === "estadual") out.esfera = esfera;
+  const valor = params.get("valor"); if (valor && valor in ROTULO_SITUACAO_VALOR) out.valor = valor;
   const a = params.get("aba") as AbaOperon | null;
   const aba = a && ABAS.includes(a) ? a : undefined;
   return Object.keys(out).length || aba ? { filtros: out, aba } : null;
@@ -77,6 +79,7 @@ export function chipsAtivos(f: FiltrosChamadas, nomeFonte: (id: string) => strin
   if (f.abrangencia !== NONE) chips.push({ chave: "abrangencia", rotulo: `Abrangência: ${ABRANGENCIAS.find(([v]) => v === f.abrangencia)?.[1] ?? f.abrangencia}` });
   if (f.prazo === "7d") chips.push({ chave: "prazo", rotulo: "Encerram em 7 dias" });
   if (f.publicados === "30d") chips.push({ chave: "publicados", rotulo: "Lançados nos últimos 30 dias" });
+  if (f.valor && f.valor !== NONE) chips.push({ chave: "valor", rotulo: `Valor: ${ROTULO_SITUACAO_VALOR[f.valor as keyof typeof ROTULO_SITUACAO_VALOR] ?? f.valor}` });
   return chips;
 }
 export const removerChip = (f: FiltrosChamadas, chave: keyof FiltrosChamadas): FiltrosChamadas => ({ ...f, [chave]: FILTROS_VAZIOS[chave] });

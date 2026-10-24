@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Bell, CalendarDays, FileCheck2, LayoutDashboard, Activity, Landmark, ListChecks, type LucideIcon } from "lucide-react";
+import { Bell, CalendarDays, FileCheck2, LayoutDashboard, Activity, Landmark, ListChecks, CircleDollarSign, type LucideIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 
@@ -7,6 +7,7 @@ export interface ItemMenuOperon { titulo: string; url: string; icone: LucideIcon
 export const ITENS_PORTAL: ItemMenuOperon[] = [
   { titulo: "Visão geral", url: "/editais", icone: LayoutDashboard, fim: true },
   { titulo: "Chamadas", url: "/editais/chamadas", icone: ListChecks },
+  { titulo: "Valores", url: "/editais/valores", icone: CircleDollarSign },
   { titulo: "Prazos", url: "/editais/prazos", icone: CalendarDays },
   { titulo: "Meus alertas", url: "/editais/alertas", icone: Bell },
   { titulo: "Fontes", url: "/editais/fontes", icone: Landmark },

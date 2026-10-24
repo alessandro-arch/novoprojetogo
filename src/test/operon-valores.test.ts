@@ -66,3 +66,16 @@ describe("CSV e ordenação com valor", () => {
     expect(ordenarChamadas([pendente, estimado, total], { coluna: "valor", direcao: "desc" }).map(e => e.id)).toEqual(["t", "e", "p"]);
   });
 });
+
+import { aplicarFiltrosExtras, filtrosDaUrl, chipsAtivos, FILTROS_VAZIOS } from "@/lib/operon-chamadas";
+describe("filtro de situação do valor", () => {
+  it("filtra por situação", () => {
+    expect(aplicarFiltrosExtras([total, pendente, vazio], { prazo: "", publicados: "", valor: "nao_confirmado" }).map(e => e.id)).toEqual(["p"]);
+  });
+  it("lê da URL e gera chip", () => {
+    const f = filtrosDaUrl(new URLSearchParams("valor=sem_valor"))!.filtros;
+    expect(f.valor).toBe("sem_valor");
+    expect(chipsAtivos({ ...FILTROS_VAZIOS, ...f }, () => undefined).map(c => c.rotulo)).toEqual(["Valor: Valor não informado"]);
+    expect(filtrosDaUrl(new URLSearchParams("valor=xyz"))).toBeNull();
+  });
+});

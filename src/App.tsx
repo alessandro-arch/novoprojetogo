@@ -37,6 +37,7 @@ import OperonLayout from "./pages/editais/OperonLayout";
 import VisaoGeralPage from "./pages/editais/VisaoGeralPage";
 import ChamadasPage from "./pages/editais/ChamadasPage";
 import PrazosPage from "./pages/editais/PrazosPage";
+import ValoresPage from "./pages/editais/ValoresPage";
 import AlertasPage from "./pages/editais/AlertasPage";
 import FontesPage from "./pages/editais/FontesPage";
 import ColetasPage from "./pages/editais/ColetasPage";
@@ -71,6 +72,7 @@ const App = () => (
                 <Route index element={<VisaoGeralPage />} />
                 <Route path="chamadas" element={<ChamadasPage />} />
                 <Route path="prazos" element={<PrazosPage />} />
+                <Route path="valores" element={<ValoresPage />} />
                 <Route path="alertas" element={<AlertasPage />} />
                 <Route path="fontes" element={<FontesPage />} />
                 <Route path="coletas" element={<ProtectedRoute allowedRoles={["icca_admin"]} loginPath="/editais/login"><ColetasPage /></ProtectedRoute>} />
