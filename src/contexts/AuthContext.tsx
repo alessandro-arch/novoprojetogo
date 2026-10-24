@@ -3,6 +3,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { aplicarViewAs, definirContextoViewAs, limparViewAs, useViewAs } from "@/lib/view-as";
+import { pularVinculoPadrao } from "@/lib/preview-membership";
 
 type AppRole = "icca_admin" | "org_admin" | "edital_manager" | "proponente" | "reviewer";
 
@@ -78,7 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .eq("user_id", userId);
 
     // Fallback: ensure default membership if none exists
-    if (!members || members.length === 0) {
+    if ((!members || members.length === 0) && !pularVinculoPadrao(userId)) {
       await supabase.rpc("ensure_default_membership");
       const { data: retryMembers } = await supabase
         .from("organization_members")
