@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { FomentoAuthProvider } from "@/contexts/FomentoAuthContext";
 import ViewAsBar from "@/components/ViewAsSwitcher";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import MfaGate from "@/components/MfaGate";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -55,6 +56,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <FomentoAuthProvider>
+            <MfaGate>
             <ViewAsBar />
             <Routes>
               <Route path="/" element={<Index />} />
@@ -94,6 +96,7 @@ const App = () => (
               <Route path="/servicedesk/*" element={<ProtectedRoute loginPath="/servicedesk/login"><ServiceDeskPanel /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </MfaGate>
           </FomentoAuthProvider>
         </AuthProvider>
       </BrowserRouter>
