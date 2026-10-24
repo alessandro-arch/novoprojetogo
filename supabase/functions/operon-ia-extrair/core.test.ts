@@ -168,3 +168,11 @@ Deno.test("tempo esgotado não repete o documento inteiro no modelo reserva", as
   catch (e) { failed = e instanceof ExtractionError && e.status === 504; }
   if (!failed || calls !== 1) throw new Error("Repetiu após tempo esgotado");
 });
+
+Deno.test("aceita valor e tipo com origem literal e rejeita valor mal formatado", () => {
+  const source = "O valor global desta chamada é de R$ 1.500.000,00 (um milhão e quinhentos mil reais).";
+  const ok = validateAI(JSON.stringify({ valor_total_reais: { valor: "1500000.00", trecho_origem: "R$ 1.500.000,00" }, valor_tipo: { valor: "total", trecho_origem: "O valor global desta chamada" } }), source);
+  assert(ok.valor_total_reais?.valor === "1500000.00" && ok.valor_tipo?.valor === "total");
+  const ruim = validateAI(JSON.stringify({ valor_total_reais: { valor: "R$ 1,5 mi", trecho_origem: "R$ 1.500.000,00" }, valor_tipo: { valor: "total", trecho_origem: "O valor global desta chamada" } }), source);
+  assert(!ruim.valor_total_reais && ruim.valor_tipo?.valor === "total");
+});
