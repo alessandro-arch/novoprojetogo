@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import type { EditalPublicado } from "@/lib/operon-portal";
-import { FILTROS_VAZIOS, aplicarFiltrosExtras, chipsAtivos, filtrosDaUrl, gerarCsv, lerFiltrosSalvos, ordenarChamadas, removerChip, salvarFiltros, chaveFiltros } from "@/lib/operon-chamadas";
+import { FILTROS_VAZIOS, aplicarFiltrosExtras, chipsAtivos, dataPublicacaoInfo, filtrosDaUrl, gerarCsv, lerFiltrosSalvos, ordenarChamadas, removerChip, salvarFiltros, chaveFiltros } from "@/lib/operon-chamadas";
 import { calcularIndicadores, abertosPorFonte, abertosPorEsfera, lancamentosPorMes, prazosProximos } from "@/lib/operon-indicadores";
 import { itensCuradoria } from "@/components/operon/OperonSidebar";
 
