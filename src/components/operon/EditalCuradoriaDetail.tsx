@@ -122,7 +122,7 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
       const anteriores: Partial<Record<CampoIA, string>> = {};
       for (const [key, suggestion] of Object.entries(result.propostas)) {
         const campo = key as CampoIA;
-        if (typeof suggestion.valor !== "string" || campo === "rodadas") continue;
+        if (typeof suggestion.valor !== "string" || campo === "rodadas" || campo === "valor_total_reais" || campo === "valor_tipo") continue;
         anteriores[campo] = campo === "resumo_tldr" ? resumo : campo === "restricao_ies" ? restricaoIes : campo === "abrangencia" ? abrangencia : form[campo];
         escreverCampoIA(campo, suggestion.valor);
       }
@@ -359,7 +359,9 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
         </fieldset></CardContent>
       </Card>
 
-      <ValorCuradoria edital={estado} onDirtyChange={setValorDirty} onEntradaChange={setEntradaValor} />
+      <ValorCuradoria edital={estado} onDirtyChange={setValorDirty} onEntradaChange={setEntradaValor}
+        sugestaoValor={sugestoes.valor_total_reais} sugestaoTipo={sugestoes.valor_tipo}
+        concluirSugestoes={() => setSugestoes(c => { const n = { ...c }; delete n.valor_total_reais; delete n.valor_tipo; return n; })} />
 
       {sugestoes.rodadas && <OperonIARodadas editalId={edital.id} sugestao={sugestoes.rodadas} sobrescrever={iaSobrescrever} concluir={() => concluirSugestao("rodadas")} onPending={acompanharRodadas} />}
 
