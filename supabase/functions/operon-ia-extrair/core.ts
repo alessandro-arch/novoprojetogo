@@ -82,7 +82,10 @@ export function validateAI(raw: string, source: string): Proposals {
     }
     result[k] = { valor: parsed.data.valor, trecho_origem: excerpt, atual_vazio: false, atual_cortado: false };
   }
-  if (!result.valor_total_reais) Object.assign(result, valorLiteral(normalizedSource));
+  if (!result.valor_total_reais) {
+    const literal = valorLiteral(normalizedSource);
+    if (literal.valor_total_reais) { result.valor_total_reais = literal.valor_total_reais; result.valor_tipo ??= literal.valor_tipo; }
+  }
   if (!Object.keys(result).length && invalid) throw new ExtractionError(422, "Nenhum campo válido com origem literal foi retornado pela IA.");
   return result;
 }

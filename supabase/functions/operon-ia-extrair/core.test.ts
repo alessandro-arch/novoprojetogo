@@ -174,7 +174,7 @@ Deno.test("aceita valor e tipo com origem literal e rejeita valor mal formatado"
   const ok = validateAI(JSON.stringify({ valor_total_reais: { valor: "1500000.00", trecho_origem: "R$ 1.500.000,00" }, valor_tipo: { valor: "total", trecho_origem: "O valor global desta chamada" } }), source);
   assert(ok.valor_total_reais?.valor === "1500000.00" && ok.valor_tipo?.valor === "total");
   const ruim = validateAI(JSON.stringify({ valor_total_reais: { valor: "R$ 1,5 mi", trecho_origem: "R$ 1.500.000,00" }, valor_tipo: { valor: "total", trecho_origem: "O valor global desta chamada" } }), source);
-  assert(!ruim.valor_total_reais && ruim.valor_tipo?.valor === "total");
+  assert(ruim.valor_total_reais?.valor === "1500000.00" && ruim.valor_tipo?.valor === "total");
 });
 
 Deno.test("valor literal recupera o valor global quando a IA omite", () => {
