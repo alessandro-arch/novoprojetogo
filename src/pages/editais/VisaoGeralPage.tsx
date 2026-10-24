@@ -5,6 +5,8 @@ import KpiCard from "@/components/operon/indicadores/KpiCard";
 import Bloco from "@/components/operon/indicadores/Bloco";
 import ProximosPrazos from "@/components/operon/indicadores/ProximosPrazos";
 import { usePortalOperon } from "@/components/operon/usePortalOperon";
+import { fmtReais, resumoValores } from "@/lib/operon-valores";
+import { Link } from "react-router-dom";
 import { calcularIndicadores, prazosProximos } from "@/lib/operon-indicadores";
 
 const Graficos = lazy(() => import("@/components/operon/indicadores/GraficosVisaoGeral"));
@@ -27,6 +29,10 @@ export default function VisaoGeralPage() {
         <KpiCard titulo="Lançados em 30 dias" valor={ind?.lancados30 ?? null} carregando={carregando} icone={Rocket} descricao="Publicados no último mês" para="/editais/chamadas?aba=abertos&publicados=30d" />
         <KpiCard titulo="Em julgamento" valor={ind?.emJulgamento ?? null} carregando={carregando} icone={Gavel} descricao="Inscrições encerradas, aguardando resultado" para="/editais/chamadas?aba=em_julgamento" />
       </div>}
+    {lista.data && (() => { const v = resumoValores(rows); return <Link to="/editais/valores" className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card p-4 hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+      <span><span className="block text-sm text-muted-foreground">Valor confirmado</span><span className="text-2xl font-bold font-heading tabular-nums">{fmtReais(v.total)}</span></span>
+      <span className="text-xs text-muted-foreground">{v.semValor.length} sem valor · {v.naoConfirmados.length} não confirmado(s) · {v.porAgencia.length} por agência</span>
+    </Link>; })()}
     <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] items-start">
       <div className="space-y-4 min-w-0">
         <Suspense fallback={<Skeleton className="h-72 rounded-xl" />}><Graficos rows={rows} carregando={carregando} erro={lista.isError} retry={() => lista.refetch()} /></Suspense>

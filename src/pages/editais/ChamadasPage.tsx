@@ -1,3 +1,4 @@
+import { ROTULO_SITUACAO_VALOR } from "@/lib/operon-valores";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Download, Search } from "lucide-react";
@@ -57,11 +58,12 @@ export default function ChamadasPage() {
   return <>
     <div className="space-y-1"><h1 className="text-2xl md:text-3xl font-bold font-heading">Chamadas</h1><p className="text-sm text-muted-foreground">Resumos feitos pela curadoria. Confirme no texto oficial do edital.</p></div>
     <div className="rounded-xl border border-border bg-card p-4 space-y-4">
-      <div className="grid gap-3 md:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))] items-end">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))] items-end">
         <div className="space-y-1"><Label htmlFor="busca">Buscar</Label><div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input id="busca" placeholder="Título, número, categoria ou área" className="pl-9" value={filtros.busca} onChange={e => set("busca")(e.target.value)} /></div></div>
         <div className="space-y-1"><Label htmlFor="fonte">Fonte</Label><Select value={filtros.fonte} onValueChange={set("fonte")}><SelectTrigger id="fonte"><SelectValue /></SelectTrigger><SelectContent><SelectItem value={NONE}>Todas as fontes</SelectItem>{(fontesQ.data ?? []).map(f => <SelectItem key={f.id} value={f.id}><FonteBadge slug={f.slug} nome={f.nome} /></SelectItem>)}</SelectContent></Select></div>
         <div className="space-y-1"><Label htmlFor="esfera">Esfera</Label><Select value={filtros.esfera} onValueChange={set("esfera")}><SelectTrigger id="esfera"><SelectValue /></SelectTrigger><SelectContent><SelectItem value={NONE}>Todas</SelectItem><SelectItem value="estadual">Estadual</SelectItem><SelectItem value="nacional">Nacional</SelectItem></SelectContent></Select></div>
         <div className="space-y-1"><Label htmlFor="abrangencia">Abrangência</Label><Select value={filtros.abrangencia} onValueChange={set("abrangencia")}><SelectTrigger id="abrangencia"><SelectValue /></SelectTrigger><SelectContent><SelectItem value={NONE}>Todas</SelectItem>{ABRANGENCIAS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent></Select></div>
+        <div className="space-y-1"><Label htmlFor="valor">Valor</Label><Select value={filtros.valor} onValueChange={set("valor")}><SelectTrigger id="valor"><SelectValue /></SelectTrigger><SelectContent><SelectItem value={NONE}>Todos</SelectItem>{Object.entries(ROTULO_SITUACAO_VALOR).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent></Select></div>
       </div>
       <FiltrosChips chips={chips} onRemover={c => setFiltros(f => removerChip(f, c))} onLimpar={() => setFiltros(FILTROS_VAZIOS)} />
     </div>
