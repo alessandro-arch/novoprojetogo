@@ -1,7 +1,7 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { escapeHtml } from "../_shared/escape-html.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.3";
+import { serveCors } from "../_shared/cors.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -115,4 +115,4 @@ async function hashToken(token: string): Promise<string> {
   return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-serve(handler);
+serveCors(handler);

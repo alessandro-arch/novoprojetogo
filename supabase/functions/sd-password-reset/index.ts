@@ -1,6 +1,7 @@
 import { escapeHtml } from "../_shared/escape-html.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.3";
 import { Resend } from "npm:resend@2.0.0";
+import { serveCors } from "../_shared/cors.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -14,7 +15,7 @@ const SITE = "https://projetogo.innovago.app";
 
 // Envia o link de redefinição de senha pelo Resend (sem o limite por hora do envio padrão).
 // Responde sempre "ok" para não revelar se o e-mail existe.
-Deno.serve(async (req) => {
+serveCors(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   if (req.method !== "POST") return json({ error: "Método inválido" }, 405);
   try {

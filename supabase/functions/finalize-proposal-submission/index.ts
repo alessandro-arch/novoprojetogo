@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { escapeHtml, escapeJsonForHtml } from "../_shared/escape-html.ts";
+import { serveCors } from "../_shared/cors.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -70,7 +71,7 @@ ${submission.cnpq_area_code ? `<p><strong>Área CNPq:</strong> ${escapeHtml(subm
 </div></body></html>`;
 }
 
-Deno.serve(async (req) => {
+serveCors(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }

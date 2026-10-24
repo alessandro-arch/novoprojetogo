@@ -1,6 +1,7 @@
 import { escapeHtml } from "../_shared/escape-html.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.3";
 import { Resend } from "npm:resend@2.0.0";
+import { serveCors } from "../_shared/cors.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -12,7 +13,7 @@ const json = (b: unknown, s = 200) =>
 
 const GENERIC = "Não foi possível validar a matrícula. Confira os dados ou procure a secretaria do seu programa.";
 
-Deno.serve(async (req) => {
+serveCors(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   if (req.method !== "POST") return json({ error: "Método inválido" }, 405);
   try {
