@@ -62,3 +62,29 @@ export default function SeguirEditalButton({ editalId }: { editalId: string }) {
     {q.data && <CanalTelegram editalId={editalId} ativo={q.data.canal_telegram} onChange={v => qc.setQueryData(key, { ...q.data, canal_telegram: v })} />}
   </div>;
 }
+
+/** Versão de linha: usa o conjunto de seguidos já carregado pela página, sem consulta por linha. */
+export function SeguirEditalCompacto({ editalId, seguindo, titulo }: { editalId: string; seguindo: boolean; titulo: string }) {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const modoVisualizacao = useModoVisualizacao();
+  const mutation = useMutation({
+    mutationFn: () => alterarSeguimento(editalId, user?.id ?? "", seguindo),
+    onSuccess: (registro) => {
+      qc.invalidateQueries({ queryKey: ["oe-seguidos", user?.id] });
+      qc.setQueryData(["oe-seguidor", user?.id, editalId], registro);
+      toast({ title: registro ? "Você está seguindo este edital" : "Você deixou de seguir este edital" });
+    },
+    onError: () => toast({ title: "Não foi possível atualizar o acompanhamento", description: "Tente novamente. Sua escolha anterior foi mantida.", variant: "destructive" }),
+  });
+  if (!user) return null;
+  return <Button size="sm" variant={seguindo ? "secondary" : "outline"} aria-pressed={seguindo}
+    aria-label={`${seguindo ? "Deixar de seguir" : "Seguir"} ${titulo}${modoVisualizacao ? ". Modo visualização" : ""}`}
+    title={modoVisualizacao ? "Modo visualização" : undefined}
+    disabled={mutation.isPending || modoVisualizacao}
+    onClick={ev => { ev.stopPropagation(); if (!simulando()) mutation.mutate(); }}>
+    {mutation.isPending ? <Loader2 className="animate-spin motion-reduce:animate-none" /> : seguindo ? <BellRing /> : <Bell />}
+    {seguindo ? "Seguindo" : "Seguir"}
+  </Button>;
+}
