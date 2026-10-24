@@ -7,7 +7,7 @@ import { simulando } from "@/lib/view-as";
 export const RPCS_LEITURA = new Set([
   "oe_is_curador", "oe_is_curador_org", "oe_membro_org", "oe_status_telegram", "sd_me", "sd_check_vpn_eligibility",
   "get_user_org_id", "get_user_org_role", "has_role", "is_org_member", "list_fomento_users",
-  "find_profile_by_email", "sd_members_signup_status",
+  "find_profile_by_email", "sd_members_signup_status", "oe_indicadores_usuarios",
 ]);
 export const MSG_MODO_VISUALIZACAO = "Modo visualização: nada é gravado enquanto você vê como outro papel.";
 export const EVENTO_BLOQUEIO = "projetogo:gravacao-bloqueada";
