@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Plus, Loader2, FileText, LogOut, Users, UserCircle, Database } from "lucide-react";
+import { Building2, Plus, Loader2, FileText, LogOut, UserCircle, Database, LayoutGrid, ChevronDown, Headphones, Landmark } from "lucide-react";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { portaisAdministrativos } from "@/lib/admin-portais";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -20,7 +22,9 @@ interface Org {
 }
 
 const AdminPanel = () => {
-  const { signOut } = useAuth();
+  const { signOut, user, loading: authLoading, globalRole, fomentoRole } = useAuth();
+  const portais = !authLoading && user ? portaisAdministrativos(globalRole, fomentoRole) : [];
+  const iconesPortais = { projeto: Building2, fomento: Landmark, operon: FileText, sd: Headphones };
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -97,7 +101,7 @@ const AdminPanel = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 py-4 flex flex-wrap gap-3 items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg gradient-primary flex items-center justify-center">
               <FileText className="w-5 h-5 text-primary-foreground" />
@@ -107,10 +111,30 @@ const AdminPanel = () => {
               <p className="text-xs text-muted-foreground">Painel ICCA Admin</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Link to="/editais/curadoria">
-              <Button variant="ghost" size="sm"><FileText className="w-4 h-4 mr-1" /> Operon Editais</Button>
-            </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            {portais.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="min-h-11">
+                    <LayoutGrid className="w-4 h-4 mr-2" /> Portais <ChevronDown className="w-4 h-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-60 max-w-[calc(100vw-2rem)]">
+                  <DropdownMenuLabel>Acesso administrativo</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {portais.map((portal) => {
+                    const Icone = iconesPortais[portal.icone];
+                    return (
+                      <DropdownMenuItem key={portal.destino} asChild>
+                        <Link to={portal.destino} className="min-h-11 gap-2" aria-current={portal.destino === "/admin" ? "page" : undefined}>
+                          <Icone className="w-4 h-4 shrink-0" /> {portal.nome}
+                        </Link>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             <Link to="/profile">
               <Button variant="ghost" size="sm"><UserCircle className="w-4 h-4 mr-1" /> Meu perfil</Button>
             </Link>
