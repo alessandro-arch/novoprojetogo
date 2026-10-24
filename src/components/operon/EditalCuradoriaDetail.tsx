@@ -103,7 +103,7 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
   const [salvo, setSalvo] = useState(assinatura);
   const sugestoesPendentes = Object.keys(sugestoes).length > 0;
   const [valorDirty, setValorDirty] = useState(false);
-  const dirty = assinatura !== salvo || sugestoesPendentes || valorDirty;
+  const dirty = assinatura !== salvo || sugestoesPendentes;
   const escreverCampoIA = (key: CampoIA, value: string) => {
     if (key === "resumo_tldr") setResumo(value);
     else if (key === "restricao_ies") setRestricaoIes(value || "__none__");
@@ -132,7 +132,7 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
     onError: (error: Error) => toast({ title: "Não foi possível gerar com IA", description: error.message, variant: "destructive" }),
   });
   useEffect(() => { setEstado(edital); }, [edital]);
-  useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
+  useEffect(() => { onDirtyChange?.(dirty || valorDirty); }, [dirty, valorDirty, onDirtyChange]);
   useEffect(() => () => { onDirtyChange?.(false); onPendingChange?.(false); }, [onDirtyChange, onPendingChange]);
   useEffect(() => {
     if (!dirty) return;
