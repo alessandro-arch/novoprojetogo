@@ -176,3 +176,10 @@ Deno.test("aceita valor e tipo com origem literal e rejeita valor mal formatado"
   const ruim = validateAI(JSON.stringify({ valor_total_reais: { valor: "R$ 1,5 mi", trecho_origem: "R$ 1.500.000,00" }, valor_tipo: { valor: "total", trecho_origem: "O valor global desta chamada" } }), source);
   assert(!ruim.valor_total_reais && ruim.valor_tipo?.valor === "total");
 });
+
+Deno.test("valor literal recupera o valor global quando a IA omite", () => {
+  const src = "5.2. O valor total de financiamento para os 15 (quinze) projetos conjuntos de pesquisa durante os 2 (dois)\nanos será de até R$ 7.005.354,75 (sete milhões).";
+  const r = validateAI(JSON.stringify({ objetivo: { valor: null, trecho_origem: null } }), src);
+  if (r.valor_total_reais?.valor !== "7005354.75") throw new Error("valor");
+  if (r.valor_tipo?.valor !== "estimado") throw new Error("tipo");
+});
