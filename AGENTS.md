@@ -25,3 +25,4 @@
 - Operon publication date prefers the agency `publicado_em`; `verificado_em` is only a fallback marked "data aproximada" (tooltip + CSV suffix) via `dataPublicacaoInfo` in operon-chamadas, the single source for filters, sorting, indicators and CSV.
 - Operon collection health derives per source from `oe_coleta` in operon-coletas (Ok <36h since last success and no consecutive failures; Atenção >36h or 1-2; Falha 3+; Sem coleta when none) — pure client rules, no new queries.
 - Operon user indicators call the aggregate RPC `oe_indicadores_usuarios` (curator-only, allowlisted as read-only in the view-as guard); when the function does not exist yet, the UI shows an activation notice instead of an error.
+- Operon edital values derive in operon-valores: only total/estimado with valor_confirmado_em enter sums; por_agencia, unconfirmed and empty values are always listed separately, never estimated.
