@@ -28,6 +28,7 @@ import { gerarSugestoes, type CampoIA, type SugestoesIA } from "@/lib/operon-ia"
 import OperonIASugestao from "@/components/operon/OperonIASugestao";
 import OperonIARodadas from "@/components/operon/OperonIARodadas";
 import ValorCuradoria from "@/components/operon/ValorCuradoria";
+import { confirmacaoAoPublicar, type EntradaValor } from "@/lib/operon-valores";
 
 type Campo = "objetivo" | "recursos" | "quem_pode" | "requisitos_ies" | "contrapartida" | "areas";
 const CAMPOS: { key: Campo; label: string }[] = [
@@ -103,6 +104,7 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
   const [salvo, setSalvo] = useState(assinatura);
   const sugestoesPendentes = Object.keys(sugestoes).length > 0;
   const [valorDirty, setValorDirty] = useState(false);
+  const [entradaValor, setEntradaValor] = useState<EntradaValor | null>(null);
   const dirty = assinatura !== salvo || sugestoesPendentes;
   const escreverCampoIA = (key: CampoIA, value: string) => {
     if (key === "resumo_tldr") setResumo(value);
@@ -184,7 +186,7 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
       const anteriores = qc.getQueriesData<EditalRow[]>({ queryKey: ["oe-editais"] });
       const anterior = estado;
       const patch = transicaoCuradoria(acao, new Date().toISOString(), user?.id);
-      const campos = acao === "descartar" || acao === "despublicar" ? {} : payloadCampos();
+      const campos = acao === "descartar" || acao === "despublicar" ? {} : { ...payloadCampos(), ...(acao === "publicar" ? confirmacaoAoPublicar(entradaValor, user?.id, new Date().toISOString()) : {}) };
       const atualizado = { ...estado, ...campos, ...patch };
       qc.setQueriesData<EditalRow[]>({ queryKey: ["oe-editais"] }, (lista) => atualizarEditalNaLista(lista, edital.id, atualizado));
       setEstado(atualizado);
@@ -193,7 +195,7 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
     },
     mutationFn: async (acao: AcaoCuradoria) => {
       const agora = new Date().toISOString();
-      const campos = acao === "descartar" || acao === "despublicar" ? {} : payloadCampos(agora);
+      const campos = acao === "descartar" || acao === "despublicar" ? {} : { ...payloadCampos(agora), ...(acao === "publicar" ? confirmacaoAoPublicar(entradaValor, user?.id, agora) : {}) };
       const upd = { ...campos, ...transicaoCuradoria(acao, agora, user?.id) };
       const { error } = await oe.from("oe_edital").update(upd).eq("id", edital.id);
       if (error) throw error;
@@ -357,7 +359,7 @@ const EditalCuradoriaDetail = ({ edital, onDirtyChange, onPendingChange, onStatu
         </fieldset></CardContent>
       </Card>
 
-      <ValorCuradoria edital={edital} onDirtyChange={setValorDirty} />
+      <ValorCuradoria edital={estado} onDirtyChange={setValorDirty} onEntradaChange={setEntradaValor} />
 
       {sugestoes.rodadas && <OperonIARodadas editalId={edital.id} sugestao={sugestoes.rodadas} sobrescrever={iaSobrescrever} concluir={() => concluirSugestao("rodadas")} onPending={acompanharRodadas} />}
 
