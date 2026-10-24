@@ -92,11 +92,12 @@ export default function OperonUserMenu({ onNavigate }: { onNavigate?: (action: (
     </DropdownMenu>
     <Dialog open={aberto} onOpenChange={value => { if (!salvando) setAberto(value); }}>
       <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg rounded-xl">
-        <DialogHeader><DialogTitle>Meu perfil</DialogTitle><DialogDescription className="break-words">{user.email}</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>Meu perfil</DialogTitle><DialogDescription className="break-words">Perfil do usuário · {user.email}</DialogDescription></DialogHeader>
         <form onSubmit={salvar} className="space-y-4">
           {bloqueado && <p role="status" className="text-sm text-muted-foreground">Modo visualização. Volte ao Superadmin para editar seu nome.</p>}
           {nomeQ.isError && <p role="alert" className="text-sm text-destructive">Não foi possível carregar seu nome.<Button type="button" variant="link" onClick={() => nomeQ.refetch()}>Tentar novamente</Button></p>}
           <div className="space-y-2"><Label htmlFor={nomeId}>Nome completo</Label><Input id={nomeId} autoComplete="name" value={nome} disabled={bloqueado || salvando || nomeQ.isLoading || nomeQ.isError} onChange={event => { setNome(event.target.value); setErro(""); }} aria-invalid={!!erro} aria-describedby={`${nomeId}-ajuda`} /><p id={`${nomeId}-ajuda`} className="text-xs text-muted-foreground">De 2 a 120 caracteres.</p>{erro && <p role="alert" className="text-sm text-destructive">{erro}</p>}</div>
+          <Button type="button" variant="link" className="h-auto min-h-11 px-0" onClick={() => { setAberto(false); navigate("/profile?aba=conta", { state: { voltar: window.location.pathname } }); }}>Minha conta: senha e verificação em duas etapas</Button>
           <DialogFooter className="gap-2"><Button type="button" variant="outline" disabled={salvando} onClick={() => setAberto(false)}>Cancelar</Button><Button type="submit" disabled={bloqueado || salvando || nomeQ.isLoading || nomeQ.isError}>{salvando ? "Salvando..." : "Salvar nome"}</Button></DialogFooter>
         </form>
       </DialogContent>

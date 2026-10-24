@@ -81,7 +81,7 @@ const SidebarContent = ({
         onClick={onItemClick}
         className="w-full flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
       >
-        <UserCircle className="w-4 h-4 shrink-0" /> Meu Cadastro
+        <UserCircle className="w-4 h-4 shrink-0" /> Meu perfil
       </Link>
       <button
         onClick={() => { onSignOut(); onItemClick?.(); }}

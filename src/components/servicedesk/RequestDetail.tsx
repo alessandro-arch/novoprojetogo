@@ -171,7 +171,7 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
               {f?.type === "textarea" || !f ? <Textarea rows={4} maxLength={4000} value={ed[k] || ""} onChange={(e) => setEdit({ ...ed, [k]: e.target.value })} />
                 : <Input maxLength={4000} value={ed[k] || ""} onChange={(e) => setEdit({ ...ed, [k]: e.target.value })} />}</div>;
           })}
-          <p className="text-xs text-muted-foreground">Só os campos indicados podem ser alterados. Dados institucionais (nome, matrícula, programa, nível, ingresso, orientador, contrato e prazos) não mudam aqui: use "Informar divergência" em Meu cadastro.</p>
+          <p className="text-xs text-muted-foreground">Só os campos indicados podem ser alterados. Dados institucionais (nome, matrícula, programa, nível, ingresso, orientador, contrato e prazos) não mudam aqui: use "Informar divergência" em Meu perfil.</p>
           <Button disabled={busy || (r.correction_fields || []).some((k: string) => (ed[k] || "").trim().length < 3)} onClick={resubmit}>Reenviar para análise</Button>
         </CardContent></Card>
       )}

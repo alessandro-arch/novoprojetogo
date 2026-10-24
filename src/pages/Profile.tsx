@@ -14,8 +14,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, User, MapPin, Briefcase, Bell, FileText, LogOut, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
 import CnpqAreaSelector from "@/components/CnpqAreaSelector";
 import InstitutionSelector from "@/components/InstitutionSelector";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import MfaSecurityCard from "@/components/MfaSecurityCard";
+import MeuAcessoCard from "@/components/MeuAcessoCard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { subtituloPerfil } from "@/lib/meu-acesso";
 
 const BRAZILIAN_STATES = [
   "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA",
@@ -23,9 +26,13 @@ const BRAZILIAN_STATES = [
 ];
 
 const Profile = () => {
-  const { signOut } = useAuth();
+  const { signOut, globalRole, membership, fomentoRole } = useAuth();
   const { profile, loading, updateProfile, completionPercentage } = useProfile();
   const { toast } = useToast();
+  const [params] = useSearchParams();
+  const voltarState = (useLocation().state as { voltar?: string } | null)?.voltar;
+  const voltarPara = voltarState && voltarState.startsWith("/") && !voltarState.startsWith("//") ? voltarState : "/dashboard";
+  const abaInicial = ["perfil", "conta", "acesso"].includes(params.get("aba") ?? "") ? params.get("aba")! : "perfil";
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Partial<UserProfile>>({});
 
@@ -83,12 +90,12 @@ const Profile = () => {
               <FileText className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-lg font-bold font-heading text-foreground">ProjetoGO</h1>
-              <p className="text-xs text-muted-foreground">Meu Cadastro</p>
+              <h1 className="text-lg font-bold font-heading text-foreground">Meu perfil</h1>
+              <p className="text-xs text-muted-foreground">{subtituloPerfil({ globalRole, membershipRole: membership?.role ?? null, fomentoRole })}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Link to="/dashboard">
+            <Link to={voltarPara}>
               <Button variant="ghost" size="sm"><ArrowLeft className="w-4 h-4 mr-1" /> Voltar</Button>
             </Link>
             <Button variant="ghost" size="sm" onClick={() => signOut()}>
@@ -99,17 +106,24 @@ const Profile = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-3xl">
+        <Tabs defaultValue={abaInicial}>
+        <TabsList className="mb-6 grid w-full grid-cols-3 h-auto">
+          <TabsTrigger value="perfil" className="min-h-11">Meu perfil</TabsTrigger>
+          <TabsTrigger value="conta" className="min-h-11">Minha conta</TabsTrigger>
+          <TabsTrigger value="acesso" className="min-h-11">Meu acesso</TabsTrigger>
+        </TabsList>
+        <TabsContent value="perfil">
         {/* Status Banner */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               {profile?.profile_completed ? (
                 <Badge variant="secondary" className="text-primary border-primary/20">
-                  <CheckCircle2 className="w-3 h-3 mr-1" /> Cadastro completo
+                  <CheckCircle2 className="w-3 h-3 mr-1" /> Perfil completo
                 </Badge>
               ) : (
                 <Badge variant="destructive" className="bg-destructive/10 text-destructive border-destructive/20">
-                  <AlertCircle className="w-3 h-3 mr-1" /> Cadastro incompleto
+                  <AlertCircle className="w-3 h-3 mr-1" /> Perfil incompleto
                 </Badge>
               )}
             </div>
@@ -118,7 +132,7 @@ const Profile = () => {
           <Progress value={pct} className="h-2" />
           {!profile?.profile_completed && (
             <p className="text-sm text-muted-foreground mt-2">
-              Complete seu cadastro para poder submeter propostas e participar de editais.
+              Complete seu perfil para poder submeter propostas e participar de editais.
             </p>
           )}
         </div>
@@ -302,15 +316,28 @@ const Profile = () => {
           </CardContent>
         </Card>
 
-        <MfaSecurityCard />
-
         {/* Save Button */}
         <div className="flex justify-end pb-8">
           <Button onClick={handleSave} size="lg" disabled={saving}>
             {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-            Salvar Cadastro
+            Salvar perfil
           </Button>
         </div>
+        </TabsContent>
+        <TabsContent value="conta">
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg">E-mail de login</CardTitle>
+              <CardDescription>Usado para entrar em todos os portais. Para trocar a senha, use "Esqueci minha senha" na tela de entrada.</CardDescription>
+            </CardHeader>
+            <CardContent><p className="text-sm font-medium break-all">{profile?.email ?? ""}</p></CardContent>
+          </Card>
+          <MfaSecurityCard />
+        </TabsContent>
+        <TabsContent value="acesso">
+          <MeuAcessoCard />
+        </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
