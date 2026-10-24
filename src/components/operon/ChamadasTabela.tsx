@@ -8,7 +8,7 @@ import { PrazoTexto } from "@/components/operon/PortalEditalUI";
 import { Badge } from "@/components/ui/badge";
 import { fmtData, situacaoEdital } from "@/pages/editais/CuradoriaPage";
 import { numeroEdital, type EditalPublicado } from "@/lib/operon-portal";
-import { dataPublicacao, valorEdital, ROTULO_SITUACAO, type ColunaOrdem, type Ordem } from "@/lib/operon-chamadas";
+import { dataPublicacaoInfo, valorEdital, ROTULO_SITUACAO, DICA_DATA_APROXIMADA, type ColunaOrdem, type Ordem } from "@/lib/operon-chamadas";
 
 interface Props { lista: EditalPublicado[]; seguidos: Set<string>; ordem: Ordem; onOrdenar: (c: ColunaOrdem) => void; onAbrir: (e: EditalPublicado) => void }
 
@@ -48,7 +48,9 @@ export default function ChamadasTabela({ lista, seguidos, ordem, onOrdenar, onAb
         <TableCell className="py-2.5"><FonteBadge slug={e.oe_fonte?.slug} nome={e.oe_fonte?.nome} /></TableCell>
         <TableCell className="py-2.5"><Situacao e={e} /></TableCell>
         <TableCell className="py-2.5"><PrazoTexto e={e} /></TableCell>
-        <TableCell className="py-2.5 text-sm text-muted-foreground whitespace-nowrap">{dataPublicacao(e) ? fmtData(dataPublicacao(e)) : "Não informada"}</TableCell>
+        <TableCell className="py-2.5 text-sm text-muted-foreground whitespace-nowrap">{(() => { const pub = dataPublicacaoInfo(e); return pub.data
+          ? <span title={pub.aproximada ? DICA_DATA_APROXIMADA : undefined} className={pub.aproximada ? "underline decoration-dotted underline-offset-4" : undefined}>{fmtData(pub.data)}{pub.aproximada ? " (aprox.)" : ""}</span>
+          : "Não informada"; })()}</TableCell>
         {mostrarValor && <TableCell className="py-2.5" />}
         <TableCell className="py-2.5 text-right"><SeguirEditalCompacto editalId={e.id} seguindo={seguidos.has(e.id)} titulo={e.titulo} /></TableCell>
       </TableRow>)}</TableBody>

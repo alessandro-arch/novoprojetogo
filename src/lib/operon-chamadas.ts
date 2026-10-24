@@ -11,8 +11,14 @@ export type ColunaOrdem = "prazo" | "publicacao" | "fonte";
 export interface Ordem { coluna: ColunaOrdem; direcao: "asc" | "desc" }
 export const ORDEM_PADRAO: Ordem = { coluna: "prazo", direcao: "asc" };
 
-/** Data de publicação usada no portal: conferência da curadoria, senão a data da agência. */
-export const dataPublicacao = (e: EditalPublicado): string | null => e.verificado_em ?? e.publicado_em ?? null;
+export interface DataPublicacao { data: string | null; aproximada: boolean }
+export const DICA_DATA_APROXIMADA = "Data da conferência pela curadoria; a agência não informou a publicação";
+/** Data de publicação usada no portal: data da agência; sem ela, a conferência da curadoria (aproximada). */
+export const dataPublicacaoInfo = (e: EditalPublicado): DataPublicacao =>
+  e.publicado_em ? { data: e.publicado_em, aproximada: false }
+    : e.verificado_em ? { data: e.verificado_em, aproximada: true }
+      : { data: null, aproximada: false };
+export const dataPublicacao = (e: EditalPublicado): string | null => dataPublicacaoInfo(e).data;
 const tempo = (v: string | null | undefined) => { const t = v ? new Date(v).getTime() : NaN; return Number.isFinite(t) ? t : null; };
 
 /** Reservado para a fase 3: nenhum edital tem valor estruturado ainda. */
@@ -98,7 +104,7 @@ export function gerarCsv(rows: EditalPublicado[], agora = Date.now()): string {
   const cab = ["Título", "Número", "Fonte", "Situação", "Prazo", "Publicação", "Restrição para IES", "Link oficial"];
   const linhas = rows.map(e => [
     e.titulo, numeroEdital(e), e.oe_fonte?.nome ?? "", ROTULO_SITUACAO[situacaoEdital(e, agora) ?? ""] ?? "",
-    fmt(prazoEdital(e, agora)), fmt(dataPublicacao(e)), temRestricaoIes(e) ? "Sim" : "Não", e.url_oficial ?? "",
+    fmt(prazoEdital(e, agora)), fmt(dataPublicacao(e)) + (dataPublicacaoInfo(e).aproximada ? " (data aproximada)" : ""), temRestricaoIes(e) ? "Sim" : "Não", e.url_oficial ?? "",
   ].map(v => celula(String(v))).join(";"));
   return "\uFEFF" + [cab.join(";"), ...linhas].join("\r\n");
 }
