@@ -53,7 +53,8 @@ export function resumoValores(lista: EditalPublicado[]): ResumoValores {
   for (const e of lista) {
     const s = situacaoValor(e);
     if (s === "confirmado") {
-      const v = numeroValor(e.valor_total_reais)!;
+      const v = numeroValor(e.valor_total_reais);
+      if (v === null) continue;
       r.confirmados.push(e); r.total += v;
       if (e.valor_tipo === "estimado") r.somaEstimado += v; else r.somaTotal += v;
     } else if (s === "por_agencia") r.porAgencia.push(e);
@@ -113,10 +114,23 @@ export function validarValor(v: EntradaValor): string | null {
   if (n !== null && n <= 0) return "O valor por agência deve ser maior que zero.";
   return null;
 }
+/** O portal exige justificativa individual; observações genéricas não são evidência. */
+export function validarConfirmacaoValor(v: EntradaValor): string | null {
+  const erro = validarValor(v);
+  if (erro) return erro;
+  if (v.tipo === "__none__" || v.tipo === "nao_informado") return "Valor não informado deve permanecer sem confirmação.";
+  const obs = v.observacao.trim();
+  const normal = obs.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[.!]+$/g, "").trim();
+  const genericas = ["valor localizado no texto oficial do edital", "edital nao informa valor em reais", "chamada sem aporte de recursos", "valor confirmado", "conferido no edital"];
+  if (obs.length < 20 || genericas.includes(normal)) return "Informe uma observação específica deste edital, com item ou página do PDF e o trecho que sustenta o valor.";
+  return null;
+}
 /** Somente os cinco campos de valor. Editar sem confirmar limpa a confirmação anterior. */
 export function montarPayloadValor(v: EntradaValor, opcoes: { confirmar: boolean; userId: string; agora?: string }) {
+  const erro = opcoes.confirmar ? validarConfirmacaoValor(v) : validarValor(v);
+  if (erro) throw new Error(erro);
   const n = lerReais(v.valor);
-  const confirma = opcoes.confirmar && v.tipo !== "__none__";
+  const confirma = opcoes.confirmar;
   return {
     valor_total_reais: n === null || Number.isNaN(n) ? null : n,
     valor_tipo: v.tipo === "__none__" ? null : v.tipo,
@@ -126,8 +140,8 @@ export function montarPayloadValor(v: EntradaValor, opcoes: { confirmar: boolean
   };
 }
 
-/** Ao aprovar e publicar: confirma o valor preenchido no formulário, se for válido e tiver tipo. */
+/** Publicação individual só confirma com justificativa específica; ausência nunca é confirmada. */
 export function confirmacaoAoPublicar(v: EntradaValor | null, userId: string | undefined, agora: string) {
-  if (!v || !userId || v.tipo === "__none__" || validarValor(v)) return {};
+  if (!v || !userId || validarConfirmacaoValor(v)) return {};
   return montarPayloadValor(v, { confirmar: true, userId, agora });
 }

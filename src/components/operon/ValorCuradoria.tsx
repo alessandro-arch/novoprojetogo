@@ -14,12 +14,12 @@ import { simulando, useModoVisualizacao } from "@/lib/view-as";
 import OperonIASugestao from "@/components/operon/OperonIASugestao";
 import type { SugestaoIA } from "@/lib/operon-ia";
 import { oe, fmtData, type EditalRow } from "@/pages/editais/CuradoriaPage";
-import { entradaDoEdital, montarPayloadValor, validarValor, situacaoValor, ROTULO_TIPO_VALOR, type EntradaValor, type TipoValor } from "@/lib/operon-valores";
+import { entradaDoEdital, montarPayloadValor, validarValor, validarConfirmacaoValor, situacaoValor, ROTULO_TIPO_VALOR, type EntradaValor, type TipoValor } from "@/lib/operon-valores";
 
 /** Grava somente os cinco campos de valor do edital. O id de quem confirma vem da sessão. */
 export async function salvarValorEdital(editalId: string, entrada: EntradaValor, confirmar: boolean) {
   if (simulando()) throw new Error("Modo visualização: gravação bloqueada.");
-  const erro = validarValor(entrada); if (erro) throw new Error(erro);
+  const erro = confirmar ? validarConfirmacaoValor(entrada) : validarValor(entrada); if (erro) throw new Error(erro);
   const { data, error: authError } = await supabase.auth.getUser();
   if (authError || !data.user) throw new Error("Sessão expirada. Entre novamente.");
   if (simulando()) throw new Error("Modo visualização: gravação bloqueada.");
@@ -34,7 +34,7 @@ export function aplicarSugestaoValor(v: EntradaValor, valor?: SugestaoIA, tipo?:
   const t = typeof tipo?.valor === "string" && tipo.valor in ROTULO_TIPO_VALOR ? tipo.valor as TipoValor : null;
   return {
     ...v,
-    ...(Number.isFinite(n) ? { valor: n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) } : {}),
+    ...(Number.isFinite(n) && n > 0 ? { valor: n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) } : {}),
     ...(t ? { tipo: t } : {}),
     ...(t === "nao_informado" ? { valor: "" } : {}),
   };
@@ -68,6 +68,7 @@ export default function ValorCuradoria({ edital, onDirtyChange, onEntradaChange,
     trecho_origem: [sugestaoValor?.trecho_origem, sugestaoTipo?.trecho_origem].filter((t, i, a) => t && a.indexOf(t) === i).join("\n\n"),
   } : undefined;
   const erro = validarValor(v);
+  const erroConfirmacao = validarConfirmacaoValor(v);
   const confirmadoAntes = situacaoValor(base) === "confirmado" || (base.valor_tipo === "por_agencia" && !!base.valor_confirmado_em);
 
   const m = useMutation({
@@ -75,7 +76,7 @@ export default function ValorCuradoria({ edital, onDirtyChange, onEntradaChange,
     onSuccess: (payload, confirmar) => {
       setBase({ ...base, ...payload });
       ["oe-editais", "oe-portal-painel", "oe-portal-ficha"].forEach(k => qc.invalidateQueries({ queryKey: [k] }));
-      toast({ title: confirmar ? "Valor confirmado" : "Valor salvo sem confirmação", description: confirmar ? "O valor passa a contar nos totais do portal." : "O valor aparece como aguardando confirmação." });
+      toast({ title: confirmar ? "Valor confirmado" : "Valor salvo sem confirmação", description: confirmar ? (v.tipo === "por_agencia" ? "O valor permanece separado dos totais do portal." : "O valor passa a contar nos totais do portal.") : "O valor permanece sem confirmação." });
     },
     onError: (e: Error) => toast({ title: "Não foi possível salvar o valor", description: e.message, variant: "destructive" }),
   });
@@ -87,7 +88,7 @@ export default function ValorCuradoria({ edital, onDirtyChange, onEntradaChange,
   return <Card className="rounded-xl">
     <CardHeader><CardTitle className="text-base">Valor do edital</CardTitle></CardHeader>
     <CardContent className="space-y-4">
-      <p className="text-xs text-muted-foreground">Ao aprovar e publicar, o valor preenchido aqui é confirmado automaticamente.</p>
+      <p className="text-xs text-muted-foreground">Coleta oficial: Hermes. A confirmação exige observação específica deste edital; valores não informados permanecem sem confirmação.</p>
       <p className="text-sm text-muted-foreground">{base.valor_confirmado_em ? `Confirmado em ${fmtData(base.valor_confirmado_em, true)}.` : "Valor ainda não confirmado pela curadoria."}</p>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1">
@@ -107,16 +108,17 @@ export default function ValorCuradoria({ edital, onDirtyChange, onEntradaChange,
       </div>
       <div className="space-y-1">
         <Label htmlFor="valor-obs">Observação</Label>
-        <Textarea id="valor-obs" rows={3} value={v.observacao} onChange={e => setV({ ...v, observacao: e.target.value })} />
+        <Textarea id="valor-obs" rows={3} value={v.observacao} onChange={e => setV({ ...v, observacao: e.target.value })} aria-describedby="valor-confirmacao-erro" placeholder="Item ou página do PDF, trecho literal e contexto do valor neste edital." />
       </div>
       <OperonIASugestao sugestao={sugestaoUnica} disabled={m.isPending}
         aceitar={() => { setAnterior(null); concluirSugestoes?.(); }}
         descartar={() => { if (anterior) setV(anterior); setAnterior(null); concluirSugestoes?.(); }} />
       {erro && <p id="valor-erro" className="text-sm text-destructive" role="alert">{erro}</p>}
+      {erroConfirmacao && !erro && <p id="valor-confirmacao-erro" className="text-sm text-muted-foreground">{erroConfirmacao}</p>}
       {dirty && confirmadoAntes && <p className="text-sm text-muted-foreground" role="status">Ao salvar sem confirmar, a confirmação anterior é removida.</p>}
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="outline" disabled={bloqueado || !!erro || !dirty} onClick={() => m.mutate(false)}>Salvar sem confirmar</Button>
-        <Button disabled={bloqueado || !!erro || v.tipo === "__none__"} onClick={() => m.mutate(true)}>{m.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Confirmar valor</Button>
+        <Button disabled={bloqueado || !!erroConfirmacao} onClick={() => m.mutate(true)}>{m.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Confirmar valor</Button>
         {modoVisualizacao && <span className="text-sm text-muted-foreground">Modo visualização</span>}
       </div>
     </CardContent>
