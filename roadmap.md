@@ -1,5 +1,6 @@
 # Roadmap — Service Desk Acadêmico
-- [ ] Retorno ao painel global nos cabeçalhos Operon, Fomento e Service Desk, sem mudar autenticação ou permissões.
+- [x] Retorno /admin nos cabeçalhos Operon, Fomento e Service Desk; 37 testes passaram, sem mudar autenticação ou permissões.
+- [ ] Conferir retorno dos portais com sessão real. Bloqueio: Supabase externo sem sessão autenticada disponível para teste automatizado.
 
 - [x] Operon valores: confirmação individual com observação específica, ausência sem zero nem confirmação; 33 testes passaram e compilação sem erros, somente preview, nenhuma alteração de dados em produção.
 - [ ] Operon valores: conferir confirmação no portal com sessão real. Bloqueio: Supabase externo sem sessão de teste; dados de produção não serão usados para testes de gravação.
