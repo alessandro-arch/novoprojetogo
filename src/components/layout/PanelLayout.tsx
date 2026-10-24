@@ -6,7 +6,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { FileText, LogOut, UserCircle, Menu, Bell } from "lucide-react";
-import AdminReturnLink from "@/components/admin/AdminReturnLink";
 
 export interface NavItem {
   key: string;
