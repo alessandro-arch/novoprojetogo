@@ -1,4 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { escapeHtml } from "../_shared/escape-html.ts";
+import { serveCors } from "../_shared/cors.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,7 +8,14 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-Deno.serve(async (req) => {
+// Célula de CSV: aspas dobradas e prefixo "'" contra injeção de fórmula em planilhas (=, +, -, @).
+function csvCell(value: unknown): string {
+  let s = value === null || value === undefined ? "" : String(value);
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+  return `"${s.replace(/"/g, '""')}"`;
+}
+
+serveCors(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -111,7 +120,7 @@ Deno.serve(async (req) => {
         const role = log.user_role ? (ROLE_LABELS[log.user_role] || log.user_role) : "Sistema";
         const entityId = log.entity_id || "";
         const meta = log.metadata_json ? JSON.stringify(log.metadata_json) : "";
-        return `"${date}","${entity}","${action}","${role}","${entityId}","${meta.replace(/"/g, '""')}"`;
+        return [date, entity, action, role, entityId, meta].map(csvCell).join(",");
       });
 
       const csv = [header, ...rows].join("\n");
@@ -137,7 +146,7 @@ Deno.serve(async (req) => {
         if (log.metadata_json?.old_status) {
           details = `${log.metadata_json.old_status} → ${log.metadata_json.new_status}`;
         }
-        return `<tr><td>${date}</td><td>${entity}</td><td>${op}</td><td>${role}</td><td>${entityId}</td><td>${details}</td></tr>`;
+        return `<tr><td>${escapeHtml(date)}</td><td>${escapeHtml(entity)}</td><td>${escapeHtml(op)}</td><td>${escapeHtml(role)}</td><td>${escapeHtml(entityId)}</td><td>${escapeHtml(details)}</td></tr>`;
       }).join("");
 
       const html = `

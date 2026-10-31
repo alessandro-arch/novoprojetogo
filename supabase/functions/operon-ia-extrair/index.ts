@@ -2,6 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { z } from "npm:zod@3.25.76";
 import { BodySchema, DEFAULT_MODEL, FALLBACK_MODEL, MAX_PDF_BYTES, ExtractionError, callOpenRouter,
+import { serveCors } from "../_shared/cors.ts";
   requireCurator, collectPDFText, generateWithFallback, eligibleProposals, publicIP, trustedPDFUrl, type Proposals } from "./core.ts";
 
 const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -42,7 +43,7 @@ async function downloadPDF(input: string): Promise<Uint8Array> {
   throw new ExtractionError(422, "O link do PDF tem redirecionamentos demais.");
 }
 
-Deno.serve(async req => {
+serveCors(async req => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Método não permitido." }, 405);
   try {

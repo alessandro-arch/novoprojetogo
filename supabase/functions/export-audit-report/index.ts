@@ -1,4 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { escapeHtml, escapeJsonForHtml } from "../_shared/escape-html.ts";
+import { serveCors } from "../_shared/cors.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,7 +8,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-Deno.serve(async (req) => {
+serveCors(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -139,14 +141,14 @@ Deno.serve(async (req) => {
           : log.user_role
           ? ROLE_LABELS[log.user_role] || log.user_role
           : "Sistema";
-        const action = log.action || "";
+        const action = escapeHtml(log.action || "");
         const diffHtml = log.diff
-          ? `<pre style="font-size:9px;margin:0;white-space:pre-wrap">${JSON.stringify(log.diff, null, 2)}</pre>`
+          ? `<pre style="font-size:9px;margin:0;white-space:pre-wrap">${escapeJsonForHtml(log.diff, 2)}</pre>`
           : "";
         const hashBadge = log.log_hash
-          ? `<span style="font-size:8px;color:#888">${log.log_hash.slice(0, 12)}…</span>`
+          ? `<span style="font-size:8px;color:#888">${escapeHtml(String(log.log_hash).slice(0, 12))}…</span>`
           : "";
-        return `<tr><td>${date}</td><td>${action}</td><td>${role}</td><td>${diffHtml}</td><td>${hashBadge}</td></tr>`;
+        return `<tr><td>${escapeHtml(date)}</td><td>${action}</td><td>${escapeHtml(role)}</td><td>${diffHtml}</td><td>${hashBadge}</td></tr>`;
       })
       .join("");
 
@@ -174,19 +176,19 @@ pre{background:#f5f5f5;padding:4px;border-radius:3px;overflow:hidden}
 </style></head><body>
 <h1>🔒 Relatório de Auditoria | ProjetoGO</h1>
 <div class="meta">
-<p><strong>Edital:</strong> ${edital.title}</p>
-<p><strong>Protocolo:</strong> ${sub.protocol || "-"}</p>
-<p><strong>ID Submissão:</strong> ${sub.id}</p>
-<p><strong>Submetido em:</strong> ${sub.submitted_at ? new Date(sub.submitted_at).toLocaleString("pt-BR") : "-"}</p>
+<p><strong>Edital:</strong> ${escapeHtml(edital.title)}</p>
+<p><strong>Protocolo:</strong> ${escapeHtml(sub.protocol || "-")}</p>
+<p><strong>ID Submissão:</strong> ${escapeHtml(sub.id)}</p>
+<p><strong>Submetido em:</strong> ${sub.submitted_at ? escapeHtml(new Date(sub.submitted_at).toLocaleString("pt-BR")) : "-"}</p>
 </div>
 
 <h2>Integridade Criptográfica</h2>
 <p>
-  <span class="badge" style="background:${integrityColor}">${sub.integrity_status || "PENDING"}</span>
+  <span class="badge" style="background:${integrityColor}">${escapeHtml(sub.integrity_status || "PENDING")}</span>
 </p>
 <table>
-<tr><td style="width:30%;font-weight:bold">integrity_hash (SHA-256)</td><td style="font-family:monospace;font-size:9px">${sub.integrity_hash || "-"}</td></tr>
-<tr><td style="font-weight:bold">pdf_integrity_hash (SHA-256)</td><td style="font-family:monospace;font-size:9px">${sub.pdf_integrity_hash || "-"}</td></tr>
+<tr><td style="width:30%;font-weight:bold">integrity_hash (SHA-256)</td><td style="font-family:monospace;font-size:9px">${escapeHtml(sub.integrity_hash || "-")}</td></tr>
+<tr><td style="font-weight:bold">pdf_integrity_hash (SHA-256)</td><td style="font-family:monospace;font-size:9px">${escapeHtml(sub.pdf_integrity_hash || "-")}</td></tr>
 </table>
 
 <h2>Timeline de Auditoria (${(logs || []).length} registros)</h2>
@@ -196,7 +198,7 @@ ${logsRows}
 </table>
 
 <div class="footer">
-<p>Exportado por: ${exporterProfile?.full_name || user.email || user.id} em ${new Date().toLocaleString("pt-BR")}</p>
+<p>Exportado por: ${escapeHtml(exporterProfile?.full_name || user.email || user.id)} em ${escapeHtml(new Date().toLocaleString("pt-BR"))}</p>
 <p>Documento gerado automaticamente, ProjetoGO</p>
 </div></body></html>`;
 
