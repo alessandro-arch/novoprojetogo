@@ -1,3 +1,4 @@
+import { canManageFomentoOrganization, findAuthUserByEmail } from "../_shared/firstAccessPolicy.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -10,6 +11,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  if (req.method !== "POST") return new Response(null, { status: 405, headers: corsHeaders });
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -33,18 +36,34 @@ Deno.serve(async (req) => {
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data: callerProfile } = await adminClient
       .from("profiles")
-      .select("fomento_role")
+      .select("fomento_role, fomento_org_id")
       .eq("user_id", caller.id)
       .single();
 
-    if (callerProfile?.fomento_role !== "admin") {
+    if (!["admin", "superadmin"].includes(callerProfile?.fomento_role ?? "")) {
       return new Response(JSON.stringify({ error: "Only fomento admins can invite" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const { email, full_name, org_id, resend, check_status } = await req.json();
+    const body = await req.json();
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const full_name = typeof body.full_name === "string" ? body.full_name.trim() : "";
+    const { org_id, resend, check_status } = body;
+
+    if (!canManageFomentoOrganization(callerProfile?.fomento_role, callerProfile?.fomento_org_id, org_id)) {
+      return new Response(JSON.stringify({ error: "Organization access denied" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: targetOrg, error: orgError } = await adminClient
+      .from("fomento_organizations").select("id").eq("id", org_id).maybeSingle();
+    if (orgError) throw orgError;
+    if (!targetOrg) return new Response(JSON.stringify({ error: "Organization not found" }), {
+      status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
 
     // ─── Check admin status endpoint ──────────────────────
     if (check_status && org_id) {
@@ -82,7 +101,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!email || !full_name || !org_id) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || !full_name || full_name.length > 200 || !org_id) {
       return new Response(JSON.stringify({ error: "email, full_name, and org_id are required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -90,10 +109,18 @@ Deno.serve(async (req) => {
     }
 
     // Check if user already exists
-    const { data: existingUsers } = await adminClient.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find(
-      (u) => u.email?.toLowerCase() === email.toLowerCase()
-    );
+    const existingUser = await findAuthUserByEmail(adminClient.auth.admin, email);
+
+    if (existingUser) {
+      const { data: prior, error: priorError } = await adminClient.from("profiles")
+        .select("fomento_role, fomento_org_id").eq("user_id", existingUser.id).maybeSingle();
+      if (priorError) throw priorError;
+      if (prior?.fomento_role === "superadmin" || (prior?.fomento_org_id && prior.fomento_org_id !== org_id)) {
+        return new Response(JSON.stringify({ error: "A conta já possui vínculo administrativo incompatível" }), {
+          status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     let userId: string;
     let isNew = false;
@@ -134,25 +161,34 @@ Deno.serve(async (req) => {
     }
 
     // Set fomento_role = 'admin' on profile
-    const { data: existingProfile } = await adminClient
+    const { data: existingProfile, error: profileReadError } = await adminClient
       .from("profiles")
-      .select("id")
+      .select("id, fomento_role, fomento_org_id")
       .eq("user_id", userId)
-      .single();
+      .maybeSingle();
+    if (profileReadError) throw profileReadError;
 
+    if (existingProfile?.fomento_role === "superadmin" ||
+        (existingProfile?.fomento_org_id && existingProfile.fomento_org_id !== org_id)) {
+      return new Response(JSON.stringify({ error: "A conta já possui vínculo administrativo incompatível" }), {
+        status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     if (existingProfile) {
-      await adminClient
+      const { error: profileError } = await adminClient
         .from("profiles")
-        .update({ fomento_role: "admin", full_name, email })
+        .update({ fomento_role: "admin", fomento_org_id: org_id, full_name, email })
         .eq("user_id", userId);
+      if (profileError) throw profileError;
     } else {
-      await adminClient
+      const { error: profileError } = await adminClient
         .from("profiles")
-        .insert({ user_id: userId, fomento_role: "admin", full_name, email });
+        .insert({ user_id: userId, fomento_role: "admin", fomento_org_id: org_id, full_name, email });
+      if (profileError) throw profileError;
     }
 
     // Update org with admin info + set status to pendente
-    await adminClient
+    const { error: orgWriteError } = await adminClient
       .from("fomento_organizations")
       .update({
         admin_user_id: userId,
@@ -161,6 +197,7 @@ Deno.serve(async (req) => {
         admin_status: "pendente",
       })
       .eq("id", org_id);
+    if (orgWriteError) throw orgWriteError;
 
     // Log invite
     await adminClient
@@ -176,7 +213,7 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Internal error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
