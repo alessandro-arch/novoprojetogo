@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# variaveis de ambiente: nunca versionar (ver README)
+.env

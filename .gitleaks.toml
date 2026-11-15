@@ -1,0 +1,42 @@
+# Configuracao do gitleaks para os repositorios do ICCA/InnovaGO.
+#
+# Por que existe allowlist: a chave publica do Supabase (JWT com claim `role: anon`) e publicada
+# no bundle do frontend de proposito, e aparece no `.env.example` e no `client.ts` gerado pela
+# Lovable. Sem a permissao, todo commit que toca esses arquivos deixaria o CI vermelho e o alarme
+# perderia credibilidade.
+#
+# LIMITE DECLARADO: a permissao e por CAMINHO, entao uma chave `service_role` colada exatamente
+# nesses arquivos nao seria reportada pelo CI. O controle para esse caso e a varredura manual de
+# historico completo, com a config padrao e sem allowlist.
+#
+# A permissao vale apenas para as regras `jwt` e `generic-api-key`, que sao as que disparam nesses
+# arquivos. Qualquer outro tipo de segredo nesses mesmos caminhos continua sendo reportado.
+
+title = "gitleaks: projetos InnovaGO/ICCA"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "jwt"
+
+    [[rules.allowlists]]
+    description = "chave publica do Supabase em arquivo de exemplo e no client gerado pela Lovable"
+    condition = "OR"
+    paths = [
+      '''(^|/)\.env\.example$''',
+      '''(^|/)\.env\.[a-z]+\.example$''',
+      '''(^|/)integrations/supabase/client\.ts$''',
+    ]
+
+[[rules]]
+id = "generic-api-key"
+
+    [[rules.allowlists]]
+    description = "mesmos caminhos do jwt: sao chaves publicas por projeto"
+    condition = "OR"
+    paths = [
+      '''(^|/)\.env\.example$''',
+      '''(^|/)\.env\.[a-z]+\.example$''',
+      '''(^|/)integrations/supabase/client\.ts$''',
+    ]

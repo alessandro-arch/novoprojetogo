@@ -1,0 +1,44 @@
+name: Segredos
+
+# Varre os commits DESTE envio, nao o historico inteiro: o objetivo e impedir que um segredo novo
+# entre pela porta da frente, e um achado antigo que ja esta no repositorio nao pode deixar o CI
+# vermelho para sempre. O historico completo se varre a mao, com `gitleaks git --log-opts --all`.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Instalar o gitleaks
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz \
+            | tar -xz gitleaks
+          sudo install -m 0755 gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+
+      - name: Varrer os commits deste envio
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            RANGE="${{ github.event.pull_request.base.sha }}..${{ github.sha }}"
+          else
+            RANGE="${{ github.event.before }}..${{ github.sha }}"
+            case "$RANGE" in
+              0000000000000000000000000000000000000000*) RANGE="HEAD~1..HEAD" ;;
+            esac
+          fi
+          echo "faixa varrida: $RANGE"
+          gitleaks git \
+            --config .gitleaks.toml \
+            --log-opts "$RANGE" \
+            --exit-code 1 \
+            --no-banner \
+            --redact \
+            --verbose
