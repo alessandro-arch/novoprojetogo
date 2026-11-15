@@ -89,7 +89,7 @@ const ServiceDeskFirstAccess = () => {
             </div>
           ) : (<>
           <p className="text-muted-foreground mb-6 mt-2">
-            Informe seu vínculo, sua matrícula, seu e-mail pessoal e crie uma senha. Depois, o login será sempre com e-mail e senha.
+            Informe seu vínculo, sua matrícula, o e-mail já cadastrado na sua instituição e crie uma senha. Caso o e-mail esteja ausente ou desatualizado, procure a secretaria. Depois, o login será sempre com e-mail e senha.
           </p>
           <div className="grid grid-cols-2 gap-2 mb-4" role="radiogroup" aria-label="Vínculo">
             {(["aluno", "professor"] as const).map((t) => (

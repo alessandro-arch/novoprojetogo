@@ -1,3 +1,4 @@
+import { matchesInstitutionalContact } from "../_shared/firstAccessPolicy.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.3";
 import { Resend } from "npm:resend@2.0.0";
 
@@ -32,14 +33,15 @@ Deno.serve(async (req) => {
     const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || null;
     const since = new Date(Date.now() - 15 * 60 * 1000).toISOString();
 
-    const [{ count: byMat }, { count: byIp }] = await Promise.all([
+    const [{ count: byMat, error: matError }, { count: byIp, error: ipError }] = await Promise.all([
       admin.from("sd_first_access_attempts").select("id", { count: "exact", head: true })
         .eq("matricula", matricula).eq("success", false).gte("created_at", since),
       ip
         ? admin.from("sd_first_access_attempts").select("id", { count: "exact", head: true })
             .eq("ip", ip).eq("success", false).gte("created_at", since)
-        : Promise.resolve({ count: 0 }),
+        : Promise.resolve({ count: 0, error: null }),
     ]);
+    if (matError || ipError) throw matError || ipError;
     if ((byMat ?? 0) >= 5 || (byIp ?? 0) >= 20)
       return json({ error: "Muitas tentativas. Aguarde 15 minutos e tente novamente." }, 429);
 
@@ -49,13 +51,15 @@ Deno.serve(async (req) => {
     };
 
     const { data: rows, error: qErr } = tipo === "professor"
-      ? await admin.from("sd_faculty").select("id, user_id, status").eq("enrollment", matricula)
-      : await admin.from("sd_students").select("id, user_id, status, service_desk_access_active").eq("enrollment", matricula);
+      ? await admin.from("sd_faculty").select("id, user_id, status, personal_email").eq("enrollment", matricula)
+      : await admin.from("sd_students").select("id, user_id, status, service_desk_access_active, email").eq("enrollment", matricula);
     if (qErr) throw qErr;
     if (!rows || rows.length !== 1) return await fail();
     const st = rows[0];
+    const institutionalEmail = tipo === "professor" ? (st as any).personal_email : (st as any).email;
+    if (!matchesInstitutionalContact(institutionalEmail, email)) return await fail();
     if (st.user_id) return await fail("Esta matrícula já possui cadastro. Use \"Entrar\" ou \"Esqueci minha senha\".", 409);
-    if (tipo === "professor" ? st.status !== "ativo" : (st.status === "trancado" || !st.service_desk_access_active))
+    if (tipo === "professor" ? st.status !== "ativo" : (st.status === "trancado" || !("service_desk_access_active" in st && st.service_desk_access_active)))
       return await fail("Seu acesso ao Service Desk está suspenso. Procure a secretaria do seu programa.", 403);
 
     // Cria a conta sem usar o envio de e-mails do sistema de login (que tem limite por hora)
@@ -74,18 +78,22 @@ Deno.serve(async (req) => {
         return json({ error: "A senha não atende aos requisitos de segurança. Use letras maiúsculas, minúsculas, números e símbolos." }, 422);
       const exists = /already|registered|exists/i.test(m);
       return await fail(exists
-        ? "Este e-mail já está cadastrado no ProjetoGO. Use outro e-mail ou entre com ele."
+        ? "Este e-mail já está cadastrado no ProjetoGO. Entre com ele ou recupere sua senha."
         : "Não foi possível criar o cadastro.", exists ? 409 : 400);
     }
 
-    const { error: uErr } = await admin.from(table)
-      .update(tipo === "professor" ? { user_id: createdUser.id } : { user_id: createdUser.id, email })
-      .eq("id", st.id).is("user_id", null);
+    const { data: claimed, error: uErr } = await admin.from(table)
+      .update({ user_id: createdUser.id })
+      .eq("id", st.id).is("user_id", null).select("id").maybeSingle();
     if (uErr) {
       await admin.auth.admin.deleteUser(createdUser.id);
       throw uErr;
     }
 
+    if (!claimed) {
+      await admin.auth.admin.deleteUser(createdUser.id);
+      return await fail(GENERIC, 409);
+    }
     const actionLink = link.properties?.action_link ?? "";
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
     const { error: sendErr } = await resend.emails.send({
