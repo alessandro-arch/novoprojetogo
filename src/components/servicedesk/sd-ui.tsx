@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, LogOut, LucideIcon } from "lucide-react";
+import { Bell, FileDown, LogOut, LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { StatusBadge, fmtDT, fmtDate, isOpen, STATUS_LABEL } from "./sd-requests";
 import AdminReturnLink from "@/components/admin/AdminReturnLink";
+import { baixarPdfLista, PdfLista } from "@/lib/sd-pdf";
+import { toast } from "sonner";
 
 const db = supabase as any;
 
@@ -179,7 +181,53 @@ export const RequestTable = ({ rows, empty = "Nenhuma solicitação." }: { rows:
   );
 };
 
-export const FilteredRequests = ({ rows, empty }: { rows: any[]; empty?: string }) => {
+// ---------- PDF das listas (somente leitura, mesmas linhas da tela) ----------
+export const PDF_COLUNAS_SOLICITACOES = [
+  { titulo: "Protocolo", largura: 14 }, { titulo: "Solicitante", largura: 24 }, { titulo: "Matrícula", largura: 11 },
+  { titulo: "Tipo", largura: 8 }, { titulo: "Serviço", largura: 20 }, { titulo: "PPG", largura: 18 },
+  { titulo: "Recebido", largura: 15 }, { titulo: "Situação", largura: 20 },
+];
+
+export const linhasSolicitacoesPdf = (rows: any[]) => rows.map((r) => [
+  r.protocol || "-", r.requester_name || "-", r.requester_enrollment || "-", r.requester_kind || "-",
+  r.sd_services?.name || "-", r.requester_program || "-",
+  fmtDate(r.created_at) + (isStale(r) ? ` (parada há mais de ${STALE_DAYS} dias)` : ""),
+  (STATUS_LABEL[r.status] || r.status || "-") + (r.correction_cycle > 0 && r.resubmitted_at && isOpen(r.status) && r.status !== "correcao" ? ` · Correção recebida (#${r.correction_cycle})` : ""),
+]);
+
+export const resumoFiltrosPdf = (rows: any[], f: ReqFilters) => {
+  const partes: string[] = [];
+  if (f.quick !== "todos") partes.push(QUICK.find(([k]) => k === f.quick)?.[1] || f.quick);
+  if (f.q.trim()) partes.push(`busca "${f.q.trim()}"`);
+  if (f.status) partes.push(`situação ${STATUS_LABEL[f.status] || f.status}`);
+  if (f.service) partes.push(`serviço ${rows.find((r) => r.service_id === f.service)?.sd_services?.name || "selecionado"}`);
+  if (f.program) partes.push(`programa ${f.program}`);
+  if (f.from) partes.push(`de ${fmtDate(f.from)}`);
+  if (f.to) partes.push(`até ${fmtDate(f.to)}`);
+  return partes.length ? partes.join(", ") : "nenhum (todas as solicitações da lista)";
+};
+
+/** Botão que baixa a lista visível em PDF. Não grava nada, por isso funciona também no Ver como. */
+export const GerarPdfButton = ({ lista, disabled }: { lista: () => PdfLista; disabled?: boolean }) => (
+  <Button variant="outline" size="sm" disabled={disabled} onClick={() => {
+    try { baixarPdfLista(lista()); toast.success("PDF gerado"); } catch { toast.error("Não foi possível gerar o PDF. Tente novamente."); }
+  }}><FileDown className="w-4 h-4 mr-2" />Gerar PDF</Button>
+);
+
+export const FilteredRequests = ({ rows, empty, pdfTitulo = "Solicitações", pdfContexto }: { rows: any[]; empty?: string; pdfTitulo?: string; pdfContexto?: string }) => {
   const [f, setF] = useState<ReqFilters>(emptyFilters);
-  return <div className="space-y-3"><RequestFilters rows={rows} value={f} onChange={setF} /><RequestTable rows={applyFilters(rows, f)} empty={empty} /></div>;
+  const visiveis = applyFilters(rows, f);
+  return (
+    <div className="space-y-3">
+      <RequestFilters rows={rows} value={f} onChange={setF} />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">{visiveis.length} solicitação(ões) na lista</p>
+        <GerarPdfButton disabled={!visiveis.length} lista={() => ({
+          titulo: f.quick === "pendentes" ? `${pdfTitulo} pendentes` : pdfTitulo, contexto: pdfContexto,
+          filtros: resumoFiltrosPdf(rows, f), colunas: PDF_COLUNAS_SOLICITACOES, linhas: linhasSolicitacoesPdf(visiveis),
+        })} />
+      </div>
+      <RequestTable rows={visiveis} empty={empty} />
+    </div>
+  );
 };

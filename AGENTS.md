@@ -28,3 +28,4 @@
 - Operon user indicators call the aggregate RPC `oe_indicadores_usuarios` (curator-only, allowlisted as read-only in the view-as guard); when the function does not exist yet, the UI shows an activation notice instead of an error.
 - Operon edital values derive in operon-valores: only total/estimado with valor_confirmado_em enter sums; por_agencia, unconfirmed and empty values are always listed separately, never estimated.
 - Operon value writes and individual publication share the confirmation validator in operon-valores; this prevents bypassing the form's observation guard through another frontend write path. Missing-value payloads remain unconfirmed, and no batch confirmation path is introduced.
+- Service Desk list PDFs are built client-side (jsPDF, `src/lib/sd-pdf.ts`) from the exact filtered rows on screen; read-only, so no new queries or permissions and allowed during Ver como.

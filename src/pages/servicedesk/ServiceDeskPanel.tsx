@@ -165,7 +165,7 @@ const AdminArea = ({ orgs, isSuper, userId, areas, onSignOut }: { orgs: any[]; i
             <NotificationBell userId={userId} />
           </div>
         </div>
-        {nav === "queue" && <FilteredRequests rows={allReqs} />}
+        {nav === "queue" && <FilteredRequests rows={allReqs} pdfTitulo="Fila de solicitações" pdfContexto={org.sigla || org.name} />}
         {nav === "users" && <UsersAccessTab orgId={org.id} />}
         {nav === "services" && <ServicesTab orgId={org.id} />}
         {nav === "audit" && <AuditTab orgId={org.id} />}

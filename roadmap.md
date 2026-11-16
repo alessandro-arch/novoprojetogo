@@ -1,4 +1,5 @@
 # Roadmap — Service Desk Acadêmico
+- [x] Service Desk: botão Gerar PDF nas listas (fila do admin, Minha Caixa, Aguardando solicitante, Solicitações, Histórico, Revogações de VPN), com os filtros da tela; testes passaram.
 - [x] Retorno /admin nos cabeçalhos Operon, Fomento e Service Desk; 37 testes passaram, sem mudar autenticação ou permissões.
 - [ ] Conferir retorno dos portais com sessão real. Bloqueio: Supabase externo sem sessão autenticada disponível para teste automatizado.
 
