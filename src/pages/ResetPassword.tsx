@@ -35,6 +35,10 @@ const ResetPassword = () => {
       if (event === "PASSWORD_RECOVERY") {
         setIsRecovery(true);
       }
+      setTimeout(async () => {
+        const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        if (senhaPedeCodigo(data)) setPedeCodigo(true);
+      }, 0);
     });
 
     return () => subscription.unsubscribe();

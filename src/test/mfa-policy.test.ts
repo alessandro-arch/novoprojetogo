@@ -11,3 +11,16 @@ describe("mfa-policy", () => {
   it("só a conta listada é obrigatória", () => { expect(contaMfaObrigatoria("a", { VITE_MFA_REQUIRED_USERS: "a,b" })).toBe(true); expect(contaMfaObrigatoria("c", { VITE_MFA_REQUIRED_USERS: "a" })).toBe(false); });
   it("logins são públicos e painéis não", () => { expect(rotaPublica("/editais/login")).toBe(true); expect(rotaPublica("/admin")).toBe(false); });
 });
+
+import { senhaPedeCodigo } from "@/lib/mfa-policy";
+describe("troca de senha com autenticador", () => {
+  it("pede código quando a conta tem autenticador e a sessão ainda não foi confirmada", () => {
+    expect(senhaPedeCodigo({ currentLevel: "aal1", nextLevel: "aal2" })).toBe(true);
+  });
+  it("não pede código depois de confirmado", () => {
+    expect(senhaPedeCodigo({ currentLevel: "aal2", nextLevel: "aal2" })).toBe(false);
+  });
+  it("não pede código para conta sem autenticador", () => {
+    expect(senhaPedeCodigo({ currentLevel: "aal1", nextLevel: "aal1" })).toBe(false);
+  });
+});
