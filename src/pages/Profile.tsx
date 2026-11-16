@@ -15,7 +15,6 @@ import { Loader2, Save, User, MapPin, Briefcase, Bell, FileText, LogOut, ArrowLe
 import CnpqAreaSelector from "@/components/CnpqAreaSelector";
 import InstitutionSelector from "@/components/InstitutionSelector";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
-import MfaSecurityCard from "@/components/MfaSecurityCard";
 import MeuAcessoCard from "@/components/MeuAcessoCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { subtituloPerfil } from "@/lib/meu-acesso";
@@ -332,7 +331,6 @@ const Profile = () => {
             </CardHeader>
             <CardContent><p className="text-sm font-medium break-all">{profile?.email ?? ""}</p></CardContent>
           </Card>
-          <MfaSecurityCard />
         </TabsContent>
         <TabsContent value="acesso">
           <MeuAcessoCard />
