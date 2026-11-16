@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { SdShell, SdArea, KpiCard, FilteredRequests, RequestTable, isStale } from "./sd-ui";
+import { SdShell, SdArea, KpiCard, FilteredRequests, RequestTable, isStale, GerarPdfButton, PDF_COLUNAS_SOLICITACOES, linhasSolicitacoesPdf } from "./sd-ui";
 import { isOpen, fmtDate } from "./sd-requests";
 
 const db = supabase as any;
@@ -142,9 +142,10 @@ const ServiceCenter = ({ groups, kindOf, userId, areas, onSignOut, canResolveDiv
       )}
       <Routes>
         <Route index element={<Dashboard />} />
-        <Route path="caixa" element={<><h1 className="text-2xl font-bold font-heading">Minha Caixa</h1><FilteredRequests rows={waiting} empty="Nada aguardando sua equipe." />
-          <h2 className="font-semibold mt-6">Aguardando solicitante</h2><RequestTable rows={awaitingRequester} empty="Nenhuma solicitação aguardando correção." /></>} />
-        <Route path="solicitacoes" element={<><h1 className="text-2xl font-bold font-heading">Solicitações</h1><FilteredRequests rows={touched} empty="Nenhuma solicitação." /></>} />
+        <Route path="caixa" element={<><h1 className="text-2xl font-bold font-heading">Minha Caixa</h1><FilteredRequests rows={waiting} empty="Nada aguardando sua equipe." pdfTitulo="Minha Caixa" pdfContexto={ctxLabel} />
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold">Aguardando solicitante</h2>
+            <GerarPdfButton disabled={!awaitingRequester.length} lista={() => ({ titulo: "Aguardando solicitante", contexto: ctxLabel, colunas: PDF_COLUNAS_SOLICITACOES, linhas: linhasSolicitacoesPdf(awaitingRequester) })} /></div><RequestTable rows={awaitingRequester} empty="Nenhuma solicitação aguardando correção." /></>} />
+        <Route path="solicitacoes" element={<><h1 className="text-2xl font-bold font-heading">Solicitações</h1><FilteredRequests rows={touched} empty="Nenhuma solicitação." pdfTitulo="Solicitações" pdfContexto={ctxLabel} /></>} />
         <Route path="prazos" element={
           <div className="space-y-6">
             {isApprover && <div><h1 className="text-2xl font-bold font-heading mb-2">Prazos acadêmicos nos próximos 90 dias</h1>
@@ -155,11 +156,14 @@ const ServiceCenter = ({ groups, kindOf, userId, areas, onSignOut, canResolveDiv
                 </table></div>)}</div>}
             {isExecutor && <div><h2 className="text-xl font-bold font-heading mb-2">Acessos VPN que vencem em {expiryDays} dias</h2><VpnTable rows={expiring} empty="Nenhum vencimento próximo." /></div>}
           </div>} />
-        <Route path="historico" element={<><h1 className="text-2xl font-bold font-heading">Histórico</h1><FilteredRequests rows={closed} empty="Nada no histórico." /></>} />
+        <Route path="historico" element={<><h1 className="text-2xl font-bold font-heading">Histórico</h1><FilteredRequests rows={closed} empty="Nada no histórico." pdfTitulo="Histórico" pdfContexto={ctxLabel} /></>} />
         {isExecutor && <Route path="vpn" element={<div className="space-y-6">
           <div><h1 className="text-2xl font-bold font-heading mb-2">Acessos ativos</h1><VpnTable rows={vpnActive} empty="Nenhum acesso ativo." /></div>
           <div><h2 className="text-xl font-bold font-heading mb-2">Vencimentos próximos</h2><VpnTable rows={expiring} empty="Nenhum vencimento próximo." /></div>
-          <div><h2 className="text-xl font-bold font-heading mb-2">Revogações pendentes</h2><VpnTable rows={toRevoke} empty="Nenhuma revogação pendente." /></div>
+          <div><div className="mb-2 flex flex-wrap items-center justify-between gap-2"><h2 className="text-xl font-bold font-heading">Revogações pendentes</h2>
+            <GerarPdfButton disabled={!toRevoke.length} lista={() => ({ titulo: "Revogações de VPN pendentes", contexto: ctxLabel,
+              colunas: ["Solicitante", "Matrícula", "Protocolo", "Programa", "Liberação", "Validade", "IP"].map((t) => ({ titulo: t, largura: t === "Solicitante" ? 24 : t === "Programa" ? 18 : 12 })),
+              linhas: toRevoke.map((r: any) => [r.requester_name, r.requester_enrollment, r.protocol, r.requester_program || "-", fmtDate(r.vpn_released_at), fmtDate(r.vpn_valid_until), r.vpn_ip || "-"]) })} /></div><VpnTable rows={toRevoke} empty="Nenhuma revogação pendente." /></div>
         </div>} />}
         {canDiv && <Route path="divergencias" element={<Divergences divs={divs} orgId={orgIds.join(",")} />} />}
         <Route path="*" element={<Navigate to={BASE} replace />} />
