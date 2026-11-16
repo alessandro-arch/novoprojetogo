@@ -41,8 +41,8 @@ describe("organização principal do Service Desk", () => {
       from: (tabela: string) => ({
         select: () => ({
           in: (col: string, ids: string[]) => ({
-            eq: (key: string, valor: string) => {
-              chamadas.push({ tabela, col, ids, key, valor });
+            eq: (colunaFiltro: string, valorFiltro: string) => {
+              chamadas.push({ tabela, col, ids, colunaFiltro, valorFiltro });
               return Promise.resolve({ data: [{ organization_id: UVV.id, value: true }] });
             },
           }),
@@ -52,7 +52,12 @@ describe("organização principal do Service Desk", () => {
     const r = await organizacoesComPrincipal(db, [ICCA, UVV]);
     expect(r.orgs.map((o) => o.sigla)).toEqual(["UVV", "ICCA"]);
     expect(r.principalId).toBe(UVV.id);
-    expect(chamadas[0]).toMatchObject({ tabela: "sd_settings", key: SD_ORG_PRINCIPAL_KEY });
+    expect(chamadas[0]).toMatchObject({
+      tabela: "sd_settings",
+      col: "organization_id",
+      colunaFiltro: "key",
+      valorFiltro: SD_ORG_PRINCIPAL_KEY,
+    });
     expect(chamadas[0].ids.sort()).toEqual([ICCA.id, UVV.id].sort());
   });
 
