@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Loader2, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { passwordReturnPath } from "@/lib/password-return";
+import { Input } from "@/components/ui/input";
+import { codigoValido, senhaPedeCodigo } from "@/lib/mfa-policy";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -15,6 +17,8 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [isRecovery, setIsRecovery] = useState(false);
+  const [pedeCodigo, setPedeCodigo] = useState(false);
+  const [codigo, setCodigo] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -49,11 +53,41 @@ const ResetPassword = () => {
     }
 
     setLoading(true);
+    const { data: nivel } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (senhaPedeCodigo(nivel)) {
+      if (!pedeCodigo) {
+        setPedeCodigo(true);
+        setLoading(false);
+        return;
+      }
+      if (!codigoValido(codigo)) {
+        setLoading(false);
+        toast({ title: "Digite os 6 números do aplicativo autenticador.", variant: "destructive" });
+        return;
+      }
+      const { data: f } = await supabase.auth.mfa.listFactors();
+      const fator = (f?.totp ?? []).find((x) => x.status === "verified");
+      const verif = fator
+        ? await supabase.auth.mfa.challengeAndVerify({ factorId: fator.id, code: codigo })
+        : { error: new Error("sem fator") };
+      setCodigo("");
+      if (verif.error) {
+        setLoading(false);
+        toast({ title: "Código incorreto ou vencido", description: "Confira o aplicativo autenticador e tente de novo.", variant: "destructive" });
+        return;
+      }
+    }
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
 
     if (error) {
-      toast({ title: "Erro ao redefinir senha", description: error.message, variant: "destructive" });
+      const aal = /aal2|insufficient_aal/i.test(error.message);
+      if (aal) setPedeCodigo(true);
+      toast({
+        title: "Erro ao redefinir senha",
+        description: aal ? "Digite o código do aplicativo autenticador para continuar." : error.message,
+        variant: "destructive",
+      });
     } else {
       setSuccess(true);
     }
@@ -127,6 +161,24 @@ const ResetPassword = () => {
               className="mt-1"
             />
           </div>
+          {pedeCodigo && (
+            <div>
+              <Label htmlFor="mfa-reset-code">Código do aplicativo autenticador</Label>
+              <p className="text-sm text-muted-foreground mt-1">
+                Sua conta usa verificação em duas etapas. Digite os 6 números que aparecem no aplicativo.
+              </p>
+              <Input
+                id="mfa-reset-code"
+                autoFocus
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                value={codigo}
+                onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ""))}
+                className="mt-2 text-center text-lg tracking-widest"
+              />
+            </div>
+          )}
           <Button type="submit" className="w-full min-h-[44px]" size="lg" disabled={loading}>
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
             Redefinir senha
