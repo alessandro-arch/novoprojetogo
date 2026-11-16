@@ -229,6 +229,7 @@ const InstitutionTab = ({ org, isSuper }: { org: any; isSuper: boolean }) => {
           <Button onClick={save}>Salvar</Button>
         </CardContent>
       </Card>
+      <PrincipalCard org={org} />
       {isSuper && (
         <Card className="rounded-xl">
           <CardHeader><CardTitle className="text-base">Nova instituição</CardTitle></CardHeader>
@@ -240,6 +241,54 @@ const InstitutionTab = ({ org, isSuper }: { org: any; isSuper: boolean }) => {
         </Card>
       )}
     </div>
+  );
+};
+
+/**
+ * Marca (ou retira) a instituição principal do Service Desk.
+ * A escolha fica em sd_settings, não no código: cada instituição pode ser a principal.
+ */
+const PrincipalCard = ({ org }: { org: any }) => {
+  const qc = useQueryClient();
+  const { data: isPrincipal } = useQuery({
+    queryKey: ["sd-org-principal", org.id],
+    queryFn: async () =>
+      (await db.from("sd_settings").select("value").eq("organization_id", org.id).eq("key", SD_ORG_PRINCIPAL_KEY).maybeSingle()).data?.value === true,
+  });
+
+  const marcar = async (valor: boolean) => {
+    if (valor) {
+      // Só uma instituição pode ser a principal: a RLS limita a limpeza às instituições que a pessoa administra.
+      const { error: limpar } = await db.from("sd_settings").delete().eq("key", SD_ORG_PRINCIPAL_KEY).neq("organization_id", org.id);
+      if (limpar) return toast.error("Erro ao atualizar: " + limpar.message);
+      const { error } = await db
+        .from("sd_settings")
+        .upsert(
+          { organization_id: org.id, key: SD_ORG_PRINCIPAL_KEY, value: true, description: DESCRICAO_ORG_PRINCIPAL },
+          { onConflict: "organization_id,key" },
+        );
+      if (error) return toast.error("Erro ao atualizar: " + error.message);
+      toast.success(`${org.sigla || org.name} é a instituição principal do Service Desk`);
+    } else {
+      const { error } = await db.from("sd_settings").delete().eq("organization_id", org.id).eq("key", SD_ORG_PRINCIPAL_KEY);
+      if (error) return toast.error("Erro ao atualizar: " + error.message);
+      toast.success(`${org.sigla || org.name} deixou de ser a instituição principal`);
+    }
+    qc.invalidateQueries({ queryKey: ["sd-orgs"] });
+    qc.invalidateQueries({ queryKey: ["sd-org-principal"] });
+  };
+
+  return (
+    <Card className="rounded-xl">
+      <CardHeader><CardTitle className="text-base">Instituição principal do Service Desk</CardTitle></CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">{DESCRICAO_ORG_PRINCIPAL}</p>
+        <Badge variant={isPrincipal ? "default" : "outline"}>{isPrincipal ? "É a instituição principal" : "Não é a instituição principal"}</Badge>
+        {isPrincipal
+          ? <Button size="sm" variant="outline" onClick={() => marcar(false)}>Tirar de principal</Button>
+          : <Button size="sm" onClick={() => marcar(true)}>Definir como principal</Button>}
+      </CardContent>
+    </Card>
   );
 };
 
