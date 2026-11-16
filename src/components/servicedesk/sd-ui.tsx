@@ -184,8 +184,8 @@ export const RequestTable = ({ rows, empty = "Nenhuma solicitação." }: { rows:
 // ---------- PDF das listas (somente leitura, mesmas linhas da tela) ----------
 export const PDF_COLUNAS_SOLICITACOES = [
   { titulo: "Protocolo", largura: 14 }, { titulo: "Solicitante", largura: 24 }, { titulo: "Matrícula", largura: 11 },
-  { titulo: "Tipo", largura: 9 }, { titulo: "Serviço", largura: 20 }, { titulo: "PPG", largura: 18 },
-  { titulo: "Recebido", largura: 10 }, { titulo: "Situação", largura: 20 },
+  { titulo: "Tipo", largura: 8 }, { titulo: "Serviço", largura: 20 }, { titulo: "PPG", largura: 18 },
+  { titulo: "Recebido", largura: 15 }, { titulo: "Situação", largura: 20 },
 ];
 
 export const linhasSolicitacoesPdf = (rows: any[]) => rows.map((r) => [
