@@ -8,6 +8,7 @@ import ServiceCenter, { PanelKind, SdGroup } from "@/components/servicedesk/Serv
 import RequestDetail from "@/components/servicedesk/RequestDetail";
 import { SdArea, NotificationBell, FilteredRequests } from "@/components/servicedesk/sd-ui";
 import { UsersAccessTab, ServicesTab, AuditTab } from "@/components/servicedesk/AdminExtras";
+import { DESCRICAO_ORG_PRINCIPAL, SD_ORG_PRINCIPAL_KEY, organizacoesComPrincipal } from "@/lib/sd-org";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useViewAs } from "@/lib/view-as";
@@ -56,18 +57,27 @@ const ServiceDeskPanel = () => {
   const isSuper = globalRole === "icca_admin";
   const simKey = sim ? `${sim.papel}:${sim.orgId}:${sim.grupoId}` : "real";
 
-  const { data: orgs, isLoading } = useQuery({
+  const { data: orgData, isLoading } = useQuery({
     queryKey: ["sd-orgs", user?.id, isSuper, simKey],
     enabled: !!user,
     queryFn: async () => {
-      if (sim && !isSuper) return [];
-      if (isSuper) return (await db.from("organizations").select("*").order("name")).data || [];
-      const { data: m } = await db.from("sd_members").select("organization_id, role").eq("user_id", user!.id).eq("role", "admin").eq("status", "ativo");
-      const ids = (m || []).map((x: any) => x.organization_id);
-      if (!ids.length) return [];
-      return (await db.from("organizations").select("*").in("id", ids)).data || [];
+      const vazio = { orgs: [] as any[], principalId: null as string | null };
+      if (sim && !isSuper) return vazio;
+      let rows: any[];
+      if (isSuper) {
+        rows = (await db.from("organizations").select("*").order("name")).data || [];
+      } else {
+        const { data: m } = await db.from("sd_members").select("organization_id, role").eq("user_id", user!.id).eq("role", "admin").eq("status", "ativo");
+        const ids = (m || []).map((x: any) => x.organization_id);
+        if (!ids.length) return vazio;
+        rows = (await db.from("organizations").select("*").in("id", ids)).data || [];
+      }
+      return await organizacoesComPrincipal(db, rows);
     },
   });
+  // A instituição principal (sd_settings) vem primeiro e é a que abre no painel.
+  const orgs = orgData?.orgs ?? [];
+  const principalId = orgData?.principalId ?? null;
   const { data: myGroups, isLoading: loadingGroups } = useQuery({
     queryKey: ["sd-my-groups", user?.id, simKey],
     enabled: !!user,
@@ -85,7 +95,7 @@ const ServiceDeskPanel = () => {
   // Simulação de solicitante: abre o Portal; os dados exibidos continuam os da conta real.
   const requester = sim ? (sim.papel === "sd_solicitante" ? (requesterReal ?? { simulado: true }) : null) : requesterReal;
   // Grupos visíveis: os meus + (para administradores) todos os grupos das instituições que administro.
-  const adminOrgIds = (orgs || []).map((o: any) => o.id);
+  const adminOrgIds = orgs.map((o: any) => o.id);
   const { data: adminGroups = [] } = useQuery({
     queryKey: ["sd-admin-groups", adminOrgIds.join(",")], enabled: adminOrgIds.length > 0,
     queryFn: async () => (await db.from("sd_groups").select("id, code, name, organization_id").in("organization_id", adminOrgIds).eq("is_active", true).order("code")).data || [],
@@ -108,7 +118,7 @@ const ServiceDeskPanel = () => {
   const areas: SdArea[] = [
     ...(requester ? [{ path: "/servicedesk/portal", label: "Meu Service Desk" }] : []),
     ...(panelGroups.length ? [{ path: "/servicedesk/atendimento", label: "Central de Atendimento" }] : []),
-    ...(orgs?.length ? [{ path: "/servicedesk/admin", label: "Administração" }] : []),
+    ...(orgs.length ? [{ path: "/servicedesk/admin", label: "Administração" }] : []),
   ];
   const home = areas.find((a) => a.path !== "/servicedesk/admin")?.path || areas[0]?.path;
 
@@ -118,7 +128,7 @@ const ServiceDeskPanel = () => {
     <Routes>
       <Route index element={<Navigate to={home} replace />} />
       <Route path="portal/*" element={requester ? <RequesterHome userId={user.id} onSignOut={() => signOut("/servicedesk/login")} noAccessMessage="" areas={areas} /> : <Navigate to={home} replace />} />
-      <Route path="admin/*" element={orgs?.length ? <AdminArea orgs={orgs} isSuper={isSuper} userId={user.id} areas={areas} onSignOut={() => signOut("/servicedesk/login")} /> : <Navigate to={home} replace />} />
+      <Route path="admin/*" element={orgs.length ? <AdminArea orgs={orgs} principalId={principalId} isSuper={isSuper} userId={user.id} areas={areas} onSignOut={() => signOut("/servicedesk/login")} /> : <Navigate to={home} replace />} />
       <Route path="solicitacao/:id" element={<div className="min-h-screen bg-background"><RequestDetail userId={user.id} isAdminOf={isAdminOf} /></div>} />
       <Route path="atendimento/*" element={panelGroups.length ? <ServiceCenter groups={panelGroups} kindOf={kindOf} userId={user.id} areas={areas} onSignOut={() => signOut("/servicedesk/login")} canResolveDivergences={(g) => isAdminOf(g.organization_id) || kindOf(g) === "approver"} /> : <Navigate to={home} replace />} />
       <Route path=":groupCode/*" element={<LegacyGroupRedirect groups={panelGroups} home={home} />} />
@@ -133,7 +143,7 @@ const LegacyGroupRedirect = ({ groups, home }: { groups: SdGroup[]; home: string
   return <Navigate to={g ? `/servicedesk/atendimento?grupo=${g.code.toLowerCase()}` : home} replace />;
 };
 
-const AdminArea = ({ orgs, isSuper, userId, areas, onSignOut }: { orgs: any[]; isSuper: boolean; userId: string; areas: SdArea[]; onSignOut: () => void }) => {
+const AdminArea = ({ orgs, principalId, isSuper, userId, areas, onSignOut }: { orgs: any[]; principalId: string | null; isSuper: boolean; userId: string; areas: SdArea[]; onSignOut: () => void }) => {
   const [nav, setNav] = useState("queue");
   const [orgId, setOrgId] = useState<string>(orgs[0].id);
   const navigate = useNavigate();
@@ -159,7 +169,7 @@ const AdminArea = ({ orgs, isSuper, userId, areas, onSignOut }: { orgs: any[]; i
             )}
             {orgs.length > 1 && (
               <select aria-label="Instituição" className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={org.id} onChange={(e) => setOrgId(e.target.value)}>
-                {orgs.map((o: any) => <option key={o.id} value={o.id}>{o.sigla || o.name}</option>)}
+                {orgs.map((o: any) => <option key={o.id} value={o.id}>{o.sigla || o.name}{o.id === principalId ? " · principal" : ""}</option>)}
               </select>
             )}
             <NotificationBell userId={userId} />
@@ -219,6 +229,7 @@ const InstitutionTab = ({ org, isSuper }: { org: any; isSuper: boolean }) => {
           <Button onClick={save}>Salvar</Button>
         </CardContent>
       </Card>
+      <PrincipalCard org={org} />
       {isSuper && (
         <Card className="rounded-xl">
           <CardHeader><CardTitle className="text-base">Nova instituição</CardTitle></CardHeader>
@@ -230,6 +241,54 @@ const InstitutionTab = ({ org, isSuper }: { org: any; isSuper: boolean }) => {
         </Card>
       )}
     </div>
+  );
+};
+
+/**
+ * Marca (ou retira) a instituição principal do Service Desk.
+ * A escolha fica em sd_settings, não no código: cada instituição pode ser a principal.
+ */
+const PrincipalCard = ({ org }: { org: any }) => {
+  const qc = useQueryClient();
+  const { data: isPrincipal } = useQuery({
+    queryKey: ["sd-org-principal", org.id],
+    queryFn: async () =>
+      (await db.from("sd_settings").select("value").eq("organization_id", org.id).eq("key", SD_ORG_PRINCIPAL_KEY).maybeSingle()).data?.value === true,
+  });
+
+  const marcar = async (valor: boolean) => {
+    if (valor) {
+      // Só uma instituição pode ser a principal: a RLS limita a limpeza às instituições que a pessoa administra.
+      const { error: limpar } = await db.from("sd_settings").delete().eq("key", SD_ORG_PRINCIPAL_KEY).neq("organization_id", org.id);
+      if (limpar) return toast.error("Erro ao atualizar: " + limpar.message);
+      const { error } = await db
+        .from("sd_settings")
+        .upsert(
+          { organization_id: org.id, key: SD_ORG_PRINCIPAL_KEY, value: true, description: DESCRICAO_ORG_PRINCIPAL },
+          { onConflict: "organization_id,key" },
+        );
+      if (error) return toast.error("Erro ao atualizar: " + error.message);
+      toast.success(`${org.sigla || org.name} é a instituição principal do Service Desk`);
+    } else {
+      const { error } = await db.from("sd_settings").delete().eq("organization_id", org.id).eq("key", SD_ORG_PRINCIPAL_KEY);
+      if (error) return toast.error("Erro ao atualizar: " + error.message);
+      toast.success(`${org.sigla || org.name} deixou de ser a instituição principal`);
+    }
+    qc.invalidateQueries({ queryKey: ["sd-orgs"] });
+    qc.invalidateQueries({ queryKey: ["sd-org-principal"] });
+  };
+
+  return (
+    <Card className="rounded-xl">
+      <CardHeader><CardTitle className="text-base">Instituição principal do Service Desk</CardTitle></CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">{DESCRICAO_ORG_PRINCIPAL}</p>
+        <Badge variant={isPrincipal ? "default" : "outline"}>{isPrincipal ? "É a instituição principal" : "Não é a instituição principal"}</Badge>
+        {isPrincipal
+          ? <Button size="sm" variant="outline" onClick={() => marcar(false)}>Tirar de principal</Button>
+          : <Button size="sm" onClick={() => marcar(true)}>Definir como principal</Button>}
+      </CardContent>
+    </Card>
   );
 };
 
