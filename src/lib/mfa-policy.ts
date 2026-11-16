@@ -26,3 +26,7 @@ export const passoMfa = (e: MfaEstado): MfaPasso => {
 };
 
 export const codigoValido = (c: string) => /^\d{6}$/.test(c);
+
+// Troca de senha com autenticador ativo exige sessão confirmada pelo código (aal2).
+export const senhaPedeCodigo = (a: { currentLevel: string | null; nextLevel: string | null } | null) =>
+  !!a && a.nextLevel === "aal2" && a.currentLevel !== "aal2";
