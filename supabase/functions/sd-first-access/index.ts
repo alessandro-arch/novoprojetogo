@@ -1,4 +1,4 @@
-import { matchesInstitutionalContact } from "../_shared/firstAccessPolicy.ts";
+import { canResendUnconfirmedSignup, matchesInstitutionalContact } from "../_shared/firstAccessPolicy.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.3";
 import { Resend } from "npm:resend@2.0.0";
 
@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
       const { data: existing, error: gErr } = await admin.auth.admin.getUserById(st.user_id);
       if (gErr) throw gErr;
       const u = existing?.user;
-      if (!u || u.email_confirmed_at || u.last_sign_in_at || u.email?.toLowerCase() !== email)
+      if (!u || !canResendUnconfirmedSignup(u, email))
         return await fail(ALREADY, 409);
       if (suspended) return await fail("Seu acesso ao Service Desk está suspenso. Procure a secretaria do seu programa.", 403);
       const { error: pErr } = await admin.auth.admin.updateUserById(u.id, { password });
