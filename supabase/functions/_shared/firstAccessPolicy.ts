@@ -20,3 +20,14 @@ export async function findAuthUserByEmail(api: any, email: string) {
   // Never treat an incomplete lookup as proof that the account does not exist.
   throw new Error("User lookup pagination limit reached");
 }
+/**
+ * A first-access account may be re-sent its confirmation only while it was never confirmed nor used,
+ * and only to the same address already proven against the institutional record.
+ */
+export function canResendUnconfirmedSignup(
+  user: { email?: string | null; email_confirmed_at?: string | null; last_sign_in_at?: string | null } | null | undefined,
+  suppliedEmail: string,
+): boolean {
+  return !!user && !user.email_confirmed_at && !user.last_sign_in_at &&
+    typeof user.email === "string" && user.email.trim().toLowerCase() === suppliedEmail.trim().toLowerCase();
+}
