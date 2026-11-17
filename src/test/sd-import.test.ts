@@ -107,6 +107,23 @@ describe("Homologação Fase 2 — importação", () => {
     expect(r[0].extra.links).toEqual([{ programId: "p-arq", relationshipType: "Permanente" }]);
   });
 
+  it("professores: mesma pessoa PJ sem matrícula em dois programas vira um só cadastro", () => {
+    const sheet = readSheet(xlsx([
+      ["TIPO de Vínculo", "Matricula", "Nome", "Programa", "Vínculo"],
+      ["Pessoa Jurídica", "PJ", "Agda Regina de Carvalho", "PPGAC", "Permanente"],
+      ["Pessoa Jurídica", "PJ", "Agda Regina de Carvalho", "Biotecnologia Vegetal", "Colaborador (a)"],
+      ["Pessoa Jurídica", "PJ", "Outra Pessoa PJ", "PPGAC", "Permanente"],
+    ]));
+    const fixed = { id: "p-arq", name: "Arquitetura e Cidade", sigla: "PPGAC" };
+    const r = reconcileFaculty(sheet, { programs: [...programs, fixed], existing: [], links: [], contracts: ["CLT", "PJ"] });
+    const agda = r.filter((x) => x.data?.full_name === "Agda Regina de Carvalho");
+    expect(agda).toHaveLength(1);
+    expect(agda[0].enrollment).toBe("PJ-0001");
+    expect(agda[0].extra.progIds).toHaveLength(2);
+    expect(r.find((x) => x.data?.full_name === "Outra Pessoa PJ")!.enrollment).toBe("PJ-0002");
+    expect(r.some((x) => x.outcome === "erro")).toBe(false);
+  });
+
   it("alunos: nome similar de orientador usa o nome oficial do cadastro de professores", () => {
     const fac = [
       { id: "id-F1", enrollment: "F1", full_name: "Augusto César Salomão Mozine", can_advise: true },

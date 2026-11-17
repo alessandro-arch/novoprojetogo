@@ -138,6 +138,8 @@ export function reconcileFaculty(sheet: any[], ctx: { programs: any[]; fixedProg
   // Continua a partir do maior número já existente na base.
   const pjNum = (enr: unknown) => { const m = /^PJ-(\d+)$/.exec(String(enr ?? "")); return m ? parseInt(m[1], 10) : 0; };
   let pjNext = Math.max(0, ...ctx.existing.map((f) => pjNum(f.enrollment))) + 1;
+  // Mesma pessoa PJ em várias linhas (ex.: uma por programa) reutiliza o número gerado nesta importação.
+  const pjAssigned = new Map<string, string>();
   sheet.forEach((r, i) => {
     const line = r.__line ?? i + 2; const enrollment = String(pick(r, "enrollment") ?? "").trim(); const errs: string[] = [];
     const full_name = String(pick(r, "full_name") ?? "").trim(); if (!full_name) errs.push("nome vazio");
@@ -165,7 +167,10 @@ export function reconcileFaculty(sheet: any[], ctx: { programs: any[]; fixedProg
     if (isPjPlaceholder) {
       const legacy = `PJ-${norm(full_name).toUpperCase().replace(/_/g, "-")}`;
       const byName = ctx.existing.find((f) => /^PJ-\d+$/.test(String(f.enrollment ?? "")) && norm(f.full_name) === norm(full_name));
-      identity = byEnr.has(legacy) ? legacy : byName ? byName.enrollment : `PJ-${String(pjNext++).padStart(4, "0")}`;
+      const nameKey = norm(full_name);
+      identity = byEnr.has(legacy) ? legacy : byName ? byName.enrollment
+        : pjAssigned.get(nameKey) ?? `PJ-${String(pjNext++).padStart(4, "0")}`;
+      if (nameKey) pjAssigned.set(nameKey, identity);
     }
     if (!identity) errs.push("matrícula vazia");
     if (seen.has(identity)) {
