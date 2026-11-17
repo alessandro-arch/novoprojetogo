@@ -12,6 +12,26 @@ const json = (b: unknown, s = 200) =>
 
 const GENERIC = "Não foi possível validar a matrícula. Confira os dados ou procure a secretaria do seu programa.";
 
+async function sendConfirmation(to: string, actionLink: string, resent: boolean): Promise<boolean> {
+  const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+  const intro = resent
+    ? "Recebemos um novo pedido de primeiro acesso ao Service Desk. O link anterior não vale mais. Para ativar a sua conta, confirme o seu e-mail clicando no botão abaixo:"
+    : "Recebemos o seu primeiro acesso ao Service Desk. Para ativar a sua conta, confirme o seu e-mail clicando no botão abaixo:";
+  const { error } = await resend.emails.send({
+    from: "ProjetoGO <noreply@innovago.app>",
+    to: [to],
+    subject: "Confirme seu e-mail, Service Desk ProjetoGO",
+    html: `<div style="font-family:Arial,sans-serif;max-width:560px">
+      <p>Olá!</p>
+      <p>${intro}</p>
+      <p><a href="${actionLink}" style="background:#1e3a5f;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;display:inline-block">Confirmar e-mail</a></p>
+      <p>Depois, entre sempre em <a href="https://projetogo.innovago.app/servicedesk/login">projetogo.innovago.app/servicedesk/login</a> com este e-mail e a senha criada no primeiro acesso.</p>
+      <p style="color:#666;font-size:12px">Se você não fez este cadastro, ignore este e-mail.</p></div>`,
+  });
+  if (error) console.error("sd-first-access resend", error);
+  return !error;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   if (req.method !== "POST") return json({ error: "Método inválido" }, 405);
@@ -58,8 +78,41 @@ Deno.serve(async (req) => {
     const st = rows[0];
     const institutionalEmail = tipo === "professor" ? (st as any).personal_email : (st as any).email;
     if (!matchesInstitutionalContact(institutionalEmail, email)) return await fail();
-    if (st.user_id) return await fail("Esta matrícula já possui cadastro. Use \"Entrar\" ou \"Esqueci minha senha\".", 409);
-    if (tipo === "professor" ? st.status !== "ativo" : (st.status === "trancado" || !("service_desk_access_active" in st && st.service_desk_access_active)))
+    const suspended = tipo === "professor"
+      ? st.status !== "ativo"
+      : (st.status === "trancado" || !("service_desk_access_active" in st && st.service_desk_access_active));
+    const ALREADY = "Esta matrícula já possui cadastro. Use \"Entrar\" ou \"Esqueci minha senha\".";
+    if (st.user_id) {
+      // Cadastro iniciado e nunca confirmado: a mesma prova do primeiro acesso (matrícula + e-mail
+      // registrado pela instituição) permite trocar a senha e reenviar o link de confirmação.
+      const { data: existing, error: gErr } = await admin.auth.admin.getUserById(st.user_id);
+      if (gErr) throw gErr;
+      const u = existing?.user;
+      if (!u || u.email_confirmed_at || u.last_sign_in_at || u.email?.toLowerCase() !== email)
+        return await fail(ALREADY, 409);
+      if (suspended) return await fail("Seu acesso ao Service Desk está suspenso. Procure a secretaria do seu programa.", 403);
+      const { error: pErr } = await admin.auth.admin.updateUserById(u.id, { password });
+      if (pErr) {
+        const m = pErr.message ?? "";
+        console.error("sd-first-access resend password", matricula, pErr.status, (pErr as any)?.code);
+        if (/weak|easy to guess|pwned|leaked/i.test(m))
+          return json({ error: "Esta senha é muito comum e foi recusada por segurança. Crie uma senha diferente, misturando letras maiúsculas, minúsculas, números e símbolos." }, 422);
+        return json({ error: "A senha não atende aos requisitos de segurança. Use letras maiúsculas, minúsculas, números e símbolos." }, 422);
+      }
+      const { data: again, error: lErr } = await admin.auth.admin.generateLink({
+        type: "signup", email, password, options: { redirectTo },
+      });
+      const againLink = again?.properties?.action_link;
+      if (lErr || !againLink) {
+        console.error("sd-first-access resend link", matricula, lErr?.status, (lErr as any)?.code);
+        return json({ error: "Não foi possível gerar um novo link agora. Tente novamente em alguns minutos." }, 502);
+      }
+      const sent = await sendConfirmation(email, againLink, true);
+      if (!sent) return json({ error: "Não foi possível enviar o e-mail de confirmação. Tente mais tarde." }, 502);
+      await admin.from("sd_first_access_attempts").insert({ matricula, ip, success: true });
+      return json({ ok: true, needsConfirmation: true, resent: true });
+    }
+    if (suspended)
       return await fail("Seu acesso ao Service Desk está suspenso. Procure a secretaria do seu programa.", 403);
 
     // Cria a conta sem usar o envio de e-mails do sistema de login (que tem limite por hora)
@@ -95,20 +148,8 @@ Deno.serve(async (req) => {
       return await fail(GENERIC, 409);
     }
     const actionLink = link.properties?.action_link ?? "";
-    const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-    const { error: sendErr } = await resend.emails.send({
-      from: "ProjetoGO <noreply@innovago.app>",
-      to: [email],
-      subject: "Confirme seu e-mail, Service Desk ProjetoGO",
-      html: `<div style="font-family:Arial,sans-serif;max-width:560px">
-        <p>Olá!</p>
-        <p>Recebemos o seu primeiro acesso ao Service Desk. Para ativar a sua conta, confirme o seu e-mail clicando no botão abaixo:</p>
-        <p><a href="${actionLink}" style="background:#1e3a5f;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;display:inline-block">Confirmar e-mail</a></p>
-        <p>Depois, entre sempre em <a href="https://projetogo.innovago.app/servicedesk/login">projetogo.innovago.app/servicedesk/login</a> com este e-mail e a senha criada.</p>
-        <p style="color:#666;font-size:12px">Se você não fez este cadastro, ignore este e-mail.</p></div>`,
-    });
+    const sendErr = !(await sendConfirmation(email, actionLink, false));
     if (sendErr) {
-      console.error("sd-first-access resend", sendErr);
       await admin.from(table).update({ user_id: null }).eq("id", st.id).eq("user_id", createdUser.id);
       await admin.auth.admin.deleteUser(createdUser.id);
       return json({ error: "Não foi possível enviar o e-mail de confirmação. Confira o e-mail informado ou tente mais tarde." }, 502);
