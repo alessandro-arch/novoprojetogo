@@ -29,4 +29,4 @@
 - Operon edital values derive in operon-valores: only total/estimado with valor_confirmado_em enter sums; por_agencia, unconfirmed and empty values are always listed separately, never estimated.
 - Operon value writes and individual publication share the confirmation validator in operon-valores; this prevents bypassing the form's observation guard through another frontend write path. Missing-value payloads remain unconfirmed, and no batch confirmation path is introduced.
 - Service Desk list PDFs are built client-side (jsPDF, `src/lib/sd-pdf.ts`) from the exact filtered rows on screen; read-only, so no new queries or permissions and allowed during Ver como.
-- Service Desk first access re-sends confirmation (and resets the password) only for linked accounts never confirmed nor signed in, matched to the same institutional e-mail via `canResendUnconfirmedSignup`; this unblocks abandoned sign-ups without trusting any new contact.
+- SD first access re-sends confirmation only for never-confirmed, never-used accounts with the same institutional e-mail (`canResendUnconfirmedSignup`); unblocks abandoned sign-ups.
