@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
 
     const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: r } = await admin.from("sd_requests").select("*, sd_services(name)").eq("id", request_id).single();
-    const { data: ev } = await admin.from("sd_request_events").select("note").eq("request_id", request_id).order("created_at", { ascending: false }).limit(1).maybeSingle();
+    const { data: ev } = await admin.from("sd_request_events").select("note, actor_name").eq("request_id", request_id).order("created_at", { ascending: false }).limit(1).maybeSingle();
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
     const svc = esc(r.sd_services?.name || "Solicitação");
     const note = ev?.note ? `<p><b>Observação:</b> ${esc(ev.note)}</p>` : "";
@@ -104,10 +104,18 @@ Caso a VPN não conecte ou o Portal CAPES não reconheça o acesso institucional
       if (ids.length) {
         const { data: ps } = await admin.from("profiles").select("email").in("user_id", ids);
         const emails = (ps || []).map((p: any) => p.email).filter(Boolean);
+        const { data: grp } = await admin.from("sd_groups").select("name").eq("id", r.current_group_id).maybeSingle();
+        const grpName = grp?.name ? esc(grp.name) : "sua equipe";
         if (emails.length) await resend.emails.send({
           from: "ProjetoGO <noreply@innovago.app>", to: emails,
-          subject: event === "reenviar" ? `Correção recebida: ${svc} | ${r.protocol}` : `Nova solicitação na sua fila: ${svc}`,
-          html: `<p>Há uma solicitação aguardando sua equipe.</p><p><b>${svc}</b>, ${esc(r.requester_name)} (${esc(r.requester_enrollment)})</p><p><a href="${reqLink}">Abrir a solicitação</a></p>`,
+          subject: event === "reenviar"
+            ? `Correção recebida: ${svc} | ${r.protocol}`
+            : event === "aprovar"
+              ? `Autorizada, aguarda execução da ${grpName}: ${svc} | ${r.protocol}`
+              : `Nova solicitação para análise: ${svc} | ${r.protocol}`,
+          html: event === "aprovar"
+            ? `<p>Olá.</p><p>A solicitação <b>${protocol}</b> (<b>${svc}</b>) foi <b>autorizada</b>${ev?.actor_name ? ` por ${esc(ev.actor_name)}` : ""} e agora <b>aguarda a execução da ${grpName}</b>.</p><p>Solicitante: ${esc(r.requester_name)} (matrícula ${esc(r.requester_enrollment || "")})${r.requester_program ? `, ${esc(r.requester_program)}` : ""}</p>${note}<p><a href="${reqLink}" style="display:inline-block;padding:10px 16px;background:#1e2433;color:#fff;border-radius:8px;text-decoration:none">Executar a solicitação</a></p>`
+            : `<p>Há uma solicitação aguardando sua equipe.</p><p><b>${svc}</b> (protocolo <b>${protocol}</b>), ${esc(r.requester_name)} (${esc(r.requester_enrollment || "")})</p><p><a href="${reqLink}">Abrir a solicitação</a></p>`,
         });
       }
     }
