@@ -18,6 +18,7 @@ const ServiceDeskFirstAccess = () => {
   const [loading, setLoading] = useState(false);
   const [tipo, setTipo] = useState<"aluno" | "professor">("aluno");
   const [sentTo, setSentTo] = useState<string | null>(null);
+  const [resent, setResent] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -58,6 +59,7 @@ const ServiceDeskFirstAccess = () => {
     }
     setLoading(false);
     if (data?.needsConfirmation) {
+      setResent(!!data?.resent);
       setSentTo(email.trim().toLowerCase());
       return;
     }
@@ -83,6 +85,9 @@ const ServiceDeskFirstAccess = () => {
           </div>
           {sentTo ? (
             <div className="mt-4 space-y-4">
+              {resent && (
+                <p className="text-sm text-foreground">Você já tinha começado o cadastro, mas o e-mail não foi confirmado. Enviamos um novo link, e a senha que você acabou de criar passa a valer.</p>
+              )}
               <p className="text-foreground">Quase pronto! Enviamos um link de confirmação para <strong>{sentTo}</strong>.</p>
               <p className="text-sm text-muted-foreground">Abra o e-mail e clique no link. Depois, entre sempre com seu e-mail e senha. Se não encontrar, verifique a caixa de spam.</p>
               <Button asChild className="w-full min-h-[44px]"><Link to="/servicedesk/login">Ir para o login</Link></Button>
