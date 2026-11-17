@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
-import { Headset, ArrowLeft, Loader2 } from "lucide-react";
+import { Headset, ArrowLeft, Loader2, MailWarning } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { translateAuthError } from "@/lib/auth-errors";
 import Seo from "@/components/Seo";
@@ -14,6 +15,7 @@ const ServiceDeskLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [unconfirmed, setUnconfirmed] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -22,6 +24,7 @@ const ServiceDeskLogin = () => {
     if (!email.trim() || !password.trim()) return;
 
     setLoading(true);
+    setUnconfirmed(false);
 
     const { data: authData, error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
@@ -30,6 +33,7 @@ const ServiceDeskLogin = () => {
 
     if (error) {
       setLoading(false);
+      if (/email not confirmed/i.test(error.message)) setUnconfirmed(true);
       toast({
         title: "Erro ao entrar",
         description: translateAuthError(error.message),
@@ -105,6 +109,17 @@ const ServiceDeskLogin = () => {
             <p className="text-muted-foreground mb-6">
               Acesse os serviços e solicitações da sua instituição
             </p>
+
+            {unconfirmed && (
+              <Alert className="mb-4 border-primary/40 bg-primary/5">
+                <MailWarning className="h-5 w-5" />
+                <AlertTitle className="font-semibold">Seu e-mail ainda não foi confirmado</AlertTitle>
+                <AlertDescription className="space-y-2">
+                  <p>Abra o e-mail do ProjetoGO e clique no link de confirmação. Olhe também a caixa de spam.</p>
+                  <p>Não encontrou ou o link venceu? Faça o <Link to="/servicedesk/primeiro-acesso" className="font-medium underline underline-offset-2">primeiro acesso</Link> de novo com os mesmos dados para receber um novo link.</p>
+                </AlertDescription>
+              </Alert>
+            )}
 
             <form onSubmit={handleLogin} className="space-y-4">
               <div>

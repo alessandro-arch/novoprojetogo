@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
-import { Headset, ArrowLeft, Loader2, AlertTriangle } from "lucide-react";
+import { Headset, ArrowLeft, Loader2, AlertTriangle, MailCheck } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import Seo from "@/components/Seo";
 import { isCommonPassword, COMMON_PASSWORD_WARNING } from "@/lib/common-passwords";
@@ -61,6 +62,7 @@ const ServiceDeskFirstAccess = () => {
     if (data?.needsConfirmation) {
       setResent(!!data?.resent);
       setSentTo(email.trim().toLowerCase());
+      toast({ title: "Cadastro feito! Agora confirme seu e-mail", description: "Você só consegue entrar depois de clicar no link que enviamos." });
       return;
     }
     toast({ title: "Cadastro concluído", description: "Entre com seu e-mail e senha." });
@@ -85,12 +87,25 @@ const ServiceDeskFirstAccess = () => {
           </div>
           {sentTo ? (
             <div className="mt-4 space-y-4">
+              <Alert className="border-primary/40 bg-primary/5">
+                <MailCheck className="h-5 w-5" />
+                <AlertTitle className="text-base font-semibold">Falta só confirmar seu e-mail</AlertTitle>
+                <AlertDescription className="space-y-2">
+                  <p>Seu cadastro foi feito. Enviamos um link de confirmação para <strong className="break-all">{sentTo}</strong>.</p>
+                  <p className="font-medium">Você só consegue entrar depois de clicar nesse link.</p>
+                </AlertDescription>
+              </Alert>
               {resent && (
                 <p className="text-sm text-foreground">Você já tinha começado o cadastro, mas o e-mail não foi confirmado. Enviamos um novo link, e a senha que você acabou de criar passa a valer.</p>
               )}
-              <p className="text-foreground">Quase pronto! Enviamos um link de confirmação para <strong>{sentTo}</strong>.</p>
-              <p className="text-sm text-muted-foreground">Abra o e-mail e clique no link. Depois, entre sempre com seu e-mail e senha. Se não encontrar, verifique a caixa de spam.</p>
-              <Button asChild className="w-full min-h-[44px]"><Link to="/servicedesk/login">Ir para o login</Link></Button>
+              <ol className="list-decimal pl-5 space-y-1.5 text-sm text-foreground">
+                <li>Abra a caixa de entrada desse e-mail.</li>
+                <li>Procure a mensagem do ProjetoGO. Se não encontrar, olhe a caixa de spam ou lixo eletrônico.</li>
+                <li>Clique no link de confirmação. Use sempre o e-mail mais recente.</li>
+                <li>Volte aqui e entre com seu e-mail e a senha que você criou.</li>
+              </ol>
+              <p className="text-xs text-muted-foreground">Não chegou ou o link venceu? Faça o primeiro acesso de novo com os mesmos dados e enviaremos um novo link.</p>
+              <Button asChild className="w-full min-h-[44px]"><Link to="/servicedesk/login">Já confirmei, ir para o login</Link></Button>
             </div>
           ) : (<>
           <p className="text-muted-foreground mb-6 mt-2">
