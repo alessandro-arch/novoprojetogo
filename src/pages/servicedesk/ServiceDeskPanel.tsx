@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2, Users, UsersRound, Settings, Loader2, Plus, Trash2, Pencil, BookOpen, GraduationCap, Briefcase, FileSpreadsheet, Inbox, UserCog, LayoutList, ScrollText } from "lucide-react";
-import { ProgramsTab, StudentsTab, FacultyTab, ImportTab } from "@/components/servicedesk/SdBases";
+import { ProgramsTab, StudentsTab, FacultyTab, StaffTab, ImportTab } from "@/components/servicedesk/SdBases";
 import RequesterHome, { useRequester } from "@/components/servicedesk/RequesterHome";
 import ServiceCenter, { PanelKind, SdGroup } from "@/components/servicedesk/ServiceCenter";
 import RequestDetail from "@/components/servicedesk/RequestDetail";
@@ -35,6 +35,7 @@ const NAV = [
   { key: "programs", label: "Programas", icon: BookOpen },
   { key: "students", label: "Alunos", icon: GraduationCap },
   { key: "faculty", label: "Professores", icon: Briefcase },
+  { key: "staff", label: "Técnicos-administrativos", icon: UserCog },
   { key: "imports", label: "Importação Excel", icon: FileSpreadsheet },
   { key: "settings", label: "Configurações", icon: Settings },
 ];
@@ -185,6 +186,7 @@ const AdminArea = ({ orgs, principalId, isSuper, userId, areas, onSignOut }: { o
         {nav === "programs" && <ProgramsTab orgId={org.id} />}
         {nav === "students" && <StudentsTab orgId={org.id} />}
         {nav === "faculty" && <FacultyTab orgId={org.id} />}
+        {nav === "staff" && <StaffTab orgId={org.id} />}
         {nav === "imports" && <ImportTab orgId={org.id} orgLabel={org.sigla || org.name} />}
         {nav === "settings" && <SettingsTab orgId={org.id} />}
       </div>

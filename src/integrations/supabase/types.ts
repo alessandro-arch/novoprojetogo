@@ -3896,6 +3896,56 @@ export type Database = {
           },
         ]
       }
+      sd_staff: {
+        Row: {
+          created_at: string
+          department: string | null
+          email: string | null
+          enrollment: string
+          full_name: string
+          id: string
+          organization_id: string
+          service_desk_access_active: boolean
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          enrollment: string
+          full_name: string
+          id?: string
+          organization_id: string
+          service_desk_access_active?: boolean
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          enrollment?: string
+          full_name?: string
+          id?: string
+          organization_id?: string
+          service_desk_access_active?: boolean
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sd_staff_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sd_students: {
         Row: {
           absent_in_last_import: boolean

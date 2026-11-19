@@ -17,7 +17,7 @@ const ServiceDeskFirstAccess = () => {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
-  const [tipo, setTipo] = useState<"aluno" | "professor">("aluno");
+  const [tipo, setTipo] = useState<"aluno" | "professor" | "tecnico">("aluno");
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [resent, setResent] = useState(false);
   const navigate = useNavigate();
@@ -111,11 +111,11 @@ const ServiceDeskFirstAccess = () => {
           <p className="text-muted-foreground mb-6 mt-2">
             Informe seu vínculo, sua matrícula, o e-mail já cadastrado na sua instituição e crie uma senha. Caso o e-mail esteja ausente ou desatualizado, procure a secretaria. Depois, o login será sempre com e-mail e senha.
           </p>
-          <div className="grid grid-cols-2 gap-2 mb-4" role="radiogroup" aria-label="Vínculo">
-            {(["aluno", "professor"] as const).map((t) => (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4" role="radiogroup" aria-label="Vínculo">
+            {(["aluno", "professor", "tecnico"] as const).map((t) => (
               <Button key={t} type="button" role="radio" aria-checked={tipo === t}
                 variant={tipo === t ? "default" : "outline"} className="min-h-[44px]" onClick={() => setTipo(t)}>
-                {t === "aluno" ? "Sou aluno" : "Sou professor"}
+                {t === "aluno" ? "Sou aluno" : t === "professor" ? "Sou professor" : "Sou técnico"}
               </Button>
             ))}
           </div>

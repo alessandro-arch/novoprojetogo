@@ -40,8 +40,8 @@ Deno.serve(async (req) => {
     const matricula = String(body.matricula ?? "").trim();
     const email = String(body.email ?? "").trim().toLowerCase();
     const password = String(body.password ?? "");
-    const tipo = body.tipo === "professor" ? "professor" : "aluno";
-    const table = tipo === "professor" ? "sd_faculty" : "sd_students";
+    const tipo = body.tipo === "professor" ? "professor" : body.tipo === "tecnico" ? "tecnico" : "aluno";
+    const table = tipo === "professor" ? "sd_faculty" : tipo === "tecnico" ? "sd_staff" : "sd_students";
     const rawRedirect = String(body.redirectTo ?? "");
     const redirectTo = /^https:\/\/([a-z0-9-]+\.)*(innovago\.app|lovable\.app)(\/|$)|^http:\/\/localhost(:\d+)?(\/|$)/i.test(rawRedirect)
       ? rawRedirect : "https://projetogo.innovago.app/servicedesk/login";
@@ -72,6 +72,8 @@ Deno.serve(async (req) => {
 
     const { data: rows, error: qErr } = tipo === "professor"
       ? await admin.from("sd_faculty").select("id, user_id, status, personal_email").eq("enrollment", matricula)
+      : tipo === "tecnico"
+      ? await admin.from("sd_staff").select("id, user_id, status, service_desk_access_active, email").eq("enrollment", matricula)
       : await admin.from("sd_students").select("id, user_id, status, service_desk_access_active, email").eq("enrollment", matricula);
     if (qErr) throw qErr;
     if (!rows || rows.length !== 1) return await fail();
@@ -80,6 +82,8 @@ Deno.serve(async (req) => {
     if (!matchesInstitutionalContact(institutionalEmail, email)) return await fail();
     const suspended = tipo === "professor"
       ? st.status !== "ativo"
+      : tipo === "tecnico"
+      ? (st.status !== "ativo" || !(st as any).service_desk_access_active)
       : (st.status === "trancado" || !("service_desk_access_active" in st && st.service_desk_access_active));
     const ALREADY = "Esta matrícula já possui cadastro. Use \"Entrar\" ou \"Esqueci minha senha\".";
     if (st.user_id) {

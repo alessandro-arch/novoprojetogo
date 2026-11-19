@@ -202,6 +202,67 @@ export const FacultyTab = ({ orgId }: { orgId: string }) => {
   );
 };
 
+/* ---------------- Técnicos-administrativos ---------------- */
+export const StaffTab = ({ orgId }: { orgId: string }) => {
+  const [q, setQ] = useState("");
+  const [f, setF] = useState({ enrollment: "", full_name: "", email: "", department: "" });
+  const [busy, setBusy] = useState(false);
+  const { data, refetch } = useQuery({
+    queryKey: ["sd-staff", orgId],
+    queryFn: async () => (await db.from("sd_staff").select("*").eq("organization_id", orgId).order("full_name")).data || [],
+  });
+  const rows = (data || []).filter((t: any) => !q || t.full_name.toLowerCase().includes(q.toLowerCase()) || t.enrollment.includes(q));
+  const upd = async (id: string, patch: any) => {
+    const { error } = await db.from("sd_staff").update(patch).eq("id", id);
+    if (error) return toast.error("Erro: " + error.message);
+    toast.success("Atualizado"); refetch();
+  };
+  const add = async () => {
+    const enrollment = f.enrollment.trim(); const full_name = f.full_name.trim(); const email = f.email.trim().toLowerCase();
+    if (!enrollment || full_name.length < 3) return toast.error("Informe matrícula funcional e nome completo.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return toast.error("Informe um e-mail institucional válido.");
+    setBusy(true);
+    const { error } = await db.from("sd_staff").insert({ organization_id: orgId, enrollment, full_name, email, department: f.department.trim() || null });
+    setBusy(false);
+    if (error) return toast.error(error.code === "23505" ? "Já existe um técnico com essa matrícula." : "Erro: " + error.message);
+    toast.success("Técnico cadastrado"); setF({ enrollment: "", full_name: "", email: "", department: "" }); refetch();
+  };
+  return (
+    <div className="space-y-4">
+      <Card className="rounded-xl">
+        <CardHeader><CardTitle className="text-base">Cadastrar técnico-administrativo</CardTitle></CardHeader>
+        <CardContent className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+          <div><Label htmlFor="st-mat">Matrícula funcional</Label><Input id="st-mat" value={f.enrollment} onChange={(e) => setF({ ...f, enrollment: e.target.value })} /></div>
+          <div><Label htmlFor="st-nome">Nome completo</Label><Input id="st-nome" value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} /></div>
+          <div><Label htmlFor="st-email">E-mail institucional</Label><Input id="st-email" type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></div>
+          <div><Label htmlFor="st-setor">Setor</Label><Input id="st-setor" placeholder="Ex.: Biblioteca Central" value={f.department} onChange={(e) => setF({ ...f, department: e.target.value })} /></div>
+          <div className="sm:col-span-2 lg:col-span-4"><Button onClick={add} disabled={busy}><Plus className="w-4 h-4 mr-1" />Cadastrar</Button></div>
+        </CardContent>
+      </Card>
+      <Input className="max-w-xs" placeholder="Buscar nome ou matrícula" value={q} onChange={(e) => setQ(e.target.value)} />
+      <p className="text-sm text-muted-foreground">{rows.length} técnico(s) · {rows.filter((t: any) => t.user_id).length} com conta criada</p>
+      <div className="overflow-x-auto rounded-xl border border-border">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/50 text-left"><tr>{["Matrícula", "Nome", "E-mail", "Setor", "Conta", "Situação", ""].map((h) => <th key={h} className="p-2 font-medium">{h}</th>)}</tr></thead>
+          <tbody>
+            {rows.map((t: any) => (
+              <tr key={t.id} className="border-t border-border">
+                <td className="p-2">{t.enrollment}</td><td className="p-2">{t.full_name}</td><td className="p-2">{t.email || "-"}</td><td className="p-2">{t.department || "-"}</td>
+                <td className="p-2">{t.user_id ? "Criada" : "Ainda não"}</td>
+                <td className="p-2"><Badge variant={t.status === "ativo" && t.service_desk_access_active ? "default" : "secondary"}>{t.status === "ativo" && t.service_desk_access_active ? "ativo" : "suspenso"}</Badge></td>
+                <td className="p-2 whitespace-nowrap">{t.status === "ativo" && t.service_desk_access_active
+                  ? <Button size="sm" variant="ghost" onClick={() => upd(t.id, { service_desk_access_active: false })}><UserX className="w-4 h-4 mr-1" />Suspender</Button>
+                  : <Button size="sm" variant="outline" onClick={() => upd(t.id, { status: "ativo", service_desk_access_active: true })}><UserCheck className="w-4 h-4 mr-1" />Reativar</Button>}</td>
+              </tr>
+            ))}
+            {!rows.length && <tr><td colSpan={7} className="p-4 text-center text-muted-foreground">Nenhum técnico cadastrado.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
 /* ---------------- Importação ---------------- */
 const LABEL: Record<Outcome, string> = { novo: "Novos", alterado: "Alterados", sem_alteracao: "Sem alterações", ausente: "Ausentes na nova base", erro: "Inconsistências" };
 

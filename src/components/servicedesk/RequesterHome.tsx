@@ -30,6 +30,8 @@ export const useRequester = (userId?: string) =>
       if (st) return { kind: "aluno" as const, row: st };
       const { data: fa } = await db.from("sd_faculty").select("*, sd_faculty_programs(relationship_type, sd_programs(name, sigla))").eq("user_id", userId).maybeSingle();
       if (fa) return { kind: "professor" as const, row: fa };
+      const { data: tc } = await db.from("sd_staff").select("*").eq("user_id", userId).maybeSingle();
+      if (tc) return { kind: "tecnico" as const, row: tc };
       return null;
     },
   });
@@ -86,8 +88,10 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
 
   const r = data.row;
   const isStudent = data.kind === "aluno";
-  const suspended = isStudent ? (r.status === "trancado" || !r.service_desk_access_active) : r.status !== "ativo";
-  const currentEmail = isStudent ? r.email : r.personal_email;
+  const isStaff = data.kind === "tecnico";
+  const suspended = isStudent ? (r.status === "trancado" || !r.service_desk_access_active)
+    : isStaff ? (r.status !== "ativo" || !r.service_desk_access_active) : r.status !== "ativo";
+  const currentEmail = isStudent || isStaff ? r.email : r.personal_email;
   const c = contact ?? { email: currentEmail || "", phone: r.phone || "" };
   const progs = (r.sd_faculty_programs || []).map((p: any) => `${p.sd_programs?.sigla || p.sd_programs?.name}${p.relationship_type ? " · " + p.relationship_type : ""}`).join(", ");
 
@@ -98,6 +102,11 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
         ["Orientador(a)", r.advisor?.full_name || "-"], ["Prazo regular", fmt(r.regular_deadline)],
         ["Prazo vigente", fmt(r.current_deadline)], ["Situação", r.status || "-"],
       ]
+    : isStaff
+    ? [
+        ["Nome", r.full_name], ["Matrícula funcional", r.enrollment], ["Setor", r.department || "-"],
+        ["E-mail institucional", r.email || "-"], ["Situação", r.status || "-"],
+      ]
     : [
         ["Nome", r.full_name], ["Matrícula", r.enrollment], ["Tipo de contrato", r.contract_type || "-"],
         ["Programas", progs || "-"], ["Situação do vínculo", r.status || "-"],
@@ -107,7 +116,7 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
   const openReqs = (requests || []).filter((q: any) => isOpen(q.status));
   const pendencias: { text: string; tone: "alert" | "warn" }[] = [
     ...(!c.email ? [{ text: "Informe seu e-mail pessoal em Meu perfil.", tone: "alert" as const }] : []),
-    ...(!r.phone ? [{ text: "Informe seu celular com WhatsApp em Meu perfil.", tone: "alert" as const }] : []),
+    ...(!r.phone && !isStaff ? [{ text: "Informe seu celular com WhatsApp em Meu perfil.", tone: "alert" as const }] : []),
     ...(suspended ? [{ text: "Seu acesso a novas solicitações está suspenso. Fale com a secretaria do programa.", tone: "warn" as const }] : []),
   ];
   const unread = (notifs || []).filter((n: any) => !n.read_at).length;
@@ -202,15 +211,15 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
     { to: `${BASE}/cadastro`, label: "Meu perfil", icon: UserCircle },
   ];
   const first = r.full_name?.split(" ")[0];
-  const subtitle = isStudent ? `${r.level ? r.level[0].toUpperCase() + r.level.slice(1) : ""} em ${r.sd_programs?.name || "-"} · Matrícula ${r.enrollment}` : `Vínculo: ${r.contract_type || "-"} · Situação: ${r.status} · Matrícula ${r.enrollment}`;
+  const subtitle = isStaff ? `Técnico-administrativo · ${r.department || "Setor não informado"} · Matrícula ${r.enrollment}` : isStudent ? `${r.level ? r.level[0].toUpperCase() + r.level.slice(1) : ""} em ${r.sd_programs?.name || "-"} · Matrícula ${r.enrollment}` : `Vínculo: ${r.contract_type || "-"} · Situação: ${r.status} · Matrícula ${r.enrollment}`;
 
   return (
-    <SdShell title="Meu Service Desk" subtitle={isStudent ? "Área do aluno" : "Área do professor"} userId={userId} areas={areas} nav={nav} onSignOut={onSignOut}>
+    <SdShell title="Meu Service Desk" subtitle={isStudent ? "Área do aluno" : isStaff ? "Área do técnico-administrativo" : "Área do professor"} userId={userId} areas={areas} nav={nav} onSignOut={onSignOut}>
       <Routes>
         <Route index element={
           <div className="space-y-6">
             <div>
-              <h1 className="text-2xl font-bold font-heading">Olá, {isStudent ? "" : "Professor(a) "}{first}</h1>
+              <h1 className="text-2xl font-bold font-heading">Olá, {isStudent || isStaff ? "" : "Professor(a) "}{first}</h1>
               <p className="text-sm text-muted-foreground">{subtitle}</p>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -230,7 +239,7 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
               <Card className="rounded-xl"><CardHeader><CardTitle className="text-base">Solicitações recentes</CardTitle></CardHeader><CardContent><RequestsList rows={(requests || []).slice(0, 3)} /></CardContent></Card>
             </div>
             <Card className="rounded-xl"><CardHeader><CardTitle className="text-base">Prazos</CardTitle></CardHeader><CardContent className="text-sm space-y-1">
-              {isStudent ? <><p>Prazo regular: <b>{fmt(r.regular_deadline)}</b></p><p>Prazo vigente: <b>{fmt(r.current_deadline)}</b></p></> : <p>Prazo do vínculo: <b>{r.contract_type === "CLT" ? "Indeterminado" : fmt(r.bond_deadline)}</b></p>}
+              {isStaff ? <p>Setor: <b>{r.department || "-"}</b></p> : isStudent ? <><p>Prazo regular: <b>{fmt(r.regular_deadline)}</b></p><p>Prazo vigente: <b>{fmt(r.current_deadline)}</b></p></> : <p>Prazo do vínculo: <b>{r.contract_type === "CLT" ? "Indeterminado" : fmt(r.bond_deadline)}</b></p>}
               <p className="text-xs text-muted-foreground">A validade de acessos (como a VPN) aparecerá aqui quando estiverem ativos.</p>
             </CardContent></Card>
           </div>
@@ -272,15 +281,15 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
                 )}
               </CardContent>
             </Card>
-            <Card className="rounded-xl">
+            {!isStaff && <Card className="rounded-xl">
               <CardHeader><CardTitle className="text-base flex items-center gap-2"><Mail className="w-4 h-4" />Meu contato</CardTitle></CardHeader>
               <CardContent className="grid sm:grid-cols-2 gap-3">
                 <div><Label>E-mail pessoal</Label><Input type="email" value={c.email} onChange={(e) => setContact({ ...c, email: e.target.value })} /></div>
                 <div><Label>Celular com WhatsApp</Label><Input value={c.phone} placeholder="(27) 99999-9999" onChange={(e) => setContact({ ...c, phone: e.target.value })} /></div>
                 <div className="sm:col-span-2"><Button onClick={saveContact} disabled={busy || !contact}>Salvar contato</Button></div>
               </CardContent>
-            </Card>
-            {!isStudent && (
+            </Card>}
+            {data.kind === "professor" && (
               <Card className="rounded-xl">
                 <CardHeader><CardTitle className="text-base flex items-center gap-2"><Users className="w-4 h-4" />Meus orientandos</CardTitle></CardHeader>
                 <CardContent>

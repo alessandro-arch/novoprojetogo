@@ -47,6 +47,11 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
     queryFn: async () => (await db.from("sd_faculty").select("contract_type, status, bond_deadline, sd_faculty_programs(relationship_type, sd_programs(name, sigla))").eq("organization_id", r.organization_id).eq("enrollment", r.requester_enrollment).maybeSingle()).data,
   });
 
+  const { data: staff } = useQuery({
+    queryKey: ["sd-req-staff", r?.organization_id, r?.requester_enrollment], enabled: r?.requester_kind === "tecnico",
+    queryFn: async () => (await db.from("sd_staff").select("department, status, email").eq("organization_id", r.organization_id).eq("enrollment", r.requester_enrollment).maybeSingle()).data,
+  });
+
   const { data: vpnInstructions } = useQuery({
     queryKey: ["sd-vpn-instructions", r?.organization_id], enabled: !!r?.organization_id && !!r?.vpn_status,
     queryFn: async () => (await db.from("sd_settings").select("value").eq("organization_id", r.organization_id).eq("key", "vpn_instructions").maybeSingle()).data?.value as string | undefined,
@@ -136,7 +141,7 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
 
   const facProgs = (faculty?.sd_faculty_programs || []).map((p: any) => p.sd_programs?.sigla || p.sd_programs?.name).filter(Boolean).join(", ");
   const info: [string, string][] = [
-    ["Solicitante", r.requester_name], ["Matrícula", r.requester_enrollment], ["Tipo", r.requester_kind],
+    ["Solicitante", r.requester_name], ["Matrícula", r.requester_enrollment], ["Tipo", r.requester_kind === "tecnico" ? "técnico-administrativo" : r.requester_kind], ...(staff ? [["Setor", staff.department || "-"]] as [string, string][] : []),
     ["Programa", student?.sd_programs?.name || facProgs || r.requester_program || "-"],
     ...(student ? [["Nível", student.level || "-"], ["Orientador(a)", student.advisor?.full_name || "-"], ["Ingresso", fmtDate(student.entry_date)], ["Prazo vigente", fmtDate(student.current_deadline)]] as [string, string][] : []),
     ...(faculty ? [["Contrato", faculty.contract_type || "-"], ["Situação do vínculo", faculty.status || "-"], ["Prazo do vínculo", faculty.contract_type === "CLT" ? "Indeterminado" : fmtDate(faculty.bond_deadline)]] as [string, string][] : []),
