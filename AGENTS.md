@@ -30,4 +30,4 @@
 - Operon value writes and individual publication share the confirmation validator in operon-valores; this prevents bypassing the form's observation guard through another frontend write path. Missing-value payloads remain unconfirmed, and no batch confirmation path is introduced.
 - Service Desk list PDFs are built client-side (jsPDF, `src/lib/sd-pdf.ts`) from the exact filtered rows on screen; read-only, so no new queries or permissions and allowed during Ver como.
 - SD first access re-sends confirmation only for never-confirmed, never-used accounts with the same institutional e-mail (`canResendUnconfirmedSignup`); unblocks abandoned sign-ups.
-- Service Desk requesters are students (`sd_students`), faculty (`sd_faculty`) or technical-administrative staff (`sd_staff`, kind `tecnico`, linked to a department instead of a program); `sd_me` resolves all three so requests and approvals reuse one flow.
+- SD requesters: `sd_students`, `sd_faculty`, `sd_staff` (kind `tecnico`, department not program); `sd_me` resolves all three so one request flow serves all.
