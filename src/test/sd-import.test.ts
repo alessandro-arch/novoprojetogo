@@ -150,3 +150,25 @@ describe("Homologação Fase 2 — importação", () => {
     expect(b3.message).toContain("ambíguo");
   });
 });
+
+describe("Importação de alunos da graduação", () => {
+  const grad = [{ id: "p-dir", name: "Direito" }, { id: "p-med", name: "Medicina" }];
+  it("aceita nível Graduação e rejeita nível desconhecido", () => {
+    const sheet = readSheet(xlsx([
+      ["Matrícula", "Nome", "Nível", "Situação", "E-mail"],
+      ["G1", "Lia", "Graduação", "Cursando", "lia@uvv.br"],
+      ["G2", "Rui", "Especialização", "Ativo", "rui@uvv.br"],
+    ]));
+    const r = reconcileStudents(sheet, { programs: grad, fixedProg: grad[0], existing: [], faculty: [] });
+    expect(r.find((x) => x.enrollment === "G1")!.data).toMatchObject({ level: "graduacao", program_id: "p-dir", status: "ativo" });
+    expect(r.find((x) => x.enrollment === "G2")!.message).toContain("nível deve ser Graduação, Mestrado ou Doutorado");
+  });
+  it("coluna Curso com nome do curso vira o curso quando nenhum foi selecionado", () => {
+    const sheet = readSheet(xlsx([
+      ["Matrícula", "Nome", "Curso", "Nível", "Situação"],
+      ["G3", "Ana", "Medicina", "Graduação", "Ativo"],
+    ]));
+    const r = reconcileStudents(sheet, { programs: grad, existing: [], faculty: [] });
+    expect(r[0].data).toMatchObject({ level: "graduacao", program_id: "p-med" });
+  });
+});

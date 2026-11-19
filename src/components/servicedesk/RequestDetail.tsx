@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { levelLabel } from "@/lib/sd-levels";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, Loader2, AlertTriangle, Download, Send } from "lucide-react";
@@ -143,7 +144,7 @@ const RequestDetail = ({ userId, isAdminOf }: { userId: string; isAdminOf: (orgI
   const info: [string, string][] = [
     ["Solicitante", r.requester_name], ["Matrícula", r.requester_enrollment], ["Tipo", r.requester_kind === "tecnico" ? "técnico-administrativo" : r.requester_kind], ...(staff ? [["Setor", staff.department || "-"]] as [string, string][] : []),
     ["Programa", student?.sd_programs?.name || facProgs || r.requester_program || "-"],
-    ...(student ? [["Nível", student.level || "-"], ["Orientador(a)", student.advisor?.full_name || "-"], ["Ingresso", fmtDate(student.entry_date)], ["Prazo vigente", fmtDate(student.current_deadline)]] as [string, string][] : []),
+    ...(student ? [["Nível", levelLabel(student.level)], ["Orientador(a)", student.advisor?.full_name || "-"], ["Ingresso", fmtDate(student.entry_date)], ["Prazo vigente", fmtDate(student.current_deadline)]] as [string, string][] : []),
     ...(faculty ? [["Contrato", faculty.contract_type || "-"], ["Situação do vínculo", faculty.status || "-"], ["Prazo do vínculo", faculty.contract_type === "CLT" ? "Indeterminado" : fmtDate(faculty.bond_deadline)]] as [string, string][] : []),
     ["E-mail", r.requester_email || "-"],
   ];

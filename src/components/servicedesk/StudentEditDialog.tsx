@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { SD_LEVELS } from "@/lib/sd-levels";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -62,7 +63,7 @@ export function StudentEditDialog({ student, programs, advisors, onOpenChange, o
           <div><Label>E-mail</Label><Input className={field} type="email" value={values.email ?? ""} onChange={(e) => set("email", e.target.value)} /></div>
           <div><Label>Turma</Label><Input className={field} value={values.turma ?? ""} onChange={(e) => set("turma", e.target.value)} /></div>
           <div><Label>Programa</Label><select className={select} value={values.program_id ?? "__none__"} onChange={(e) => set("program_id", e.target.value)}><option value="__none__">Sem programa</option>{programs.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-          <div><Label>Nível</Label><select className={select} value={values.level ?? "mestrado"} onChange={(e) => set("level", e.target.value)}><option value="mestrado">Mestrado</option><option value="doutorado">Doutorado</option></select></div>
+          <div><Label>Nível</Label><select className={select} value={values.level ?? "mestrado"} onChange={(e) => set("level", e.target.value)}>{SD_LEVELS.map((l) => <option key={l.value} value={l.value}>{l.label}</option>)}</select></div>
           <div><Label>Ingresso</Label><Input className={field} type="date" value={values.entry_date ?? ""} onChange={(e) => set("entry_date", e.target.value)} /></div>
           <div><Label>Término previsto</Label><Input className={field} type="date" value={values.expected_end ?? ""} onChange={(e) => set("expected_end", e.target.value)} /></div>
           <div><Label>Orientador</Label><select className={select} value={values.advisor_id ?? "__none__"} onChange={(e) => set("advisor_id", e.target.value)}><option value="__none__">Sem orientador</option>{advisors.map((a) => <option key={a.id} value={a.id}>{a.full_name}</option>)}</select></div>

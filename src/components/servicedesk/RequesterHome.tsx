@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { levelLabel } from "@/lib/sd-levels";
 import { Link, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, LogOut, ShieldCheck, Mail, AlertTriangle, ClipboardList, Users, Home, Bell, UserCircle } from "lucide-react";
@@ -98,7 +99,7 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
   const fields: [string, string][] = isStudent
     ? [
         ["Nome", r.full_name], ["Matrícula", r.enrollment], ["Programa", r.sd_programs?.name || "-"],
-        ["Nível", r.level || "-"], ["Turma", r.turma || "-"], ["Ingresso", fmt(r.entry_date)],
+        ["Nível", levelLabel(r.level)], ["Turma", r.turma || "-"], ["Ingresso", fmt(r.entry_date)],
         ["Orientador(a)", r.advisor?.full_name || "-"], ["Prazo regular", fmt(r.regular_deadline)],
         ["Prazo vigente", fmt(r.current_deadline)], ["Situação", r.status || "-"],
       ]
@@ -211,7 +212,7 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
     { to: `${BASE}/cadastro`, label: "Meu perfil", icon: UserCircle },
   ];
   const first = r.full_name?.split(" ")[0];
-  const subtitle = isStaff ? `Técnico-administrativo · ${r.department || "Setor não informado"} · Matrícula ${r.enrollment}` : isStudent ? `${r.level ? r.level[0].toUpperCase() + r.level.slice(1) : ""} em ${r.sd_programs?.name || "-"} · Matrícula ${r.enrollment}` : `Vínculo: ${r.contract_type || "-"} · Situação: ${r.status} · Matrícula ${r.enrollment}`;
+  const subtitle = isStaff ? `Técnico-administrativo · ${r.department || "Setor não informado"} · Matrícula ${r.enrollment}` : isStudent ? `${r.level ? levelLabel(r.level) : ""} em ${r.sd_programs?.name || "-"} · Matrícula ${r.enrollment}` : `Vínculo: ${r.contract_type || "-"} · Situação: ${r.status} · Matrícula ${r.enrollment}`;
 
   return (
     <SdShell title="Meu Service Desk" subtitle={isStudent ? "Área do aluno" : isStaff ? "Área do técnico-administrativo" : "Área do professor"} userId={userId} areas={areas} nav={nav} onSignOut={onSignOut}>
@@ -297,7 +298,7 @@ const RequesterHome = ({ userId, onSignOut, noAccessMessage, areas = [] }: Props
                     <div className="overflow-x-auto"><table className="w-full text-sm">
                       <thead><tr className="text-left text-xs text-muted-foreground"><th className="py-1 pr-2">Matrícula</th><th className="pr-2">Nome</th><th className="pr-2">Programa</th><th className="pr-2">Nível</th><th className="pr-2">Prazo vigente</th><th>Situação</th></tr></thead>
                       <tbody>{advisees.map((a: any) => (
-                        <tr key={a.enrollment} className="border-t"><td className="py-1 pr-2">{a.enrollment}</td><td className="pr-2">{a.full_name}</td><td className="pr-2">{a.sd_programs?.sigla || a.sd_programs?.name}</td><td className="pr-2 capitalize">{a.level}</td><td className="pr-2">{fmt(a.current_deadline)}</td><td>{a.status}</td></tr>
+                        <tr key={a.enrollment} className="border-t"><td className="py-1 pr-2">{a.enrollment}</td><td className="pr-2">{a.full_name}</td><td className="pr-2">{a.sd_programs?.sigla || a.sd_programs?.name}</td><td className="pr-2">{levelLabel(a.level)}</td><td className="pr-2">{fmt(a.current_deadline)}</td><td>{a.status}</td></tr>
                       ))}</tbody>
                     </table></div>
                   )}

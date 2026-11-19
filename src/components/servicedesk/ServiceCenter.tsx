@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { levelLabel } from "@/lib/sd-levels";
 import { Navigate, Route, Routes, useSearchParams } from "react-router-dom";
 import { useState } from "react";
 import { LayoutDashboard, Inbox, ListChecks, CalendarClock, AlertTriangle, History, ShieldCheck } from "lucide-react";
@@ -152,7 +153,7 @@ const ServiceCenter = ({ groups, kindOf, userId, areas, onSignOut, canResolveDiv
               {!soon.length ? <p className="text-sm text-muted-foreground">Nenhum prazo próximo.</p> : (
                 <div className="overflow-x-auto border rounded-xl"><table className="w-full text-sm">
                   <thead className="bg-muted/50 text-left text-xs text-muted-foreground"><tr><th className="p-2">Matrícula</th><th className="p-2">Nome</th><th className="p-2">Programa</th><th className="p-2">Nível</th><th className="p-2">Prazo vigente</th></tr></thead>
-                  <tbody>{soon.map((s: any) => <tr key={s.enrollment} className="border-t"><td className="p-2">{s.enrollment}</td><td className="p-2">{s.full_name}</td><td className="p-2">{s.sd_programs?.sigla || s.sd_programs?.name}</td><td className="p-2 capitalize">{s.level}</td><td className="p-2">{fmtDate(s.current_deadline)}</td></tr>)}</tbody>
+                  <tbody>{soon.map((s: any) => <tr key={s.enrollment} className="border-t"><td className="p-2">{s.enrollment}</td><td className="p-2">{s.full_name}</td><td className="p-2">{s.sd_programs?.sigla || s.sd_programs?.name}</td><td className="p-2">{levelLabel(s.level)}</td><td className="p-2">{fmtDate(s.current_deadline)}</td></tr>)}</tbody>
                 </table></div>)}</div>}
             {isExecutor && <div><h2 className="text-xl font-bold font-heading mb-2">Acessos VPN que vencem em {expiryDays} dias</h2><VpnTable rows={expiring} empty="Nenhum vencimento próximo." /></div>}
           </div>} />

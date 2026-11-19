@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { parseLevel } from "@/lib/sd-levels";
 
 export type Outcome = "novo" | "alterado" | "sem_alteracao" | "ausente" | "erro";
 export interface Row { line: number; enrollment: string; outcome: Outcome; data?: any; before?: any; message?: string; diffs?: string[]; extra?: any; }
@@ -10,7 +11,7 @@ const ALIASES: Record<string, string[]> = {
   status: ["situacao", "status"], contract_type: ["tipo_de_vinculo", "tipo_vinculo", "contrato", "tipo_contrato", "tipo_de_contrato"], bond_start: ["inicio", "inicio_vinculo", "inicio_do_vinculo", "data_inicio"],
   programs: ["programas", "programa", "ppg"], can_advise: ["pode_orientar"],
   relationship_type: ["vinculo"],
-  cpf: ["cpf"], phone: ["telefone", "celular", "fone"], email: ["email", "e_mail"], turma: ["turma"],
+  cpf: ["cpf"], phone: ["telefone", "celular", "fone"], email: ["email", "e_mail"], turma: ["turma", "periodo"],
   expected_end: ["termino_previsto_data_de_conclusao", "termino_previsto", "termino", "data_de_conclusao", "previsao_de_termino"],
   scholarship: ["bolsa", "bolsista"],
 };
@@ -92,11 +93,15 @@ export function reconcileStudents(sheet: any[], ctx: { programs: any[]; fixedPro
     const line = r.__line ?? i + 2; const enrollment = String(pick(r, "enrollment") ?? "").trim(); const errs: string[] = [];
     if (!enrollment) errs.push("matrícula vazia"); else if (seen.has(enrollment)) errs.push("matrícula repetida no arquivo"); seen.add(enrollment);
     const full_name = String(pick(r, "full_name") ?? "").trim(); if (!full_name) errs.push("nome vazio");
-    const progRaw = pick(r, "program"); const prog = progRaw ? progByName.get(norm(progRaw)) : fixedProg;
+    // "Curso" pode trazer o nível (pós) ou o nome do curso (graduação).
+    const nivelLv = parseLevel(norm(r.nivel)); const cursoRaw = r.curso !== undefined && r.curso !== "" ? r.curso : undefined;
+    const cursoLv = parseLevel(norm(cursoRaw));
+    const progRaw = pick(r, "program") ?? (!fixedProg && cursoRaw !== undefined && !cursoLv ? cursoRaw : undefined);
+    const prog = progRaw ? progByName.get(norm(progRaw)) : fixedProg;
     if (!prog) errs.push(progRaw ? `programa não cadastrado: ${progRaw}` : "programa não informado");
     else if (fixedProg && prog.id !== fixedProg.id) errs.push(`programa diferente do selecionado: ${progRaw}`);
-    const lv = norm(pick(r, "level")); const level = lv.startsWith("mest") || lv === "ms" ? "mestrado" : lv.startsWith("dout") || lv === "dr" ? "doutorado" : null;
-    if (!level) errs.push("nível deve ser Mestrado ou Doutorado");
+    const level = nivelLv ?? cursoLv;
+    if (!level) errs.push("nível deve ser Graduação, Mestrado ou Doutorado");
     const entry_date = parseDate(pick(r, "entry_date")); if (entry_date === "invalid") errs.push("data de ingresso inválida");
     const advRaw = pick(r, "advisor"); let advisor_id: string | null = null; let advisorNote: string | null = null;
     if (advRaw) {

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { levelLabel } from "@/lib/sd-levels";
 import { useQuery } from "@tanstack/react-query";
 import { readSheet, reconcileStudents, reconcileFaculty, type Outcome, type Row } from "@/lib/sd-import";
 import { Plus, Upload, Loader2, AlertTriangle, Pencil, UserCheck, UserX } from "lucide-react";
@@ -129,7 +130,7 @@ export const StudentsTab = ({ orgId }: { orgId: string }) => {
             {rows.map((s: any) => (
               <tr key={s.id} className="border-t border-border">
                 <td className="p-2">{s.enrollment}</td><td className="p-2">{s.full_name}</td><td className="p-2">{s.program?.name || "-"}</td><td className="p-2">{s.source_period || "-"}</td>
-                <td className="p-2 capitalize">{s.level}</td><td className="p-2">{s.turma || "-"}</td><td className="p-2">{fmtDate(s.entry_date)}</td><td className="p-2">{fmtDate(s.expected_end)}</td><td className="p-2">{s.advisor?.full_name || "-"}</td><td className="p-2">{s.scholarship || "-"}</td>
+                <td className="p-2">{levelLabel(s.level)}</td><td className="p-2">{s.turma || "-"}</td><td className="p-2">{fmtDate(s.entry_date)}</td><td className="p-2">{fmtDate(s.expected_end)}</td><td className="p-2">{s.advisor?.full_name || "-"}</td><td className="p-2">{s.scholarship || "-"}</td>
                 <td className="p-2">{fmtDate(s.regular_deadline)}</td><td className="p-2">{fmtDate(s.current_deadline)}</td>
                 <td className="p-2"><Badge variant={s.status === "ativo" ? "default" : "secondary"}>{s.status}</Badge>{s.absent_in_last_import && <Badge variant="destructive" className="ml-1">ausente na nova base</Badge>}</td>
                 <td className="p-2"><Badge variant={s.service_desk_access_active !== false ? "default" : "secondary"}>{s.service_desk_access_active !== false ? "Ativo" : "Desativado"}</Badge></td>
