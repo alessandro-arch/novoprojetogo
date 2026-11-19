@@ -10,6 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { translateAuthError } from "@/lib/auth-errors";
 import Seo from "@/components/Seo";
+import { canEnterServiceDesk } from "@/lib/sd-login-access";
 
 const ServiceDeskLogin = () => {
   const [email, setEmail] = useState("");
@@ -42,8 +43,8 @@ const ServiceDeskLogin = () => {
       return;
     }
 
-    // Acesso: administrador geral, membro ativo de instituição ou aluno com acesso ativo
-    const [{ data: roles }, { data: memberships }, { data: studentRows }, { data: facultyRows }] = await Promise.all([
+    // Acesso: administrador geral, membro ativo de instituição ou solicitante (aluno, professor ou técnico) com acesso ativo
+    const [{ data: roles }, { data: memberships }, { data: studentRows }, { data: facultyRows }, { data: staffRows }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", authData.user.id),
       supabase
         .from("sd_members")
@@ -63,13 +64,27 @@ const ServiceDeskLogin = () => {
         .eq("user_id", authData.user.id)
         .eq("status", "ativo")
         .limit(1),
+      (supabase as any)
+        .from("sd_staff")
+        .select("id")
+        .eq("user_id", authData.user.id)
+        .eq("status", "ativo")
+        .eq("service_desk_access_active", true)
+        .limit(1),
     ]);
     const { data: groupRows } = await (supabase as any).from("sd_group_members").select("id").eq("user_id", authData.user.id).limit(1);
 
     const isSuperadmin = (roles ?? []).some((r) => r.role === "icca_admin");
-    const isMember = (memberships ?? []).length > 0 || (studentRows ?? []).length > 0 || (facultyRows ?? []).length > 0 || (groupRows ?? []).length > 0;
+    const allowed = canEnterServiceDesk({
+      isSuperadmin,
+      memberships: (memberships ?? []).length,
+      groups: (groupRows ?? []).length,
+      students: (studentRows ?? []).length,
+      faculty: (facultyRows ?? []).length,
+      staff: (staffRows ?? []).length,
+    });
 
-    if (!isSuperadmin && !isMember) {
+    if (!allowed) {
       await supabase.auth.signOut();
       setLoading(false);
       toast({
