@@ -31,4 +31,3 @@
 - Service Desk list PDFs are built client-side (jsPDF, `src/lib/sd-pdf.ts`) from the exact filtered rows on screen; read-only, so no new queries or permissions and allowed during Ver como.
 - SD first access re-sends confirmation only for never-confirmed, never-used accounts with the same institutional e-mail (`canResendUnconfirmedSignup`); unblocks abandoned sign-ups.
 - SD requesters: `sd_students`, `sd_faculty`, `sd_staff` (kind `tecnico`, department not program); `sd_me` resolves all three so one request flow serves all.
-- Operon external read API is the `operon-editais-api` edge function: GET-only, no CORS, `OPERON_API_KEY` checked in constant time, service-role reads limited to published editais, released events and the shaping in its core.ts (no user ids, embeddings or unconfirmed values as numbers); this gives tools like Claude Code read access without a curator account that could write.
