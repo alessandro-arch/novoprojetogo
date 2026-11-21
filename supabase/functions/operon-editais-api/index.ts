@@ -18,22 +18,22 @@ Deno.serve(async req => {
     const db = createClient(url, service, { auth: { persistSession: false } });
 
     if (consulta.id) {
-      const { data: edital, error } = await db.from("oe_edital").select(SELECT).eq("id", consulta.id).eq("status_curadoria", "publicado").maybeSingle();
+      const { data: edital, error } = await db.from("oe_edital").select(SELECT).eq("id", consulta.id).in("status_curadoria", consulta.status).maybeSingle();
       if (error) throw error;
-      if (!edital) throw new ApiError(404, "Edital não encontrado ou não publicado.");
+      if (!edital) throw new ApiError(404, "Edital não encontrado neste escopo (descartados não aparecem).");
       const [docs, evs] = await Promise.all([
         db.from("oe_documento").select("tipo,rotulo,url,versao,publicado_em,substituido").eq("edital_id", consulta.id).order("publicado_em", { ascending: false }),
-        db.from("oe_evento").select("tipo,ocorrido_em,liberado,valor_anterior,valor_novo").eq("edital_id", consulta.id).eq("liberado", true).order("ocorrido_em", { ascending: false }),
+        db.from("oe_evento").select("tipo,ocorrido_em,liberado,valor_anterior,valor_novo").eq("edital_id", consulta.id).order("ocorrido_em", { ascending: false }),
       ]);
       if (docs.error) throw docs.error;
       if (evs.error) throw evs.error;
       return json(formatarDetalhe(edital, docs.data ?? [], evs.data ?? []));
     }
 
-    const { data, error } = await db.from("oe_edital").select(SELECT).eq("status_curadoria", "publicado").limit(5000);
+    const { data, error } = await db.from("oe_edital").select(SELECT).in("status_curadoria", consulta.status).limit(5000);
     if (error) throw error;
     const { total, itens } = filtrarLista(data ?? [], consulta);
-    return json({ total, limite: consulta.limite, offset: consulta.offset, itens });
+    return json({ total, status: consulta.status, limite: consulta.limite, offset: consulta.offset, itens });
   } catch (e) {
     if (e instanceof ApiError) return json({ error: e.message }, e.status);
     console.error("operon-editais-api", e instanceof Error ? e.name : "erro");

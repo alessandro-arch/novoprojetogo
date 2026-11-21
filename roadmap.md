@@ -46,3 +46,6 @@
 - [x] Operon IA: DeepSeek v4.1 Flash substitui Nemotron nas duas tentativas; função instalada, 16 testes Deno passaram e PDF oficial retornou sugestões validadas em 14 segundos sem gravação.
 - [x] Operon IA: TL;DR validado com PDF oficial após separar síntese/evidência e exigir JSON estruturado; todos os nove campos passaram na validação real, 18 testes Deno passaram, sem gravação automática.
 - [x] Operon IA: CPU Time exceeded confirmado nos logs; leitura em lotes autenticados da mesma função instalada, 23 testes Deno e 80 Vitest passaram; PDF oficial completo (39 páginas) gerou TL;DR e nove campos sem gravação. Chamada instalada bloqueou sessão ausente com 401; geração autenticada no ambiente hospedado ainda depende de sessão válida.
+
+- [x] Operon API para Claude Code: endereço só de leitura protegido por chave, com publicados e pendentes (rascunho/em revisão), descartados nunca; 9 testes passaram.
+- [ ] Operon API: primeira consulta com a chave real. Bloqueio: a chave fica só com o usuário.

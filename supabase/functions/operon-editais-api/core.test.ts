@@ -23,11 +23,21 @@ Deno.test("valida parâmetros e limita a 200 por página", () => {
     assert(erro, q);
   }
 });
-Deno.test("lista só publicados e nunca expõe embedding nem quem confirmou", () => {
-  const r = filtrarLista([base(), base({ id: "2", status_curadoria: "pendente" })], lerConsulta(new URLSearchParams()));
-  assert(r.total === 1 && r.itens[0].id === "1");
-  const json = JSON.stringify(r);
-  assert(!json.includes("embedding") && !json.includes("user-1") && !json.includes("status_curadoria"));
+const comStatus = () => [base(), base({ id: "2", status_curadoria: "rascunho" }), base({ id: "3", status_curadoria: "em_revisao" }), base({ id: "4", status_curadoria: "descartado" })];
+Deno.test("por padrão traz publicados e pendentes, nunca descartados", () => {
+  const r = filtrarLista(comStatus(), lerConsulta(new URLSearchParams()));
+  assert(r.total === 3 && !r.itens.some(e => e.id === "4"));
+  assert(r.itens.find(e => e.id === "2")?.status_curadoria === "rascunho");
+});
+Deno.test("status=publicado e status=pendentes separam os escopos", () => {
+  assert(filtrarLista(comStatus(), lerConsulta(new URLSearchParams("status=publicado"))).itens.map(e => e.id).join() === "1");
+  assert(filtrarLista(comStatus(), lerConsulta(new URLSearchParams("status=pendentes"))).total === 2);
+  let erro = false; try { lerConsulta(new URLSearchParams("status=descartado")); } catch (e) { erro = e instanceof ApiError && e.status === 400; }
+  assert(erro);
+});
+Deno.test("nunca expõe embedding nem quem confirmou o valor", () => {
+  const json = JSON.stringify(filtrarLista(comStatus(), lerConsulta(new URLSearchParams())));
+  assert(!json.includes("embedding") && !json.includes("user-1"));
 });
 Deno.test("filtra por fonte, busca sem acento e data de atualização", () => {
   const rows = [base(), base({ id: "2", titulo: "Inovação", oe_fonte: { slug: "cnpq", nome: "CNPq" }, updated_at: "2026-11-10T00:00:00Z" })];
@@ -41,7 +51,7 @@ Deno.test("valor numérico só quando confirmado e total ou estimado", () => {
   assert(formatarValor({ valor_tipo: "por_agencia", valor_total_reais: 1000, valor_confirmado_em: "2026-11-01" }).total_reais === null);
   assert(formatarValor({ valor_tipo: "nao_informado", valor_total_reais: null, valor_confirmado_em: null }).total_reais === null);
 });
-Deno.test("detalhe nunca inclui evento não liberado", () => {
+Deno.test("detalhe marca eventos ainda não liberados", () => {
   const d = formatarDetalhe(base(), [], [{ tipo: "errata", ocorrido_em: "2026-11-01", liberado: true }, { tipo: "prazo_alterado", ocorrido_em: "2026-11-02", liberado: false }]);
-  assert(d.eventos.length === 1 && d.eventos[0].tipo === "errata");
+  assert(d.eventos.length === 2 && d.eventos[0].liberado === true && d.eventos[1].liberado === false);
 });

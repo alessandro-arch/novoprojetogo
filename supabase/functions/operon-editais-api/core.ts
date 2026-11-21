@@ -4,6 +4,9 @@ export const MAX_LIMITE = 200;
 export const LIMITE_PADRAO = 50;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+export const PENDENTES = ["rascunho", "em_revisao"] as const;
+export const ESCOPOS: Record<string, readonly string[]> = { todos: ["publicado", ...PENDENTES], publicado: ["publicado"], pendentes: PENDENTES };
+
 export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
@@ -30,9 +33,12 @@ export function chaveDoPedido(headers: Headers): string | null {
   return m ? m[1].trim() : null;
 }
 
-export interface Consulta { id: string | null; fonte: string | null; busca: string | null; atualizadoDesde: string | null; limite: number; offset: number }
+export interface Consulta { status: readonly string[]; id: string | null; fonte: string | null; busca: string | null; atualizadoDesde: string | null; limite: number; offset: number }
 
 export function lerConsulta(params: URLSearchParams): Consulta {
+  const escopo = params.get("status")?.trim().toLowerCase() || "todos";
+  const status = ESCOPOS[escopo];
+  if (!status) throw new ApiError(400, "Parâmetro status deve ser todos, publicado ou pendentes.");
   const id = params.get("id")?.trim() || null;
   if (id && !UUID.test(id)) throw new ApiError(400, "Parâmetro id inválido.");
   const fonte = params.get("fonte")?.trim().toLowerCase() || null;
@@ -46,7 +52,7 @@ export function lerConsulta(params: URLSearchParams): Consulta {
   const offsetBruto = params.get("offset");
   const offset = offsetBruto === null ? 0 : Number(offsetBruto);
   if (!Number.isInteger(offset) || offset < 0) throw new ApiError(400, "Parâmetro offset deve ser inteiro maior ou igual a 0.");
-  return { id, fonte, busca, atualizadoDesde: desde ? new Date(desde).toISOString() : null, limite, offset };
+  return { status, id, fonte, busca, atualizadoDesde: desde ? new Date(desde).toISOString() : null, limite, offset };
 }
 
 const normalizar = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
@@ -67,11 +73,12 @@ export function formatarValor(e: Linha) {
   };
 }
 
-/** Campos públicos de um edital publicado; nunca expõe ids de usuários, embedding ou dados de curadoria interna. */
+/** Campos do edital (publicado ou pendente, indicado em status_curadoria); nunca expõe ids de usuários nem embedding. */
 export function formatarEdital(e: Linha) {
   const fonte = e.oe_fonte ?? null;
   return {
     id: e.id,
+    status_curadoria: e.status_curadoria,
     titulo: e.titulo,
     numero: e.numero,
     ano: e.ano,
@@ -101,11 +108,11 @@ export function formatarEdital(e: Linha) {
   };
 }
 
-/** Apenas publicados, filtros combinados, ordem por atualização mais recente e paginação. */
+/** Somente os status do escopo (descartados nunca), filtros combinados, ordem por atualização mais recente e paginação. */
 export function filtrarLista(rows: Linha[], c: Consulta) {
   const busca = c.busca ? normalizar(c.busca) : null;
   const filtrados = rows
-    .filter(e => e.status_curadoria === "publicado")
+    .filter(e => c.status.includes(e.status_curadoria))
     .filter(e => !c.fonte || e.oe_fonte?.slug === c.fonte)
     .filter(e => !c.atualizadoDesde || new Date(e.updated_at).getTime() >= new Date(c.atualizadoDesde).getTime())
     .filter(e => !busca || normalizar([e.titulo, e.numero, e.orgao, e.categoria, ...(e.areas ?? [])].filter(Boolean).join(" ")).includes(busca))
@@ -117,7 +124,7 @@ export function formatarDetalhe(e: Linha, documentos: Linha[], eventos: Linha[])
   return {
     ...formatarEdital(e),
     documentos: documentos.map(d => ({ tipo: d.tipo, rotulo: d.rotulo, url: d.url, versao: d.versao, publicado_em: d.publicado_em ?? null, substituido: d.substituido === true })),
-    // Defesa adicional: somente eventos liberados.
-    eventos: eventos.filter(ev => ev.liberado === true).map(ev => ({ tipo: ev.tipo, ocorrido_em: ev.ocorrido_em, valor_anterior: ev.valor_anterior ?? null, valor_novo: ev.valor_novo ?? null })),
+    // Eventos ainda não liberados aparecem marcados com liberado: false.
+    eventos: eventos.map(ev => ({ tipo: ev.tipo, liberado: ev.liberado === true, ocorrido_em: ev.ocorrido_em, valor_anterior: ev.valor_anterior ?? null, valor_novo: ev.valor_novo ?? null })),
   };
 }
